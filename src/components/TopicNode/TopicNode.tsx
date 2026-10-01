@@ -1,6 +1,6 @@
-import { Check } from 'lucide-react';
+import { Check, CircleDashed, Layers, Play } from 'lucide-react';
 import type { Page } from '../../types/course';
-import { fa } from '../ui';
+import { fa, ic } from '../ui';
 
 export type NodeState = 'known' | 'next' | 'todo';
 type Props = {
@@ -10,6 +10,7 @@ type Props = {
   selected: boolean;
   size?: number;
   badge?: string;
+  due?: number; // flashcards of this topic waiting for review
   onClick: () => void;
 };
 
@@ -20,7 +21,11 @@ const RING: Record<NodeState, string> = {
 };
 
 /** Round thumbnail with a state ring; falls back to the first letter when the article has no image. */
-export function TopicNode({ page, score, state, selected, size = 84, badge, onClick }: Props) {
+// Status is a word plus an icon, so it never rests on colour alone.
+const STATUS = { known: ['بلدم', Check], next: ['گام بعدی', Play], todo: ['در صف', CircleDashed] } as const;
+
+export function TopicNode({ page, score, state, selected, size = 84, badge, due, onClick }: Props) {
+  const [statusText, StatusIcon] = STATUS[state];
   return (
     <button onClick={onClick} className="group flex w-36 flex-col items-center gap-1.5 text-center" aria-pressed={selected}>
       {badge && <span className="mb-1.5 rounded-full bg-accent px-2.5 py-0.5 text-xs font-bold text-on-accent">{badge}</span>}
@@ -40,7 +45,17 @@ export function TopicNode({ page, score, state, selected, size = 84, badge, onCl
       <span dir="auto" className="line-clamp-2 text-sm font-semibold leading-snug">
         {page.title}
       </span>
-      {score !== undefined && <span className="text-xs text-muted">{fa(score)}٪</span>}
+      <span className="flex items-center gap-1 text-xs font-medium">
+        <StatusIcon className={ic} aria-hidden="true" />
+        {statusText}
+      </span>
+      {score !== undefined && <span className="text-xs text-muted">ارتباط {fa(score)}٪</span>}
+      {!!due && (
+        <span className="flex items-center gap-1 text-xs font-medium text-accent">
+          <Layers className={ic} aria-hidden="true" />
+          {fa(due)} کارت برای مرور
+        </span>
+      )}
     </button>
   );
 }

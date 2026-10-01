@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { BookOpen, Check, ExternalLink, KeyRound, PenLine, Route, Sparkles, Star } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { ArrowLeft, BookOpen, Check, ClipboardCheck, ExternalLink, KeyRound, Layers, PenLine, Route, Sparkles, Star } from 'lucide-react';
 import type { Course, Pack, Page, Role, Topic } from '../../types/course';
 import { readHref, type Store } from '../../data/store';
 import { topicKey } from '../../utils/course';
@@ -18,6 +18,8 @@ type Props = {
   busy: boolean; // a course build is running
   onBuildPack: () => void;
   onBuildCourse: (url: string) => void;
+  next: Page | null; // the next topic on the path that isn't known yet (null: the whole path is known)
+  onNext: () => void;
 };
 
 const ROLE: Record<Role | 'root', [string, string]> = {
@@ -28,18 +30,20 @@ const ROLE: Record<Role | 'root', [string, string]> = {
 };
 const TABS = [['about', 'درباره'], ['cards', 'فلش‌کارت'], ['quiz', 'آزمون']] as const;
 
-export function TopicDetail({ course, page, topic, store, pack, packJob, busy, onBuildPack, onBuildCourse }: Props) {
+export function TopicDetail({ course, page, topic, store, pack, packJob, busy, onBuildPack, onBuildCourse, next, onNext }: Props) {
   const [tab, setTab] = useState<(typeof TABS)[number][0]>('about');
+  const [learned, setLearned] = useState(false); // just marked as known: show where to go next
   const { state } = store;
   const key = topicKey(page);
   const known = state.known.includes(key);
   const saved = state.saved.some((p) => topicKey(p) === key);
+  useEffect(() => setLearned(false), [key]);
   const [roleLabel, roleChip] = ROLE[topic?.role ?? 'root'];
 
   const packCta = (what: string) => (
-    <div className="space-y-3 rounded-2xl border border-dashed border-line p-6 text-center">
+    <div className="space-y-3 rounded-lg border border-dashed border-line p-6 text-center">
       <p className="text-sm leading-7 text-muted">
-        {what} این موضوع هنوز ساخته نشده. هوش مصنوعی از روی متن خود مقاله نکات کلیدی، ۶ فلش‌کارت و ۴ سؤال می‌سازد؛ یک بار، و بعد روی همین دستگاه می‌ماند.
+        {what} این موضوع هنوز ساخته نشده. هوش مصنوعی از روی متن خود مقاله نکات کلیدی، ۶ فلش‌کارت و ۴ سؤال می‌سازد (محتوای تولیدشده، نه متن ویکی‌پدیا)؛ یک بار، و بعد روی همین دستگاه می‌ماند.
       </p>
       <button className={primary} disabled={!!packJob?.status} onClick={onBuildPack}>
         <Sparkles className={ic} />
@@ -51,7 +55,7 @@ export function TopicDetail({ course, page, topic, store, pack, packJob, busy, o
 
   const about = (
     <div className="space-y-5">
-      {page.thumbnail && <img src={page.thumbnail} alt="" loading="lazy" decoding="async" className="aspect-video w-full rounded-xl bg-fg/5 object-cover" />}
+      {page.thumbnail && <img src={page.thumbnail} alt="" loading="lazy" decoding="async" className="aspect-video w-full rounded-lg bg-fg/5 object-cover" />}
       <div className="space-y-2">
         <div className="flex flex-wrap items-center gap-2 text-xs font-semibold">
           <span className={`rounded-full px-2.5 py-0.5 ${roleChip}`}>{roleLabel}</span>
@@ -61,12 +65,20 @@ export function TopicDetail({ course, page, topic, store, pack, packJob, busy, o
         <h2 dir="auto" className="text-2xl font-bold leading-snug">{page.title}</h2>
       </div>
       {topic?.why && (
-        <p className="rounded-xl bg-fg/5 p-3 text-sm leading-7">
+        <p className="rounded-lg bg-fg/5 p-3 text-sm leading-7">
           <b className="text-accent">چرا در این مسیر؟ </b>
+          <span className="text-xs text-muted">(تخمین هوش مصنوعی) </span>
           {topic.why}
         </p>
       )}
-      <p dir="auto" className="leading-8">{page.summary}</p>
+      <div className="space-y-1">
+        <p dir="auto" className="leading-8">{page.summary}</p>
+        <p className="text-xs text-muted">
+          خلاصه از{' '}
+          <a href={page.url} target="_blank" rel="noopener noreferrer" className="underline hover:text-fg">ویکی‌پدیا</a>
+          {' '}(CC BY-SA 4.0)
+        </p>
+      </div>
 
       {pack?.keyPoints.length ? (
         <section>
@@ -80,7 +92,7 @@ export function TopicDetail({ course, page, topic, store, pack, packJob, busy, o
         </section>
       ) : (
         <div>
-          <button className="flex items-center gap-1.5 text-sm font-semibold text-accent hover:underline disabled:opacity-60" disabled={!!packJob?.status} onClick={onBuildPack}>
+          <button className="flex min-h-11 items-center gap-1.5 text-sm font-semibold text-accent hover:underline disabled:opacity-60" disabled={!!packJob?.status} onClick={onBuildPack}>
             <Sparkles className={ic} />
             {packJob?.status || 'ساخت نکات کلیدی، فلش‌کارت و آزمون'}
           </button>
@@ -88,18 +100,56 @@ export function TopicDetail({ course, page, topic, store, pack, packJob, busy, o
         </div>
       )}
 
+      {learned && known && (
+        <div className="space-y-2 rounded-lg border border-accent bg-accent-soft p-3" role="status">
+          <p className="flex items-center gap-2 font-bold">
+            <Check className={`${ic} text-accent`} />
+            «{page.title}» را بلدی
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {next ? (
+              <button className={primary} onClick={() => { setLearned(false); onNext(); }}>
+                موضوع بعدی: <span dir="auto">{next.title}</span>
+                <ArrowLeft className={ic} />
+              </button>
+            ) : (
+              <p className="text-sm">همه‌ی مسیر را بلدی. وقت مرور یا یک دوره‌ی تازه است.</p>
+            )}
+            <button className={ghost} onClick={() => setTab('quiz')}>
+              <ClipboardCheck className={ic} />
+              آزمون این موضوع
+            </button>
+          </div>
+        </div>
+      )}
+
       <div className="grid grid-cols-2 gap-2">
-        <a className={`${primary} col-span-2`} href={readHref(page.lang, page.title)}>
+        <a className={`${primary} col-span-2`} href={readHref(page.lang, page.title, course.key)}>
           <BookOpen className={ic} />
           مطالعه‌ی مقاله
         </a>
-        <button className={known ? outline : ghost} aria-pressed={known} onClick={() => store.toggleKnown(key)}>
+        <button
+          className={known ? outline : ghost}
+          aria-pressed={known}
+          onClick={() => {
+            store.toggleKnown(key, course.key);
+            setLearned(!known);
+          }}
+        >
           <Check className={ic} />
           {known ? 'بلدم' : 'این را بلدم'}
         </button>
+        <button className={ghost} onClick={() => setTab('cards')}>
+          <Layers className={ic} />
+          نیاز به مرور دارم
+        </button>
         <button className={ghost} aria-pressed={saved} onClick={() => store.toggleSaved(page)}>
           <Star className={`${ic} ${saved ? 'fill-current' : ''}`} />
-          {saved ? 'در کتابخانه' : 'ذخیره'}
+          {saved ? 'ذخیره‌شده' : 'ذخیره برای بعد'}
+        </button>
+        <button className={ghost} onClick={() => setTab('quiz')}>
+          <ClipboardCheck className={ic} />
+          آزمون این موضوع
         </button>
         <a className={`${ghost} ${topic ? '' : 'col-span-2'}`} href={page.url} target="_blank" rel="noopener noreferrer">
           <ExternalLink className={ic} />
@@ -127,7 +177,7 @@ export function TopicDetail({ course, page, topic, store, pack, packJob, busy, o
           value={state.notes[key] ?? ''}
           onChange={(e) => store.setNote(key, e.target.value)}
           placeholder="مثلاً: این مفهوم یعنی…"
-          className="w-full rounded-xl border border-line bg-bg p-3 leading-7 placeholder:text-muted focus:border-accent focus:outline-none"
+          className="w-full rounded-lg border border-line bg-bg p-3 leading-7 placeholder:text-muted focus:border-accent focus:outline-none"
         />
       </label>
 
@@ -163,13 +213,22 @@ export function TopicDetail({ course, page, topic, store, pack, packJob, busy, o
         {tab === 'about' && about}
         {tab === 'cards' &&
           (pack?.cards.length ? (
-            <Flashcards key={key} items={pack.cards.map((c, i) => ({ id: `${key}#${i}`, ...c }))} onRate={store.rateCard} />
+            <Flashcards key={key} items={pack.cards.map((c, i) => ({ id: `${key}#${i}`, ...c }))} boxes={state.boxes} onRate={store.rateCard} />
           ) : (
             packCta('فلش‌کارت‌های')
           ))}
         {tab === 'quiz' &&
           (pack?.quiz.length ? (
-            <Quiz key={key} questions={pack.quiz} best={state.quiz[key]} onDone={(pct) => store.quizDone(key, pct)} />
+            <Quiz
+              key={key}
+              questions={pack.quiz}
+              best={state.quiz[key]}
+              onDone={(pct) => store.quizDone(key, pct, course.key)}
+              onReviewCards={() => setTab('cards')}
+              readHref={readHref(page.lang, page.title, course.key)}
+              onContinue={next ? onNext : undefined}
+              continueLabel={next ? `موضوع بعدی: ${next.title}` : undefined}
+            />
           ) : (
             packCta('آزمون')
           ))}

@@ -2,11 +2,16 @@
 //   Wikipedia -> article summary/thumbnail, lead-section links, plain text
 //   AI (ArvanCloud gateway -> Gemini 2.5 Flash-lite) -> prerequisites / next steps / related scored 0-100, flashcards, quiz, key terms
 // Only needs fetch: runs in the browser (the app; both APIs allow CORS) and in Node (scripts/build-course.ts).
-import type { AI, Course, Pack, Page, Topic } from '../types/course';
+import type { AI, BuildOpts, Course, Pack, Page, Purpose, Topic } from '../types/course';
 import { ROLES, cleanItems, cleanPack, courseKey, extractLists, parseWikiUrl, topicKey } from '../utils/course';
 import { cleanTerms, outline, parseArticle } from '../utils/reader';
 
-export type Status = (message: string) => void;
+/** `stage` is the index of the named step the message belongs to (the course builder shows them as a checklist). */
+export type Status = (message: string, stage?: number) => void;
+
+export const DEFAULT_OPTS: BuildOpts = { depth: 'standard', purpose: 'general' };
+/** Topics requested per role; 'standard' is the original behaviour. */
+export const DEPTH_CAP = { quick: 3, standard: 5, deep: 8 } as const;
 
 const TRIES = 6;
 const UA = 'wiki-course/0.2 (personal learning app)';
@@ -42,6 +47,21 @@ async function summary(lang: string, title: string): Promise<Page | null> {
     if (e.status === 404) return null;
     throw e; // rate limit / network: don't pretend the article doesn't exist
   }
+}
+
+/** What the builder shows before anything is built: the article as Wikipedia describes it. Errors carry a `kind`. */
+export type Preview = Page & { description?: string; updated?: string };
+export async function previewArticle(url: string): Promise<Preview> {
+  const { lang, title } = parseWikiUrl(url);
+  let r: any;
+  try {
+    r = await getJson(`https://${lang}.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(title.replace(/ /g, '_'))}`, { headers: WIKI_HEADERS });
+  } catch (e: any) {
+    if (e.status === 404) throw Object.assign(new Error(`مقاله‌ای با عنوان «${title}» در ${lang}.wikipedia.org پیدا نشد`), { kind: 'notfound' });
+    throw Object.assign(new Error('اتصال به ویکی‌پدیا برقرار نشد'), { kind: 'network' });
+  }
+  if (r.type === 'disambiguation') throw Object.assign(new Error(`«${r.title}» صفحه‌ی ابهام‌زدایی است؛ یک مقاله‌ی مشخص را انتخاب کن`), { kind: 'unsupported' });
+  return { title: r.title, lang, url: r.content_urls.desktop.page, summary: r.extract ?? '', thumbnail: r.thumbnail?.source, description: r.description, updated: r.timestamp };
 }
 
 /** The title as given, or the closest real article (the model often misses ی/ي, ZWNJ or capitalisation). */
@@ -122,16 +142,23 @@ async function askJson<K extends string, T>(ai: AI, prompt: string, keys: readon
   throw new Error(text.trim() ? `پاسخ مدل قابل استفاده نبود: «${text.slice(0, 120).replace(/\s+/g, ' ')}»` : `پاسخ مدل خالی بود (${fa(TRIES)} بار تلاش شد)`);
 }
 
-const coursePrompt = (root: Page, candidates: string[]) => `You design learning paths from Wikipedia articles.
+const PURPOSE_HINT: Record<Purpose, string> = {
+  general: '',
+  exam: '\nThe learner is preparing for an exam: favour core definitions and the standard textbook topics that are commonly tested.',
+  work: '\nThe learner needs this for practical work: favour applied, hands-on topics and the tools or methods used in practice.',
+  research: '\nThe learner wants to do research: favour foundational theory, and specialised or advanced next topics.',
+};
+
+const coursePrompt = (root: Page, candidates: string[], { depth, purpose }: BuildOpts) => `You design learning paths from Wikipedia articles.
 Article: "${root.title}" (${root.lang}.wikipedia.org)
 Summary: ${root.summary}
 Articles linked from its introduction (prefer these titles when they fit; you may use others): ${candidates.join(' | ')}
 
-Base your judgement on how university syllabi, textbooks and learning roadmaps order this subject. Answer with ONE JSON object and nothing else:
+Base your judgement on how university syllabi, textbooks and learning roadmaps order this subject.${PURPOSE_HINT[purpose]} Answer with ONE JSON object and nothing else:
 {"prereq":[...],"next":[...],"related":[...]}
-- prereq: up to 5 topics a learner should know BEFORE reading this article; score = how essential (0-100).
-- next: up to 5 topics to read AFTER it; score = how natural a next step it is (0-100).
-- related: up to 5 neighbouring topics that are neither; score = topical closeness (0-100).
+- prereq: up to ${DEPTH_CAP[depth]} topics a learner should know BEFORE reading this article; score = how essential (0-100).
+- next: up to ${DEPTH_CAP[depth]} topics to read AFTER it; score = how natural a next step it is (0-100).
+- related: up to ${DEPTH_CAP[depth]} neighbouring topics that are neither; score = topical closeness (0-100).
 Each item: {"title": exact article title on ${root.lang}.wikipedia.org, "score": number, "why": one Persian sentence naming the evidence, "summary": one short Persian sentence explaining the topic}.
 Output raw JSON, no code fence, no commentary. Never repeat a title across lists. Do not include "${root.title}" itself.`;
 
@@ -166,19 +193,21 @@ export async function buildTerms(a: Pick<Article, 'lang' | 'title' | 'text'>, ai
   });
 }
 
-export async function buildCourse(url: string, ai: AI, status: Status = () => {}): Promise<Course> {
+export async function buildCourse(url: string, ai: AI, status: Status = () => {}, opts: BuildOpts = DEFAULT_OPTS): Promise<Course> {
   const { lang, title } = parseWikiUrl(url);
-  status('در حال خواندن ویکی‌پدیا…');
+  status('در حال خواندن ویکی‌پدیا…', 0);
   const [root, candidates] = await Promise.all([summary(lang, title), leadLinks(lang, title).catch(() => [])]);
   if (!root) throw new Error(`مقاله‌ای با عنوان «${title}» در ${lang}.wikipedia.org پیدا نشد`);
 
-  const roles = await askJson(ai, coursePrompt(root, candidates), ROLES, status, {
-    clean: (d) => ({ prereq: cleanItems(d.prereq), next: cleanItems(d.next), related: cleanItems(d.related) }),
-    enough: (r) => r.prereq.length >= 2 && r.next.length >= 2 && r.prereq.length + r.next.length + r.related.length >= 8,
+  const cap = DEPTH_CAP[opts.depth];
+  const need = Math.round(cap * 1.6); // 8 at the standard depth
+  const roles = await askJson(ai, coursePrompt(root, candidates, opts), ROLES, (m) => status(m, 1), {
+    clean: (d) => ({ prereq: cleanItems(d.prereq, cap), next: cleanItems(d.next, cap), related: cleanItems(d.related, cap) }),
+    enough: (r) => r.prereq.length >= Math.min(2, cap) && r.next.length >= Math.min(2, cap) && r.prereq.length + r.next.length + r.related.length >= need,
     size: (r) => r.prereq.length + r.next.length + r.related.length,
   });
 
-  status('در حال پیدا کردن مقاله‌ها در ویکی‌پدیا…');
+  status('در حال پیدا کردن مقاله‌ها در ویکی‌پدیا…', 2);
   const seen = new Set([topicKey(root)]);
   const topics: Topic[] = [];
   for (const role of ROLES) {
@@ -192,7 +221,7 @@ export async function buildCourse(url: string, ai: AI, status: Status = () => {}
     });
   }
   if (!topics.length) throw new Error('هیچ موضوع معتبری از پاسخ مدل به‌دست نیامد');
-  return { key: courseKey(lang, root.title), root, topics, sources: [], generatedAt: new Date().toISOString() };
+  return { key: courseKey(lang, root.title), root, topics, sources: [], opts, generatedAt: new Date().toISOString() };
 }
 
 export async function buildPack(page: Pick<Page, 'lang' | 'title'>, ai: AI, status: Status = () => {}): Promise<Pack> {

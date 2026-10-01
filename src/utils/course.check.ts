@@ -2,7 +2,9 @@ import assert from 'node:assert/strict';
 import type { Course, State } from '../types/course';
 import { cleanItems, cleanPack, courseKey, extractJson, extractLists, parseWikiUrl, ROLES } from './course';
 import { courseMarkdown, nextStep, PROMPTS } from './export';
-import { EMPTY_STATE, dueIds, mergeBackup, rate, streak } from './learn';
+import { EMPTY_STATE, dueIds, mergeBackup, nextDue, nextInterval, rate, streak } from './learn';
+import { courseStats, nextAction, weakTopics, weekStats } from './progress';
+import { seed, subjectOf } from './subject';
 import { FORMULA, boldSegments, cleanTerms, outline, parseArticle, termRegex } from './reader';
 
 assert.deepEqual(parseWikiUrl('https://en.wikipedia.org/wiki/Linear_algebra#History'), { lang: 'en', title: 'Linear algebra' });
@@ -16,6 +18,7 @@ const items = cleanItems([{ title: ' A ', score: 150 }, { title: 'B', score: 'x'
 assert.deepEqual(items.map((i) => [i.title, i.score]), [['A', 100], ['C', 40], ['B', 0]]);
 assert.equal(cleanItems(undefined).length, 0);
 assert.equal(cleanItems(Array.from({ length: 9 }, (_, i) => ({ title: `t${i}`, score: i }))).length, 6);
+assert.equal(cleanItems(Array.from({ length: 9 }, (_, i) => ({ title: `t${i}`, score: i })), 3).length, 3);
 
 // A reply cut off mid-way keeps every complete item; junk from the cut is dropped by the cleaners.
 const cut = '```json\n{"prereq":[{"title":"A","score":9},{"title":"B","score":8}],"next":[{"title":"C","score":7},{"title":"D","sc';
@@ -32,13 +35,21 @@ assert.deepEqual(pack.cards, [{ q: 'س۱', a: 'ج۱' }]);
 assert.equal(pack.quiz.length, 1);
 assert.equal(cleanPack({ quiz: [{ q: 'q', options: ['a', 'b'], answer: 2 }, { q: 'q', options: ['a', ''], answer: 0 }] }).quiz.length, 0);
 
-// Leitner: right answers climb boxes and push the due date out; a wrong answer resets to box 1, due today.
-let box = rate(undefined, true, '2026-10-01');
+// Leitner: good climbs a box, easy two, hard drops one and is due tomorrow.
+let box = rate(undefined, 'good', '2026-10-01');
 assert.deepEqual(box, { box: 1, due: '2026-10-02' });
-box = rate(box, true, '2026-10-02');
+box = rate(box, 'good', '2026-10-02');
 assert.deepEqual(box, { box: 2, due: '2026-10-04' });
-assert.deepEqual(rate({ box: 5, due: '' }, true, '2026-10-01'), { box: 5, due: '2026-10-17' });
-assert.deepEqual(rate(box, false, '2026-10-04'), { box: 1, due: '2026-10-04' });
+assert.deepEqual(rate({ box: 5, due: '' }, 'good', '2026-10-01'), { box: 5, due: '2026-10-17' });
+assert.deepEqual(rate(box, 'hard', '2026-10-04'), { box: 1, due: '2026-10-05' });
+assert.deepEqual(rate({ box: 1, due: '' }, 'hard', '2026-10-04'), { box: 1, due: '2026-10-05' }, 'hard never goes below box 1');
+assert.deepEqual(rate({ box: 2, due: '' }, 'easy', '2026-10-01'), { box: 4, due: '2026-10-09' });
+assert.deepEqual(rate(undefined, 'easy', '2026-10-01'), { box: 2, due: '2026-10-03' });
+assert.equal(nextInterval({ box: 2, due: '' }, 'good'), 4);
+assert.equal(nextInterval({ box: 4, due: '' }, 'hard'), 1);
+assert.equal(nextInterval(undefined, 'easy'), 2);
+assert.equal(nextDue({ a: { box: 1, due: '2026-10-01' }, b: { box: 2, due: '2026-10-05' }, c: { box: 2, due: '2026-10-03' } }, '2026-10-02'), '2026-10-03');
+assert.equal(nextDue({ a: { box: 1, due: '2026-10-01' } }, '2026-10-02'), null);
 assert.deepEqual(dueIds({ a: { box: 1, due: '2026-10-01' }, b: { box: 2, due: '2026-10-03' } }, '2026-10-02'), ['a']);
 
 assert.equal(streak(['2026-09-29', '2026-09-30', '2026-10-01'], '2026-10-01'), 3);
@@ -75,6 +86,24 @@ const tutor = PROMPTS.find((p) => p.id === 'tutor')!.build(ctx);
 assert.ok(tutor.includes('گام بعدی من: «P2»') && tutor.includes('my words') && tutor.includes('1. ✓ P1'));
 
 assert.equal(courseKey('en', 'Linear algebra'), 'en-Linear_algebra');
+
+// New state fields merge sensibly: a day's counters keep the larger value, meta and pos take the backup's.
+const withLog: State = { ...EMPTY_STATE, log: { '2026-10-01': { cards: 5, known: 0, quiz: 0, sec: 60 } }, meta: { a: { last: 1 } }, goal: 3 };
+const m2 = mergeBackup(withLog, { log: { '2026-10-01': { cards: 2, known: 1, quiz: 0, sec: 90 } }, meta: { a: { last: 9, archived: true } }, pos: { 'fa:x': 0.4 } });
+assert.deepEqual(m2.log['2026-10-01'], { cards: 5, known: 1, quiz: 0, sec: 90 });
+assert.deepEqual(m2.meta.a, { last: 9, archived: true });
+assert.equal(m2.pos['fa:x'], 0.4);
+assert.equal(m2.goal, 3, 'scalars keep the local value');
+assert.deepEqual(mergeBackup(EMPTY_STATE, {}), EMPTY_STATE, 'an old v1 backup (no new fields) changes nothing');
+
+// Subject covers.
+assert.equal(subjectOf({ title: 'جبر خطی' }), 'math');
+assert.equal(subjectOf({ title: 'Quantum mechanics' }), 'physics');
+assert.equal(subjectOf({ title: 'Python (programming language)' }), 'code');
+assert.equal(subjectOf({ title: 'شاهنشاهی اشکانی' }), 'history');
+assert.equal(subjectOf({ title: 'Cat', summary: 'a small organism and species of animal' }), 'biology');
+assert.equal(subjectOf({ title: 'Banana' }), 'other');
+assert.equal(seed('x'), seed('x'));
 
 // ---------- reader ----------
 // Plain-text extract: "== H ==" headings, one paragraph per line, formulas as runs of indented junk lines.
@@ -122,4 +151,23 @@ assert.ok(outline(secs).startsWith('## Linear algebra') && !outline(secs).includ
 
 assert.ok(courseMarkdown({ ...ctx, packs: { 'fa:P1': { key: 'fa-P1', lang: 'fa', title: 'P1', keyPoints: ['kp'], cards: [], quiz: [], generatedAt: '' } } }).includes('نکته‌ی کلیدی: kp'));
 assert.ok(!/\p{Extended_Pictographic}/u.test(md + tutor), 'exports contain no emoji');
+
+// ---------- progress ----------
+const st: State = { ...EMPTY_STATE, known: ['fa:P1'], boxes: { 'fa:P2#0': { box: 1, due: '2026-10-01' }, 'fa:Z#0': { box: 1, due: '2026-10-01' } } };
+const cs = courseStats(course, st, '2026-10-02');
+assert.deepEqual([cs.total, cs.done, cs.pct, cs.due, cs.status], [4, 1, 25, 1, 'active'], 'due counts only this course\'s cards');
+assert.equal(courseStats(course, { ...EMPTY_STATE }, '2026-10-02').status, 'new');
+assert.equal(courseStats(course, { ...EMPTY_STATE, meta: { 'fa-X': { last: 5, archived: true } } }, '2026-10-02').status, 'archived');
+assert.equal(courseStats(course, { ...EMPTY_STATE, known: ['fa:P1', 'fa:P2', 'fa:X', 'fa:N1'] }, '2026-10-02').status, 'done');
+
+const wk = weekStats({ ...EMPTY_STATE, days: ['2026-10-02', '2026-09-20'], log: { '2026-10-02': { cards: 4, known: 1, quiz: 0, sec: 600 }, '2026-09-20': { cards: 9, known: 9, quiz: 9, sec: 9999 } } }, '2026-10-02');
+assert.deepEqual([wk.rows.length, wk.active, wk.cards, wk.known, wk.minutes], [7, 1, 4, 1, 10], 'only the last 7 days count');
+
+const href = (k: string) => `#/c/${k}`;
+assert.equal(nextAction(st, [course], '2026-10-02', href).kind, 'review');
+assert.equal(nextAction({ ...st, boxes: {} }, [course], '2026-10-02', href).href, '#/c/fa-X');
+assert.equal(nextAction({ ...EMPTY_STATE, meta: { 'fa-X': { last: 5 } } }, [course], '2026-10-02', href).kind, 'continue');
+assert.equal(nextAction(EMPTY_STATE, [], '2026-10-02', href).href, '#/new');
+assert.deepEqual(weakTopics({ ...EMPTY_STATE, quiz: { 'fa:A': 50, 'fa:B': 90 }, boxes: { 'fa:C#1': { box: 1, due: '' }, 'fa:A#0': { box: 1, due: '' } } }).map((w) => [w.key, w.why]), [['fa:A', 'quiz'], ['fa:C', 'cards']]);
+
 console.log('course.check ok');

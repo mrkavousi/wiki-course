@@ -1,11 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
-import { Check, Download, Upload, X } from 'lucide-react';
+import { Check, Download, Trash2, Upload, X } from 'lucide-react';
 import type { AI } from '../../types/course';
-import { backupJson, restoreJson, type Store } from '../../data/store';
+import { backupJson, restoreJson, wipeAll, type Store } from '../../data/store';
 import { testAI } from '../../lib/build';
 import { download } from '../../utils/export';
 import { today } from '../../utils/learn';
-import { ghost, ic, primary } from '../ui';
+import { ConfirmModal } from '../ConfirmModal/ConfirmModal';
+import { fa, ghost, ic, primary } from '../ui';
 
 type Props = { open: boolean; ai: AI; store: Store; onSave: (ai: AI) => void; onClose: () => void };
 
@@ -16,6 +17,7 @@ const input = 'w-full rounded-lg border border-line bg-bg px-3 py-2 text-base pl
 export function Settings({ open, ai, store, onSave, onClose }: Props) {
   const ref = useRef<HTMLDialogElement>(null);
   const [form, setForm] = useState(ai);
+  const [wipe, setWipe] = useState(false);
   const [msg, setMsg] = useState<{ kind: 'info' | 'ok' | 'err'; text: string } | null>(null);
 
   useEffect(() => {
@@ -37,21 +39,25 @@ export function Settings({ open, ai, store, onSave, onClose }: Props) {
       setMsg({ kind: 'err', text: e.message });
     }
   };
-  const backup = async () => download(`wiki-course-backup-${today()}.json`, await backupJson(store.state), 'application/json');
+  const backup = async () => {
+    download(`wiki-course-backup-${today()}.json`, await backupJson(store.state), 'application/json');
+    store.markBackup();
+    setMsg({ kind: 'ok', text: 'فایل پشتیبان ساخته شد' });
+  };
   const restore = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     e.target.value = ''; // let the same file be picked again
     if (!file) return;
     try {
       store.restore(await restoreJson(await file.text()));
-      setMsg({ kind: 'ok', text: 'پشتیبان بازیابی شد' });
+      setMsg({ kind: 'ok', text: 'پشتیبان بازیابی شد. دوره‌ها، پیشرفت و یادداشت‌های فایل به داده‌های فعلی اضافه شدند و چیزی پاک نشد.' });
     } catch (err: any) {
-      setMsg({ kind: 'err', text: err instanceof SyntaxError ? 'فایل JSON معتبر نیست' : err.message });
+      setMsg({ kind: 'err', text: err instanceof SyntaxError ? 'این فایل JSON معتبر نیست. چیزی تغییر نکرد.' : err.message });
     }
   };
 
   return (
-    <dialog ref={ref} onClose={onClose} className="m-auto w-[min(34rem,calc(100%-2rem))] rounded-2xl border border-line bg-panel p-0 text-fg shadow-2xl backdrop:bg-black/60">
+    <dialog ref={ref} onClose={onClose} className="m-auto w-[min(34rem,calc(100%-2rem))] rounded-lg border border-line bg-panel p-0 text-fg shadow-2xl backdrop:bg-black/60">
       <form method="dialog" onSubmit={() => onSave(form)} className="space-y-4 p-5">
         <h2 className="text-xl font-bold">تنظیمات</h2>
         <fieldset className="space-y-3">
@@ -85,6 +91,7 @@ export function Settings({ open, ai, store, onSave, onClose }: Props) {
         <p className="text-xs leading-6 text-muted">
           کتابخانه، پیشرفت، یادداشت‌ها، فلش‌کارت‌ها و دوره‌های ساخته‌شده فقط در همین مرورگرند. برای انتقال به گوشی یا دستگاه دیگر، فایل پشتیبان بگیر و آن‌جا بازیابی کن.
         </p>
+        <p className="text-sm">{store.state.lastBackup ? `آخرین پشتیبان یا بازیابی: ${new Date(store.state.lastBackup).toLocaleString('fa')}` : 'هنوز پشتیبان نگرفته‌ای.'}</p>
         <div className="flex flex-wrap gap-2">
           <button type="button" className={ghost} onClick={backup}>
             <Download className={ic} />
@@ -97,6 +104,14 @@ export function Settings({ open, ai, store, onSave, onClose }: Props) {
           </label>
         </div>
       </section>
+      <section className="space-y-2 border-t border-line p-5">
+        <h3 className="font-semibold">حذف همه‌ی داده‌ها</h3>
+        <p className="text-xs leading-6 text-muted">دوره‌ها، پیشرفت، یادداشت‌ها، فلش‌کارت‌ها و تنظیمات هوش مصنوعی را از این مرورگر پاک می‌کند. قابل برگشت نیست، مگر فایل پشتیبان داشته باشی.</p>
+        <button type="button" className={`${ghost} text-danger`} onClick={() => setWipe(true)}>
+          <Trash2 className={ic} />
+          حذف همه‌ی داده‌های من
+        </button>
+      </section>
       {msg && (
         <p role="status" className={`flex items-start gap-2 px-5 pb-5 text-sm ${msg.kind === 'err' ? 'text-danger' : ''}`}>
           {msg.kind === 'ok' && <Check className={`${ic} mt-1 text-accent`} />}
@@ -104,6 +119,19 @@ export function Settings({ open, ai, store, onSave, onClose }: Props) {
           <span className="min-w-0 break-words">{msg.text}</span>
         </p>
       )}
+      <ConfirmModal
+        open={wipe}
+        danger
+        title="همه‌ی داده‌ها حذف شود؟"
+        text={`${fa(store.state.recent.length)} دوره، ${fa(store.state.known.length)} موضوع بلدشده و همه‌ی یادداشت‌ها و کارت‌ها پاک می‌شوند. اگر پشتیبان نگرفته‌ای، برنمی‌گردند.`}
+        confirmLabel="بله، همه را حذف کن"
+        onCancel={() => setWipe(false)}
+        onConfirm={async () => {
+          await wipeAll();
+          location.hash = '#/';
+          location.reload();
+        }}
+      />
     </dialog>
   );
 }

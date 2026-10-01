@@ -136,7 +136,7 @@ export function CourseGraph({ course, known, selectedKey, onSelect }: Props) {
           />
         </g>
       </svg>
-      <ul className="pointer-events-none absolute inset-x-3 bottom-3 flex flex-wrap items-center gap-x-4 gap-y-1 rounded-xl bg-panel/90 px-3 py-2 text-xs text-muted">
+      <ul className="pointer-events-none absolute inset-x-3 bottom-3 flex flex-wrap items-center gap-x-4 gap-y-1 rounded-lg bg-panel/90 px-3 py-2 text-xs text-muted">
         {LEGEND.map(([role, label]) => (
           <li key={role} className="flex items-center gap-1.5">
             <span className={`size-2.5 rounded-full ${DOT[role]}`} />
