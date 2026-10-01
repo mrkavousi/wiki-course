@@ -268,7 +268,10 @@ export function useRoute() {
     addEventListener('hashchange', f);
     return () => removeEventListener('hashchange', f);
   }, []);
-  if (hash.startsWith('#/c/')) return { name: 'course' as const, key: dec(hash.slice(4)) };
+  if (hash.startsWith('#/c/')) {
+    const [k, q] = hash.slice(4).split('?'); // keys are percent-encoded, so a raw ? starts the query
+    return { name: 'course' as const, key: dec(k), topic: new URLSearchParams(q).get('t') ?? undefined };
+  }
   if (hash.startsWith('#/read/')) {
     const rest = hash.slice(7);
     const at = rest.indexOf('/');
@@ -281,6 +284,7 @@ export function useRoute() {
   if (page === 'new' || page === 'library' || page === 'review' || page === 'discover' || page === 'insights') return { name: page as 'new' | 'library' | 'review' | 'discover' | 'insights' };
   return { name: 'home' as const };
 }
-export const courseHref = (key: string) => `#/c/${encodeURIComponent(key)}`;
+/** `topic` (a topicKey) opens the course on that topic: a screen of its own on phones, so Back returns to the path. */
+export const courseHref = (key: string, topic?: string) => `#/c/${encodeURIComponent(key)}${topic ? `?t=${encodeURIComponent(topic)}` : ''}`;
 /** `course` (a courseKey) lets the reader offer the next topic of that course. */
 export const readHref = (lang: string, title: string, course?: string) => `#/read/${lang}/${encodeURIComponent(title)}${course ? `?c=${encodeURIComponent(course)}` : ''}`;

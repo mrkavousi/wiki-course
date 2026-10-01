@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { PartyPopper } from 'lucide-react';
 import type { Box, Grade } from '../../types/course';
 import { nextInterval } from '../../utils/learn';
@@ -27,6 +27,9 @@ export function Flashcards({ items, boxes, onRate, done }: Props) {
   const [flipped, setFlipped] = useState(false);
   const [tally, setTally] = useState<Record<Grade, number>>({ hard: 0, good: 0, easy: 0 });
   const card = items[i];
+  // Swipe on a flipped card: right = good, left = hard (physical directions, so RTL doesn't flip the meaning). The buttons stay for everyone else.
+  const start = useRef<{ x: number; y: number } | null>(null);
+  const swiped = useRef(false);
 
   const grade = (g: Grade) => {
     onRate(card.id, g);
@@ -83,7 +86,20 @@ export function Flashcards({ items, boxes, onRate, done }: Props) {
       </div>
       <ProgressBar value={i} max={items.length} label="پیشرفت مرور" className="h-1.5" />
       <button
-        onClick={() => setFlipped((f) => !f)}
+        onPointerDown={(e) => (start.current = { x: e.clientX, y: e.clientY })}
+        onPointerUp={(e) => {
+          const s = start.current;
+          start.current = null;
+          swiped.current = false;
+          if (!s || !flipped || e.pointerType === 'mouse') return;
+          const dx = e.clientX - s.x;
+          if (Math.abs(dx) > 80 && Math.abs(dx) > 2 * Math.abs(e.clientY - s.y)) {
+            swiped.current = true; // the click that follows this release must not flip the card back
+            grade(dx > 0 ? 'good' : 'hard');
+          }
+        }}
+        onClick={() => (swiped.current ? (swiped.current = false) : setFlipped((f) => !f))}
+        style={{ touchAction: 'pan-y' }}
         aria-label={flipped ? 'نمایش سؤال' : 'نمایش جواب'}
         className={`flex min-h-52 w-full flex-col items-center justify-center gap-3 rounded-lg border-2 p-6 text-center transition ${flipped ? 'border-accent bg-accent-soft' : 'border-line bg-panel hover:border-accent/60'}`}
       >
@@ -92,6 +108,8 @@ export function Flashcards({ items, boxes, onRate, done }: Props) {
         {!flipped && <span className="text-xs text-muted">اول جواب را در ذهنت بگو، بعد کارت را برگردان (Space)</span>}
       </button>
       {flipped ? (
+        <div className="space-y-2">
+        <p className="text-center text-xs text-muted lg:hidden">یا کارت را بکش: به راست «خوب»، به چپ «سخت»</p>
         <div className="grid grid-cols-3 gap-2" role="group" aria-label="چقدر یادت بود؟">
           {GRADES.map((g) => (
             <button key={g.grade} className={`flex min-h-14 flex-col items-center justify-center rounded-lg border px-2 text-sm font-semibold transition ${g.style}`} onClick={() => grade(g.grade)}>
@@ -101,6 +119,7 @@ export function Flashcards({ items, boxes, onRate, done }: Props) {
               <span className="text-xs font-normal opacity-80">{inDays(nextInterval(boxes[card.id], g.grade))}</span>
             </button>
           ))}
+        </div>
         </div>
       ) : (
         <p className="min-h-14 text-center text-sm text-muted">بعد از دیدن جواب، یکی از سه گزینه‌ی «سخت»، «خوب» یا «آسان» را بزن.</p>

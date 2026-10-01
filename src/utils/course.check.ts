@@ -3,7 +3,7 @@ import type { Course, State } from '../types/course';
 import { cleanItems, cleanPack, courseKey, extractJson, extractLists, parseWikiUrl, ROLES } from './course';
 import { courseMarkdown, nextStep, PROMPTS } from './export';
 import { EMPTY_STATE, dueIds, mergeBackup, nextDue, nextInterval, rate, streak } from './learn';
-import { courseStats, nextAction, weakTopics, weekStats } from './progress';
+import { courseStats, daysAt, levelOf, nextAction, weakTopics, weekStats } from './progress';
 import { seed, subjectOf } from './subject';
 import { FORMULA, boldSegments, cleanTerms, outline, parseArticle, termRegex } from './reader';
 
@@ -170,4 +170,11 @@ assert.equal(nextAction({ ...EMPTY_STATE, meta: { 'fa-X': { last: 5 } } }, [cour
 assert.equal(nextAction(EMPTY_STATE, [], '2026-10-02', href).href, '#/new');
 assert.deepEqual(weakTopics({ ...EMPTY_STATE, quiz: { 'fa:A': 50, 'fa:B': 90 }, boxes: { 'fa:C#1': { box: 1, due: '' }, 'fa:A#0': { box: 1, due: '' } } }).map((w) => [w.key, w.why]), [['fa:A', 'quiz'], ['fa:C', 'cards']]);
 
+assert.equal(levelOf({ ...course, topics: [] }), 'intro');
+assert.equal(levelOf(course), 'mid', 'two prerequisites is mid');
+assert.equal(levelOf({ ...course, topics: Array.from({ length: 4 }, (_, i) => ({ ...page(`Q${i}`), role: 'prereq' as const, score: 1, why: '' })) }), 'adv');
+assert.equal(daysAt(132, 30), 5);
+assert.equal(daysAt(5, 60), 1);
+
+// Course route carries an optional topic: #/c/<key>?t=<topicKey>.
 console.log('course.check ok');

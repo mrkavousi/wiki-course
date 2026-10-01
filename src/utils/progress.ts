@@ -8,6 +8,16 @@ export const STATUS_LABEL: Record<Status, string> = { new: 'شروع‌نشده'
 /** Minutes per topic, only used for rough estimates. */
 export const MIN_PER_TOPIC = 12;
 
+export type Level = 'intro' | 'mid' | 'adv';
+export const LEVEL_LABEL: Record<Level, string> = { intro: 'مقدماتی', mid: 'متوسط', adv: 'پیشرفته' };
+/** Rough level from how much a learner must know first: 0-1 prerequisites intro, 2-3 mid, more advanced. ponytail: a heuristic, not an assessment. */
+export const levelOf = (c: Course): Level => {
+  const n = c.topics.filter((t) => t.role === 'prereq').length;
+  return n <= 1 ? 'intro' : n <= 3 ? 'mid' : 'adv';
+};
+/** Days to finish `minutes` of study at `perDay` minutes a day. */
+export const daysAt = (minutes: number, perDay: number) => Math.max(1, Math.ceil(minutes / perDay));
+
 export function courseStats(course: Course, state: State, day: string) {
   const steps = pathOf(course);
   const known = new Set(state.known);

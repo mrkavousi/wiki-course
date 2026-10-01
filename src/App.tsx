@@ -128,7 +128,7 @@ export default function App() {
         onSearch={() => setSearchOpen(true)}
       >
         {route.name === 'course' ? (
-          <CourseView key={`${route.key}:${rev}`} courseKey={route.key} store={store} ai={ai} busy={busy} needAI={needAI} onBuild={build} />
+          <CourseView key={`${route.key}:${rev}`} courseKey={route.key} topicParam={route.topic} store={store} ai={ai} busy={busy} needAI={needAI} onBuild={build} />
         ) : (
           <div key={page} className="page-in min-h-0 flex-1 lg:overflow-y-auto">
             {route.name === 'read' ? (

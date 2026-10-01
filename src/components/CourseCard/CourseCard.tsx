@@ -2,7 +2,7 @@ import { Archive, ArrowLeft, CircleCheck, CircleDashed, CirclePlay, Layers, Star
 import type { Course, State } from '../../types/course';
 import { courseHref } from '../../data/store';
 import { topicKey } from '../../utils/course';
-import { courseStats, STATUS_LABEL, type Status } from '../../utils/progress';
+import { courseStats, LEVEL_LABEL, levelOf, STATUS_LABEL, type Status } from '../../utils/progress';
 import { SUBJECT_LABEL, subjectOf } from '../../utils/subject';
 import { Cover } from '../Cover/Cover';
 import { ProgressBar } from '../Progress/Progress';
@@ -51,6 +51,7 @@ export function CourseCard({ course, state, day, variant = 'grid', level = 3, on
             {STATUS_LABEL[s.status]}
           </span>
           <span>{SUBJECT_LABEL[subjectOf({ title: course.root.title, summary: course.root.summary })]}</span>
+          <span>{LEVEL_LABEL[levelOf(course)]}</span>
         </div>
         <ProgressBar value={s.done} max={s.total} label={`پیشرفت «${course.root.title}»`} className="h-1.5" />
         <p className="text-sm text-muted">

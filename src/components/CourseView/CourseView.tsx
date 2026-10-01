@@ -1,10 +1,10 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Archive, ArchiveRestore, ArrowLeft, ArrowRight, ChevronDown, CircleCheck, CircleDashed, CirclePlay, ClipboardCopy, Clock, Download, ExternalLink, Network, PartyPopper, RefreshCw, Route, Star } from 'lucide-react';
 import type { AI, Course, Pack, Page } from '../../types/course';
-import { findCourse, loadPack, savePack, type Store } from '../../data/store';
+import { courseHref, findCourse, loadPack, savePack, type Store } from '../../data/store';
 import { buildPack } from '../../lib/build';
 import { PASS, dueIds, today } from '../../utils/learn';
-import { STATUS_LABEL, courseStats } from '../../utils/progress';
+import { LEVEL_LABEL, STATUS_LABEL, courseStats, levelOf } from '../../utils/progress';
 import { courseKey, pathOf, topicKey } from '../../utils/course';
 import { PROMPTS, courseMarkdown, download, nextStep, type ExportCtx } from '../../utils/export';
 import { CourseGraph } from '../CourseGraph/CourseGraph';
@@ -18,6 +18,7 @@ import { badge, fa, fmtMinutes, ghost, ic, primary } from '../ui';
 
 type Props = {
   courseKey: string;
+  topicParam?: string; // topicKey from the address: phones show that topic as a screen of its own
   store: Store;
   ai: AI;
   busy: boolean;
@@ -43,14 +44,13 @@ function MenuItem({ onClick, disabled, children }: { onClick: () => void; disabl
   );
 }
 
-export function CourseView({ courseKey: key, store, ai, busy, needAI, onBuild }: Props) {
+export function CourseView({ courseKey: key, topicParam, store, ai, busy, needAI, onBuild }: Props) {
   const [course, setCourse] = useState<Course | null>(); // undefined = loading, null = not on this device
   const [selected, setSelected] = useState<string | null>(null);
   const [view, setView] = useState<'roadmap' | 'graph'>('roadmap');
   const [packs, setPacks] = useState<Record<string, Pack>>({}); // by topicKey
   const [packJob, setPackJob] = useState<{ key: string; status: string; error: string } | null>(null);
   const toast = useToast();
-  const aside = useRef<HTMLElement>(null);
 
   useEffect(() => {
     let live = true;
@@ -58,7 +58,7 @@ export function CourseView({ courseKey: key, store, ai, busy, needAI, onBuild }:
       if (!live) return;
       setCourse(c);
       if (!c) return;
-      setSelected(topicKey(c.root));
+      setSelected(topicParam ?? topicKey(c.root));
       store.touch(c.key);
       const rows = await Promise.all([c.root, ...c.topics].map(async (p) => [topicKey(p), await loadPack(courseKey(p.lang, p.title))] as const));
       if (live) setPacks(Object.fromEntries(rows.filter((r) => r[1])) as Record<string, Pack>);
@@ -67,6 +67,11 @@ export function CourseView({ courseKey: key, store, ai, busy, needAI, onBuild }:
       live = false;
     };
   }, [key]);
+
+  // Declared before the early returns below: hooks must run on every render.
+  useEffect(() => {
+    if (topicParam) setSelected(topicParam);
+  }, [topicParam]);
 
   if (course === undefined) {
     return (
@@ -103,9 +108,11 @@ export function CourseView({ courseKey: key, store, ai, busy, needAI, onBuild }:
   for (const id of dueIds(store.state.boxes, today())) due[id.slice(0, id.lastIndexOf('#'))] = (due[id.slice(0, id.lastIndexOf('#'))] ?? 0) + 1;
   const passed = [course.root, ...course.topics].filter((p) => (store.state.quiz[topicKey(p)] ?? 0) >= PASS).length;
 
+  // Phones: a topic is its own screen (own address, so Back returns to the path). Desktop keeps the two-pane layout.
   const select = (k: string) => {
     setSelected(k);
-    if (innerWidth < 1024) aside.current?.scrollIntoView({ behavior: 'smooth' }); // the panel sits below the path on phones
+    if (innerWidth < 1024) location.hash = courseHref(key, k);
+    else history.replaceState(null, '', courseHref(key, k));
   };
   const copy = async (text: string) => {
     try {
@@ -131,7 +138,7 @@ export function CourseView({ courseKey: key, store, ai, busy, needAI, onBuild }:
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
-      <header className="flex shrink-0 flex-col gap-3 border-b border-line bg-panel p-4 sm:flex-row">
+      <header className={`shrink-0 flex-col gap-3 border-b border-line bg-panel p-4 sm:flex-row ${topicParam ? 'max-lg:hidden lg:flex' : 'flex'}`}>
         <Cover title={course.root.title} summary={course.root.summary} thumbnail={course.root.thumbnail} className="h-24 w-full shrink-0 rounded-lg sm:h-auto sm:w-40" />
         <div className="min-w-0 flex-1 space-y-2">
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
@@ -144,6 +151,7 @@ export function CourseView({ courseKey: key, store, ai, busy, needAI, onBuild }:
               <StatusIcon className={ic} aria-hidden="true" />
               {STATUS_LABEL[stats.status]}
             </span>
+            <span className="text-muted">سطح تقریبی: {LEVEL_LABEL[levelOf(course)]}</span>
             {course.opts && <span className="text-muted">عمق: {DEPTH_LABEL[course.opts.depth]}</span>}
             <span className="flex items-center gap-1 text-muted">
               <Clock className={ic} aria-hidden="true" />
@@ -236,15 +244,25 @@ export function CourseView({ courseKey: key, store, ai, busy, needAI, onBuild }:
         </div>
       </header>
 
+      {topicParam && (
+        <nav aria-label="مسیر صفحه" className="flex items-center gap-2 border-b border-line bg-panel px-4 py-1 text-sm lg:hidden">
+          <a href={courseHref(key)} className="flex min-h-11 min-w-0 items-center gap-1 text-muted hover:text-fg">
+            <ArrowRight className={ic} />
+            <span dir="auto" className="truncate">{course.root.title}</span>
+          </a>
+          <span aria-hidden="true" className="text-muted">/</span>
+          <span dir="auto" aria-current="page" className="min-w-0 truncate font-semibold">{page.title}</span>
+        </nav>
+      )}
       <div className="flex min-h-0 flex-1 flex-col lg:flex-row">
-        <section className={view === 'roadmap' ? 'lg:flex-1 lg:overflow-y-auto' : 'h-[65vh] lg:h-auto lg:flex-1'}>
+        <section className={`${view === 'roadmap' ? 'lg:flex-1 lg:overflow-y-auto' : 'h-[65vh] lg:h-auto lg:flex-1'} ${topicParam ? 'max-lg:hidden' : ''}`}>
           {view === 'roadmap' ? (
             <Roadmap course={course} known={known} selectedKey={topicKey(page)} onSelect={select} due={due} />
           ) : (
             <CourseGraph course={course} known={known} selectedKey={topicKey(page)} onSelect={select} />
           )}
         </section>
-        <aside ref={aside} aria-label="جزئیات موضوع" className="border-t border-line bg-panel lg:w-[26rem] lg:overflow-y-auto lg:border-s lg:border-t-0">
+        <aside aria-label="جزئیات موضوع" className={`${topicParam ? '' : 'max-lg:hidden'} border-t border-line bg-panel lg:w-[26rem] lg:overflow-y-auto lg:border-s lg:border-t-0`}>
           <TopicDetail
             course={course}
             page={page}

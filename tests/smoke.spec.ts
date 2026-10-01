@@ -197,3 +197,69 @@ for (const route of ['#/', '#/new', '#/library', '#/discover', '#/insights', '#/
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   });
 }
+
+test('phone: a topic is its own screen with a breadcrumb, and Back returns to the path', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 800 });
+  await seed(page);
+  await page.goto(COURSE);
+  await page.locator('button[aria-pressed]', { hasText: 'ریاضیات' }).first().click();
+  await expect(page).toHaveURL(/\?t=fa%3A/);
+  await expect(page.getByRole('navigation', { name: 'مسیر صفحه' })).toContainText('ریاضیات');
+  await expect(page.getByRole('tab', { name: 'درباره' })).toBeVisible();
+  await expect(page.locator('button[aria-pressed]', { hasText: 'دستگاه معادلات' })).toBeHidden(); // the path is not on this screen
+  await page.goBack();
+  await expect(page.locator('button[aria-pressed]', { hasText: 'دستگاه معادلات' }).first()).toBeVisible();
+  // a deep link opens straight on the topic
+  await page.goto(`${COURSE}?t=${encodeURIComponent('fa:دستگاه معادلات خطی')}`);
+  await expect(page.getByRole('heading', { name: 'دستگاه معادلات خطی' })).toBeVisible();
+});
+
+test('course shows an approximate level; builder estimates days from minutes per day', async ({ page }) => {
+  await seed(page);
+  await page.goto(COURSE);
+  await expect(page.getByText(/سطح تقریبی: (مقدماتی|متوسط|پیشرفته)/)).toBeVisible();
+  await stubWikipedia(page);
+  await page.goto('#/new?url=' + encodeURIComponent('https://en.wikipedia.org/wiki/Calculus'));
+  await page.getByText('روزی چقدر وقت داری؟').waitFor();
+  const before = await page.getByText(/با این ریتم، حدود/).innerText();
+  await page.getByLabel('۱۵ دقیقه').check();
+  expect(await page.getByText(/با این ریتم، حدود/).innerText()).not.toBe(before);
+});
+
+test('cards: swiping a flipped card right grades it good', async ({ page }) => {
+  await seed(page);
+  await page.goto(COURSE);
+  await putKv(page, 'pack/fa-ریاضیات', PACK);
+  await page.reload();
+  await page.locator('button[aria-pressed]', { hasText: 'ریاضیات' }).first().click();
+  await page.getByRole('tab', { name: /فلش‌کارت/ }).click();
+  const card = page.getByRole('button', { name: 'نمایش جواب' });
+  await card.click();
+  await page.getByRole('button', { name: 'نمایش سؤال' }).evaluate((el) => {
+    const fire = (type: string, x: number) => el.dispatchEvent(new PointerEvent(type, { bubbles: true, pointerType: 'touch', clientX: x, clientY: 300 }));
+    fire('pointerdown', 100);
+    fire('pointerup', 260);
+    el.dispatchEvent(new MouseEvent('click', { bubbles: true })); // the click a real swipe release produces
+  });
+  await expect(page.getByText('کارت ۲ از ۳')).toBeVisible();
+  const s = await state(page);
+  expect(Object.values<any>(s.boxes).map((b) => b.box)).toEqual([1]);
+  await expect(page.getByRole('button', { name: 'نمایش جواب' })).toBeVisible(); // still on the question side: no stray flip
+});
+
+test('search: arrow keys move through results', async ({ page }) => {
+  await seed(page);
+  await page.goto('/');
+  await page.getByRole('heading', { level: 1 }).waitFor(); // the shortcut exists once the app has mounted
+  await page.keyboard.press('Control+k');
+  await page.getByLabel('عبارت جست‌وجو یا لینک ویکی‌پدیا').fill('a');
+  const results = page.locator('#search-results a');
+  await results.first().waitFor();
+  await page.keyboard.press('ArrowDown');
+  await expect(results.first()).toBeFocused();
+  await page.keyboard.press('ArrowDown');
+  await expect(results.nth(1)).toBeFocused();
+  await page.keyboard.press('ArrowUp');
+  await page.keyboard.press('ArrowUp');
+  await expect(page.getByLabel('عبارت جست‌وجو یا لینک ویکی‌پدیا')).toBeFocused();
+});

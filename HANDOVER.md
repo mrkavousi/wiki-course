@@ -24,7 +24,7 @@ It is a personal, local-first tool: all learner data lives in the browser.
 | `#/` | `Home` | dashboard: builder strip, the one next action, today's review, active courses, weekly progress, suggestions |
 | `#/new` (`?url=`) | `CourseBuilder` | paste, preview the article, choose depth and purpose, build with named stages |
 | `#/library` | `Library` | search, filters (language, status, subject), sort, grid/list, favourite, archive, delete |
-| `#/c/<courseKey>` | `CourseView` with `Roadmap`, `CourseGraph`, `TopicDetail` | course overview (cover, progress, mastery) and the selected topic (tabs: about, flashcards, quiz) |
+| `#/c/<courseKey>` (`?t=<topicKey>`) | `CourseView` with `Roadmap`, `CourseGraph`, `TopicDetail` | course overview (cover, level, progress, mastery) and the selected topic (tabs: about, flashcards, quiz). With `?t=` a phone shows that topic as its own screen with a breadcrumb (Back returns to the path); desktop keeps two panes and keeps the address in sync |
 | `#/read/<lang>/<title>` (`?c=<courseKey>`) | `Reader` | article reader (needs no AI in easy mode); remembers the scroll position. With `?c=` it offers the course's next topic |
 | `#/review` | `Review` | today's due flashcards across all topics, three ratings |
 | `#/discover` | `Discover` | unstarted sample courses and next topics from your own courses |
@@ -157,9 +157,9 @@ Vercel imports the GitHub repo. Framework preset Vite, build `npm run build` (`t
 9. **Graph layout** is a fixed ring; with more than about 30 nodes labels will overlap.
 
 10. **Builder outline is an estimate.** The real outline needs the AI call, so the builder shows counts and time from the chosen depth; `buildCourse` has no partial-success mode (a failure keeps nothing).
-11. **Level** is not assessed; the course page shows the chosen depth (older courses show none). Covers come from the keyword classifier in `utils/subject.ts` (`other` is a neutral dot pattern).
+11. **Level** (`levelOf` in `utils/progress.ts`) is a heuristic from the number of prerequisites, labelled "approximate"; it is not an assessment. The builder's "minutes a day" only estimates the number of days and is not stored. Covers come from the keyword classifier in `utils/subject.ts` (`other` is a neutral dot pattern).
 12. **Review and missing packs.** A due card whose pack is gone from Cache Storage cannot be shown. The review page says so (progress is kept) instead of claiming everything is done; the header badge still counts it.
-13. **No swipe gestures** on flashcards (large touch buttons instead); search has no arrow-key navigation (Tab and Enter work).
+13. **Swipe grading** (right = good, left = hard, after flipping; touch and pen only) is a shortcut; the three buttons remain the accessible path. There is no "easy" swipe.
 14. **Phase 4 not done:** accounts and sync, analytics, SEO, error monitoring. Data boundaries are clean (`State` in, backup JSON out) so sync can be added later.
 
 ## 10. Suggested next steps
