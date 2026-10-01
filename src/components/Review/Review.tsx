@@ -28,6 +28,8 @@ export function Review({ store }: { store: Store }) {
   }, []); // eslint-disable-line react-hooks/exhaustive-deps -- a session doesn't reshuffle while you grade
 
   const day = today();
+  const dueCount = dueIds(store.state.boxes, day).length;
+  const missing = items ? Math.max(0, dueCount - items.length) : 0; // due cards whose study pack is gone from this browser
   const back = nextDue(store.state.boxes, day);
   const finish = (
     <>
@@ -62,9 +64,20 @@ export function Review({ store }: { store: Store }) {
         </div>
       ) : items.length ? (
         <>
+          {missing > 0 && (
+            <p className="rounded-lg bg-gold/20 p-3 text-sm leading-7">
+              {fa(missing)} کارت دیگر هم وقت مرور دارد، ولی بسته‌ی مطالعه‌اش روی این دستگاه نیست. پیشرفتت نگه داشته شده؛ بسته را در همان دوره دوباره بساز یا پشتیبانت را بازیابی کن.
+            </p>
+          )}
           <p className="text-sm font-semibold">{fa(items.length)} کارت برای امروز، حدود {fa(Math.max(1, Math.round(items.length / 2)))} دقیقه</p>
           <Flashcards items={items} boxes={store.state.boxes} onRate={store.rateCard} done={finish} />
         </>
+      ) : missing > 0 ? (
+        <EmptyState icon={Layers} title="کارت‌هایت منتظرند، ولی متنشان اینجا نیست" text={`${fa(missing)} کارت وقت مرور دارد، اما بسته‌ی مطالعه‌ی آن‌ها از این مرورگر پاک شده. پیشرفتت از بین نرفته: بسته را در همان دوره دوباره بساز یا پشتیبانت را از تنظیمات بازیابی کن.`}>
+          <a href="#/library" className={primary}>
+            رفتن به کتابخانه
+          </a>
+        </EmptyState>
       ) : (
         <EmptyState
           icon={Sparkles}

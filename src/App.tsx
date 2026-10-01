@@ -132,7 +132,7 @@ export default function App() {
         ) : (
           <div key={page} className="page-in min-h-0 flex-1 lg:overflow-y-auto">
             {route.name === 'read' ? (
-              <Reader lang={route.lang} title={route.title} store={store} ai={ai} needAI={needAI} />
+              <Reader lang={route.lang} title={route.title} course={route.course} store={store} ai={ai} needAI={needAI} />
             ) : route.name === 'review' ? (
               <Review store={store} />
             ) : route.name === 'discover' ? (

@@ -124,7 +124,7 @@ export function TopicDetail({ course, page, topic, store, pack, packJob, busy, o
       )}
 
       <div className="grid grid-cols-2 gap-2">
-        <a className={`${primary} col-span-2`} href={readHref(page.lang, page.title)}>
+        <a className={`${primary} col-span-2`} href={readHref(page.lang, page.title, course.key)}>
           <BookOpen className={ic} />
           مطالعه‌ی مقاله
         </a>
@@ -225,7 +225,7 @@ export function TopicDetail({ course, page, topic, store, pack, packJob, busy, o
               best={state.quiz[key]}
               onDone={(pct) => store.quizDone(key, pct, course.key)}
               onReviewCards={() => setTab('cards')}
-              readHref={readHref(page.lang, page.title)}
+              readHref={readHref(page.lang, page.title, course.key)}
               onContinue={next ? onNext : undefined}
               continueLabel={next ? `موضوع بعدی: ${next.title}` : undefined}
             />

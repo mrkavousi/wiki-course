@@ -25,7 +25,7 @@ It is a personal, local-first tool: all learner data lives in the browser.
 | `#/new` (`?url=`) | `CourseBuilder` | paste, preview the article, choose depth and purpose, build with named stages |
 | `#/library` | `Library` | search, filters (language, status, subject), sort, grid/list, favourite, archive, delete |
 | `#/c/<courseKey>` | `CourseView` with `Roadmap`, `CourseGraph`, `TopicDetail` | course overview (cover, progress, mastery) and the selected topic (tabs: about, flashcards, quiz) |
-| `#/read/<lang>/<title>` | `Reader` | article reader (needs no AI in easy mode); remembers the scroll position |
+| `#/read/<lang>/<title>` (`?c=<courseKey>`) | `Reader` | article reader (needs no AI in easy mode); remembers the scroll position. With `?c=` it offers the course's next topic |
 | `#/review` | `Review` | today's due flashcards across all topics, three ratings |
 | `#/discover` | `Discover` | unstarted sample courses and next topics from your own courses |
 | `#/insights` | `Insights` | weekly goal, activity, weak topics, quiz results, course completion |
@@ -150,7 +150,7 @@ Vercel imports the GitHub repo. Framework preset Vite, build `npm run build` (`t
 2. **Duplicate `fa()`** in `components/ui.ts` and (private) in `lib/build.ts`. Move one copy to `utils/format.ts`.
 3. **AI quality.** Scores and reasons are estimates (no web search). Results are sometimes thin: the Quantum mechanics sample has only 4 topics. "ساخت دوباره" rebuilds a course.
 4. **Reader limits.** Plain-text extracts drop formulas (shown as a "formula" chip), tables, image captions and list bullets. No scroll restore, no offline. The section skip-list for references (`parseArticle`) only covers English and Persian headings.
-5. **No CI, linter or formatter**, and one assert script instead of a test runner. `npm run check` fetches `tsx` through `npx --yes` each time instead of declaring it.
+5. **No linter, formatter or browser tests**, and one assert script instead of a test runner. CI (`.github/workflows/ci.yml`) runs `npm ci`, `npm run check` and `npm run build` on pull requests and pushes to `main`. `npm run check` fetches `tsx` through `npx --yes` each time instead of declaring it.
 6. **Device-local data.** There is no sync; the backup file is the only transfer path.
 7. **CORS dependency.** The static design relies on the gateway's `Access-Control-Allow-Origin: *`. If that changes, a small serverless proxy is needed.
 8. **Docs.** `README.md` is Persian only. `public/courses/en-Linear_algebra.json` is hand-made (marked by its `note`), not AI output.
@@ -158,14 +158,13 @@ Vercel imports the GitHub repo. Framework preset Vite, build `npm run build` (`t
 
 10. **Builder outline is an estimate.** The real outline needs the AI call, so the builder shows counts and time from the chosen depth; `buildCourse` has no partial-success mode (a failure keeps nothing).
 11. **Level** is not assessed; the course page shows the chosen depth (older courses show none). Covers come from the keyword classifier in `utils/subject.ts` (`other` is a neutral dot pattern).
-12. **Review edge case.** The due badge counts card ids; a due card whose pack is missing from Cache Storage cannot be shown, so the badge can exceed the session length.
+12. **Review and missing packs.** A due card whose pack is gone from Cache Storage cannot be shown. The review page says so (progress is kept) instead of claiming everything is done; the header badge still counts it.
 13. **No swipe gestures** on flashcards (large touch buttons instead); search has no arrow-key navigation (Tab and Enter work).
 14. **Phase 4 not done:** accounts and sync, analytics, SEO, error monitoring. Data boundaries are clean (`State` in, backup JSON out) so sync can be added later.
 
 ## 10. Suggested next steps
 
 - Fix `courseKey` collisions (with migration) and dedupe `fa()`.
-- GitHub Actions: `npm ci && npm run check && npm run build` on every PR.
 - Move the asserts to Vitest; add the Playwright smoke suite from section 7.
 - Grounded scoring: use a search-capable model or a search API and store the sources in `Course.sources` (the field exists and is empty today).
 - Reader: real math (Parsoid/MathML images), scroll restore, offline cache.

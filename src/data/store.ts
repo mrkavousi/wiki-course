@@ -272,11 +272,15 @@ export function useRoute() {
   if (hash.startsWith('#/read/')) {
     const rest = hash.slice(7);
     const at = rest.indexOf('/');
-    if (at > 0 && at < rest.length - 1) return { name: 'read' as const, lang: rest.slice(0, at), title: dec(rest.slice(at + 1)) };
+    if (at > 0 && at < rest.length - 1) {
+      const [title, q] = rest.slice(at + 1).split('?'); // titles are percent-encoded, so a raw ? starts the query
+      return { name: 'read' as const, lang: rest.slice(0, at), title: dec(title), course: new URLSearchParams(q).get('c') ?? undefined };
+    }
   }
   const page = hash.slice(2).split(/[?/]/)[0];
   if (page === 'new' || page === 'library' || page === 'review' || page === 'discover' || page === 'insights') return { name: page as 'new' | 'library' | 'review' | 'discover' | 'insights' };
   return { name: 'home' as const };
 }
 export const courseHref = (key: string) => `#/c/${encodeURIComponent(key)}`;
-export const readHref = (lang: string, title: string) => `#/read/${lang}/${encodeURIComponent(title)}`;
+/** `course` (a courseKey) lets the reader offer the next topic of that course. */
+export const readHref = (lang: string, title: string, course?: string) => `#/read/${lang}/${encodeURIComponent(title)}${course ? `?c=${encodeURIComponent(course)}` : ''}`;

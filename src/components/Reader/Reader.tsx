@@ -1,14 +1,15 @@
 import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
-import { ArrowRight, BookOpen, Check, ExternalLink, Highlighter, Info, List, Minus, Plus, RefreshCw, Sparkles, Star, Type } from 'lucide-react';
+import { ArrowLeft, ArrowRight, BookOpen, Check, ExternalLink, Highlighter, Info, List, Minus, Plus, RefreshCw, Sparkles, Star, Type } from 'lucide-react';
 import type { AI } from '../../types/course';
-import { READER_SIZES, loadTerms, saveTerms, useReaderPrefs, type ReaderMode, type Store } from '../../data/store';
+import { READER_SIZES, courseHref, findCourse, loadTerms, readHref, saveTerms, useReaderPrefs, type ReaderMode, type Store } from '../../data/store';
 import { buildTerms, fetchArticle, type Article } from '../../lib/build';
-import { courseKey, topicKey, wikiUrl } from '../../utils/course';
+import { courseKey, pathOf, topicKey, wikiUrl } from '../../utils/course';
+import type { Course } from '../../types/course';
 import { FORMULA, boldSegments, parseArticle, termRegex, type Seg } from '../../utils/reader';
 import { useToast } from '../Toast/Toast';
 import { card, fa, ghost, ic, outline, primary } from '../ui';
 
-type Props = { lang: string; title: string; store: Store; ai: AI; needAI: () => boolean };
+type Props = { lang: string; title: string; course?: string; store: Store; ai: AI; needAI: () => boolean };
 type Job = { status: string; error: string } | null;
 
 const MODES: [ReaderMode, string, typeof BookOpen][] = [
@@ -60,7 +61,7 @@ function scroller(from: HTMLElement | null): { top: () => number; max: () => num
 const HEADING = ['', '', 'mt-10 text-[1.4em]', 'mt-8 text-[1.2em]', 'mt-6 text-[1.08em]'];
 
 /** Distraction-free article reader. Easy: clean text. Enhanced: the AI's key terms in bold, once per section. */
-export function Reader({ lang, title, store, ai, needAI }: Props) {
+export function Reader({ lang, title, course: courseId, store, ai, needAI }: Props) {
   const [prefs, setPrefs] = useReaderPrefs();
   const [article, setArticle] = useState<Article>();
   const [error, setError] = useState('');
@@ -74,6 +75,17 @@ export function Reader({ lang, title, store, ai, needAI }: Props) {
   const root = useRef<HTMLDivElement>(null);
   const saved = store.state.saved.some((p) => topicKey(p) === topic);
   const savedAt = useRef(store.state.pos[topic]);
+  // When opened from a course: the next topic on its path that isn't known yet, so reading can flow on.
+  const [from, setFrom] = useState<Course | null>(null);
+  useEffect(() => {
+    let live = true;
+    if (courseId) findCourse(courseId).then((c) => live && setFrom(c));
+    else setFrom(null);
+    return () => {
+      live = false;
+    };
+  }, [courseId]);
+  const next = from ? pathOf(from).find((s) => topicKey(s.page) !== topic && !store.state.known.includes(topicKey(s.page)))?.page : undefined;
 
   // Reading position: restored once when the article is on screen, then saved a moment after each scroll.
   useEffect(() => {
@@ -171,7 +183,7 @@ export function Reader({ lang, title, store, ai, needAI }: Props) {
   const sizeBtn = 'flex size-11 items-center justify-center hover:bg-fg/5 disabled:opacity-40';
 
   return (
-    <div ref={root} className="mx-auto max-w-3xl px-4 pb-36 lg:pb-16">
+    <div ref={root} className="mx-auto max-w-3xl px-4 pb-44 lg:pb-16">
       <div className="sticky top-0 z-20 -mx-4 flex flex-wrap items-center gap-x-3 gap-y-2 border-b border-line bg-bg/95 px-4 py-2.5 backdrop-blur">
         <button onClick={back} className="flex min-h-11 items-center gap-1 text-sm text-muted hover:text-fg">
           <ArrowRight className={ic} />
@@ -330,6 +342,17 @@ export function Reader({ lang, title, store, ai, needAI }: Props) {
                 صفحه‌ی اصلی و فهرست نویسندگان
               </a>
             </p>
+            {next && from && (
+              <a href={readHref(next.lang, next.title, from.key)} className={`${known ? primary : ghost} max-lg:hidden`}>
+                موضوع بعدی: <span dir="auto">{next.title}</span>
+                <ArrowLeft className={ic} />
+              </a>
+            )}
+            {from && (
+              <a href={courseHref(from.key)} className={`${ghost} max-lg:hidden`}>
+                برگشت به دوره
+              </a>
+            )}
             <p className="hidden text-sm text-muted lg:block">میان‌بر: <kbd>M</kbd> بلدم · <kbd>+</kbd> و <kbd>-</kbd> اندازه‌ی متن</p>
           </footer>
         </article>
@@ -348,6 +371,12 @@ export function Reader({ lang, title, store, ai, needAI }: Props) {
               {saved ? 'ذخیره‌شده' : 'ذخیره'}
             </button>
           </div>
+          {next && from && (
+            <a href={readHref(next.lang, next.title, from.key)} className={`${known ? primary : ghost} mx-auto mt-2 flex max-w-3xl`}>
+              موضوع بعدی: <span dir="auto" className="truncate">{next.title}</span>
+              <ArrowLeft className={ic} />
+            </a>
+          )}
         </div>
       )}
     </div>
