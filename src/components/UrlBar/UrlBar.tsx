@@ -18,7 +18,7 @@ export function UrlBar({ busy, onBuild, onRead, hero }: Props) {
   if (hero) {
     return (
       <form
-        className="flex w-full gap-2"
+        className="flex w-full gap-2 rounded-2xl bg-panel p-1.5 ring-1 ring-line glow transition-shadow focus-within:ring-2 focus-within:ring-accent/40"
         onSubmit={(e) => {
           e.preventDefault();
           if (link) onBuild(link);
@@ -30,9 +30,9 @@ export function UrlBar({ busy, onBuild, onRead, hero }: Props) {
           onChange={(e) => setUrl(e.target.value)}
           placeholder="لینک مقاله ویکی‌پدیا را وارد یا پیست کن (فارسی یا انگلیسی)…"
           aria-label="لینک مقاله‌ی ویکی‌پدیا"
-          className="min-w-0 flex-1 rounded-2xl border border-line bg-bg px-4 py-3.5 text-lg placeholder:text-muted focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/30"
+          className="min-w-0 flex-1 rounded-xl bg-transparent px-3 py-3 text-lg placeholder:text-muted focus:outline-none"
         />
-        <button type="button" disabled={busy} onClick={paste} className={`${ghost} flex-none`} aria-label="چسباندن از کلیپ‌بورد" title="چسباندن از کلیپ‌بورد">
+        <button type="button" disabled={busy} onClick={paste} className={`${ghost} flex-none border-0`} aria-label="چسباندن از کلیپ‌بورد" title="چسباندن از کلیپ‌بورد">
           <ClipboardPaste className={ic} />
         </button>
         <button disabled={busy || !link} className={`${primary} flex-none px-6`}>

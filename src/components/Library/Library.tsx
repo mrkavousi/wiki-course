@@ -4,16 +4,17 @@ import type { Course, CourseRef, Page } from '../../types/course';
 import { courseHref, findCourse, SAMPLES, type Store } from '../../data/store';
 import { courseKey, pathOf, topicKey, wikiUrl } from '../../utils/course';
 import { dueIds, PASS, streak, today } from '../../utils/learn';
-import { card, fa, ic, primary } from '../ui';
+import { badge, card, fa, ic, lift, primary } from '../ui';
 import { UrlBar } from '../UrlBar/UrlBar';
 
 type Props = { store: Store; busy: boolean; onBuild: (url: string) => void; onRead: (url: string) => void };
 
+// icon, title, text, icon-badge tint
 const TIPS = [
-  [Compass, 'از پیش‌نیازها شروع کن', 'مسیر به ترتیب اهمیت چیده شده. هر چه بلدی را علامت بزن تا «گام بعدی» معلوم شود.'],
-  [PenLine, 'با زبان خودت بنویس', 'بعد از خواندن هر مقاله، در چند جمله توضیحش بده (تکنیک فاینمن).'],
-  [Target, 'خودت را بیازما', `آزمون هر موضوع را بده؛ با ${fa(PASS)}٪ «بلدم» می‌خورد.`],
-  [Repeat, 'هر روز کمی مرور', 'فلش‌کارت‌ها با فاصله‌ی بیشتر و بیشتر برمی‌گردند تا در حافظه‌ی بلندمدت بمانند.'],
+  [Compass, 'از پیش‌نیازها شروع کن', 'مسیر به ترتیب اهمیت چیده شده. هر چه بلدی را علامت بزن تا «گام بعدی» معلوم شود.', 'bg-fg/10 text-fg'],
+  [PenLine, 'با زبان خودت بنویس', 'بعد از خواندن هر مقاله، در چند جمله توضیحش بده (تکنیک فاینمن).', 'bg-accent/10 text-accent'],
+  [Target, 'خودت را بیازما', `آزمون هر موضوع را بده؛ با ${fa(PASS)}٪ «بلدم» می‌خورد.`, 'bg-prereq/10 text-prereq'],
+  [Repeat, 'هر روز کمی مرور', 'فلش‌کارت‌ها با فاصله‌ی بیشتر و بیشتر برمی‌گردند تا در حافظه‌ی بلندمدت بمانند.', 'bg-related/10 text-related'],
 ] as const;
 
 const starBtn = 'flex size-9 items-center justify-center rounded-full text-accent hover:bg-fg/10';
@@ -82,7 +83,7 @@ export function Library({ store, busy, onBuild, onRead }: Props) {
       </section>
 
       <section className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-        <a href="#/review" className={`${card} p-4 transition hover:border-accent`}>
+        <a href="#/review" className={`${card} ${lift} bg-accent/5 p-4 hover:border-accent`}>
           <div className="mb-3 flex size-10 items-center justify-center rounded-xl bg-accent/10">
             <Layers className="size-5 text-accent" />
           </div>
@@ -90,7 +91,7 @@ export function Library({ store, busy, onBuild, onRead }: Props) {
           <p className="text-2xl font-bold">{fa(due)} کارت</p>
           <p className="text-sm text-muted">{due ? 'بزن تا شروع کنیم' : 'امروز کارت جدیدی نداری؛ برای حفظ زنجیره سراغ یک دوره‌ی جدید برو'}</p>
         </a>
-        <div className={`${card} p-4`}>
+        <div className={`${card} bg-prereq/5 p-4`}>
           <div className="mb-3 flex size-10 items-center justify-center rounded-xl bg-prereq/10">
             <Flame className="size-5 text-prereq" />
           </div>
@@ -98,7 +99,7 @@ export function Library({ store, busy, onBuild, onRead }: Props) {
           <p className="text-2xl font-bold">{fa(streak(state.days, day))}</p>
           <p className="text-sm text-muted">با هر مرور روزانه، زنجیره‌ات را حفظ کن</p>
         </div>
-        <div className={`${card} p-4`}>
+        <div className={`${card} bg-accent/5 p-4`}>
           <div className="mb-3 flex size-10 items-center justify-center rounded-xl bg-accent/10">
             <CircleCheck className="size-5 text-accent" />
           </div>
@@ -120,7 +121,7 @@ export function Library({ store, busy, onBuild, onRead }: Props) {
               const steps = c ? pathOf(c) : [];
               const done = steps.filter((s) => known.has(topicKey(s.page))).length;
               return (
-                <li key={k} className={`${card} relative`}>
+                <li key={k} className={`${card} ${lift} relative`}>
                   <button
                     disabled={!c && busy}
                     onClick={() => (c ? (location.hash = courseHref(c.key)) : onBuild(p.url))}
@@ -164,12 +165,12 @@ export function Library({ store, busy, onBuild, onRead }: Props) {
           {courses.map((c) => {
             const saved = savedKeys.has(topicKey(c));
             return (
-              <li key={c.key} className={`${card} flex items-center gap-3 p-2`}>
+              <li key={c.key} className={`${card} ${lift} flex items-center gap-3 p-2`}>
                 <Thumb src={c.thumbnail} title={c.title} className="h-11 w-11 rounded-lg" ariaHidden={!c.thumbnail} />
                 <a href={courseHref(c.key)} dir="auto" className="min-w-0 flex-1 truncate font-medium hover:text-accent">
                   {c.title}
                 </a>
-                <span className="rounded-md border border-line px-1.5 py-0.5 text-[13px] uppercase text-muted">{c.lang}</span>
+                <span className={badge}>{c.lang}</span>
                 <button
                   onClick={() => store.toggleSaved(refPage(c))}
                   aria-pressed={saved}
@@ -187,10 +188,10 @@ export function Library({ store, busy, onBuild, onRead }: Props) {
       <section>
         <h2 className="mb-3 text-xl font-bold">چطور بهتر یاد بگیریم؟</h2>
         <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          {TIPS.map(([Icon, title, text]) => (
+          {TIPS.map(([Icon, title, text, tint]) => (
             <li key={title} className={`${card} p-4`}>
-              <div className="mb-3 flex size-10 items-center justify-center rounded-xl bg-accent/10">
-                <Icon className="size-5 text-accent" />
+              <div className={`mb-3 flex size-10 items-center justify-center rounded-xl ${tint}`}>
+                <Icon className="size-5" />
               </div>
               <p className="mb-2 font-bold">{title}</p>
               <p className="text-sm leading-7 text-muted">{text}</p>
