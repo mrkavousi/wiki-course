@@ -39,13 +39,15 @@ export function Home({ store, job, hasAI, onBuild, onRead, onSettings }: Props) 
   const back = nextDue(state.boxes, day);
 
   return (
-    <div className="mx-auto w-full max-w-6xl space-y-6 px-4 py-6">
-      <header className="space-y-1">
-        <h1 className="text-2xl font-extrabold">از هر مقاله، یک مسیر یادگیری</h1>
-        <p className="text-muted">لینک یک مقاله‌ی ویکی‌پدیا را بچسبان؛ پیش‌نیازها را پیدا کن، یاد بگیر، مرور کن و واقعاً به خاطر بسپار.</p>
+    <div className="page-in mx-auto w-full max-w-6xl space-y-10 px-4 py-6">
+      <header className="hero-bg space-y-3 rounded-3xl border border-line/60 px-4 pb-8 pt-10 text-center sm:pt-14">
+        <h1 className="text-3xl font-extrabold tracking-tight sm:text-5xl">
+          از هر مقاله، یک <span className="text-grad">مسیر</span> یادگیری
+        </h1>
+        <p className="mx-auto max-w-xl text-muted">لینک یک مقاله‌ی ویکی‌پدیا را بچسبان؛ پیش‌نیازها را پیدا کن، یاد بگیر، مرور کن و واقعاً به خاطر بسپار.</p>
       </header>
 
-      <section className={`${card} p-4`} aria-label="ساخت دوره">
+      <section className={`${card} mx-auto max-w-3xl p-4 elev-hi`} aria-label="ساخت دوره">
         <CourseBuilder compact job={job} hasAI={hasAI} recent={state.recent} onBuild={onBuild} onRead={onRead} onSettings={onSettings} />
       </section>
 
@@ -117,13 +119,13 @@ export function Home({ store, job, hasAI, onBuild, onRead, onSettings }: Props) 
               <CourseCardSkeleton />
             </div>
           ) : active.length ? (
-            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+            <div className="stagger grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
               {active.map(({ c }) => (
                 <CourseCard key={c.key} course={c} state={state} day={day} onToggleSaved={() => store.toggleSaved(c.root)} />
               ))}
             </div>
           ) : (
-            <EmptyState icon={Route} title="هنوز دوره‌ای شروع نکرده‌ای" text="یک لینک بچسبان یا یکی از دوره‌های آماده را شروع کن. هر پیشرفتی که داشته باشی همین‌جا دیده می‌شود.">
+            <EmptyState icon={Route} art="history" title="هنوز دوره‌ای شروع نکرده‌ای" text="یک لینک بچسبان یا یکی از دوره‌های آماده را شروع کن. هر پیشرفتی که داشته باشی همین‌جا دیده می‌شود.">
               <a href="#/new" className={primary}>ساخت دوره</a>
               <a href="#/discover" className={ghost}>
                 <Compass className={ic} />
@@ -162,7 +164,7 @@ export function Home({ store, job, hasAI, onBuild, onRead, onSettings }: Props) 
             <Sparkles className={`${ic} text-accent`} />
             برای شروع پیشنهاد می‌کنیم
           </h2>
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="stagger grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {fresh.map(({ c }) => (
               <CourseCard key={c.key} course={c} state={state} day={day} onToggleSaved={() => store.toggleSaved(c.root)} />
             ))}
@@ -170,7 +172,7 @@ export function Home({ store, job, hasAI, onBuild, onRead, onSettings }: Props) 
         </section>
       )}
       {stats && stats.length > 0 && stats.every((x) => x.s.status === 'done') && (
-        <EmptyState icon={PartyPopper} title="همه‌ی دوره‌ها را تمام کرده‌ای" text="وقت یک موضوع تازه است." />
+        <EmptyState icon={PartyPopper} art="biology" title="همه‌ی دوره‌ها را تمام کرده‌ای" text="وقت یک موضوع تازه است." />
       )}
     </div>
   );

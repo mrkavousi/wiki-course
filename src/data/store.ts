@@ -2,7 +2,8 @@
 // (they can outgrow localStorage's ~5MB). Backup files move it all to another device.
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { AI, Course, CourseRef, Day, Grade, Pack, Page, State, Terms } from '../types/course';
-import { topicKey } from '../utils/course';
+import { courseKey, topicKey } from '../utils/course';
+import { pack, sanitizeCourse, sanitizePack, sanitizeState, sanitizeTerms } from '../utils/share';
 import { EMPTY_DAY, EMPTY_STATE, PASS, mergeBackup, rate, today } from '../utils/learn';
 import samplesJson from './samples.json';
 
@@ -105,18 +106,45 @@ export async function backupJson(state: State) {
   const [courses, packs, terms] = await Promise.all([kv.all<Course>('course/'), kv.all<Pack>('pack/'), kv.all<Terms>('terms/')]);
   return JSON.stringify({ app: 'wiki-course', version: BACKUP_VERSION, exportedAt: new Date().toISOString(), state, courses, packs, terms });
 }
-/** Stores the backup's courses and packs; returns its state for the caller to merge. The AI key is never in a backup. */
-export async function restoreJson(text: string): Promise<Partial<State>> {
+/** A backup (file or link) after validation: nothing in it is trusted until it has been rebuilt by the sanitizers. */
+export type Parsed = { state: Partial<State>; courses: Course[]; packs: Pack[]; terms: Terms[]; skipped: number };
+export function parseBackup(text: string): Parsed {
   const b = JSON.parse(text);
   if (b?.app !== 'wiki-course') throw new Error('این فایل پشتیبان Wiki Course نیست. چیزی تغییر نکرد.');
   if (!(b.version >= 1) || b.version > BACKUP_VERSION) throw new Error('این پشتیبان از نسخه‌ی جدیدتری از برنامه است و خوانده نمی‌شود. چیزی تغییر نکرد.');
-  await Promise.all([
-    ...(b.courses ?? []).map((c: Course) => saveCourse(c)),
-    ...(b.packs ?? []).map((p: Pack) => savePack(p)),
-    ...(b.terms ?? []).map((t: Terms) => saveTerms(t)),
-  ]);
-  return b.state ?? {};
+  const keep = <T,>(xs: unknown, f: (x: unknown) => T | null, max: number) => {
+    const all = Array.isArray(xs) ? xs.slice(0, max) : [];
+    const ok = all.map(f).filter((x): x is T => x !== null);
+    return { ok, skipped: all.length - ok.length };
+  };
+  const courses = keep(b.courses, sanitizeCourse, 100);
+  const packs = keep(b.packs, sanitizePack, 1000);
+  const terms = keep(b.terms, sanitizeTerms, 1000);
+  return { state: sanitizeState(b.state), courses: courses.ok, packs: packs.ok, terms: terms.ok, skipped: courses.skipped + packs.skipped + terms.skipped };
 }
+/** Stores a parsed backup's courses and packs; the caller merges `state`. The AI key is never in a backup. */
+export async function applyBackup(p: Parsed) {
+  await Promise.all([...p.courses.map(saveCourse), ...p.packs.map(savePack), ...p.terms.map(saveTerms)]);
+}
+export async function restoreJson(text: string): Promise<Parsed> {
+  const p = parseBackup(text);
+  await applyBackup(p);
+  return p;
+}
+
+// ---------- share links ----------
+/** A link that carries a whole course (and its study packs) but none of the learner's progress or notes. */
+export async function courseShareLink(c: Course) {
+  const packs = (await Promise.all([c.root, ...c.topics].map((p) => loadPack(courseKey(p.lang, p.title))))).filter((p): p is Pack => !!p);
+  return `${location.origin}${location.pathname}#/import?d=${await pack(JSON.stringify({ app: 'wiki-course', version: BACKUP_VERSION, kind: 'course', courses: [c], packs }))}`;
+}
+/** A link that carries everything a backup does. Long: callers should check `.length`. */
+export async function transferLink(state: State) {
+  return `${location.origin}${location.pathname}#/import?d=${await pack(await backupJson(state))}`;
+}
+/** Links longer than this are refused: chat apps and some browsers cut them silently. */
+export const MAX_LINK = 200_000;
+
 /** Everything this app keeps in the browser: localStorage (wc:*) and the course/pack cache. The AI settings go too. */
 export async function wipeAll() {
   try {
@@ -260,7 +288,7 @@ const dec = (s: string) => {
   }
 };
 
-/** Hash routes keep static hosting simple: #/ home, #/new builder, #/library, #/review, #/discover, #/insights, #/c/<key> course, #/read/<lang>/<title> reader. */
+/** Hash routes keep static hosting simple: #/ home, #/new builder, #/library, #/review, #/discover, #/insights, #/settings, #/c/<key> course, #/read/<lang>/<title> reader. */
 export function useRoute() {
   const [hash, setHash] = useState(() => location.hash);
   useEffect(() => {
@@ -268,7 +296,10 @@ export function useRoute() {
     addEventListener('hashchange', f);
     return () => removeEventListener('hashchange', f);
   }, []);
-  if (hash.startsWith('#/c/')) return { name: 'course' as const, key: dec(hash.slice(4)) };
+  if (hash.startsWith('#/c/')) {
+    const [k, q] = hash.slice(4).split('?'); // keys are percent-encoded, so a raw ? starts the query
+    return { name: 'course' as const, key: dec(k), topic: new URLSearchParams(q).get('t') ?? undefined };
+  }
   if (hash.startsWith('#/read/')) {
     const rest = hash.slice(7);
     const at = rest.indexOf('/');
@@ -278,9 +309,13 @@ export function useRoute() {
     }
   }
   const page = hash.slice(2).split(/[?/]/)[0];
-  if (page === 'new' || page === 'library' || page === 'review' || page === 'discover' || page === 'insights') return { name: page as 'new' | 'library' | 'review' | 'discover' | 'insights' };
+  if (page === 'new' || page === 'library' || page === 'review' || page === 'discover' || page === 'insights' || page === 'settings') return { name: page as 'new' | 'library' | 'review' | 'discover' | 'insights' | 'settings' };
+  if (page === 'about' || page === 'privacy') return { name: page as 'about' | 'privacy' };
+  if (page === 'import') return { name: 'import' as const, data: new URLSearchParams(hash.split('?')[1]).get('d') ?? '' };
+  if (hash.startsWith('#/') && hash.length > 2 && page) return { name: 'notfound' as const }; // a bare '#main' (skip link) or '#/' stays on home
   return { name: 'home' as const };
 }
-export const courseHref = (key: string) => `#/c/${encodeURIComponent(key)}`;
+/** `topic` (a topicKey) opens the course on that topic: a screen of its own on phones, so Back returns to the path. */
+export const courseHref = (key: string, topic?: string) => `#/c/${encodeURIComponent(key)}${topic ? `?t=${encodeURIComponent(topic)}` : ''}`;
 /** `course` (a courseKey) lets the reader offer the next topic of that course. */
 export const readHref = (lang: string, title: string, course?: string) => `#/read/${lang}/${encodeURIComponent(title)}${course ? `?c=${encodeURIComponent(course)}` : ''}`;

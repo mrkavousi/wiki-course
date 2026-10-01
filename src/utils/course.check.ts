@@ -3,7 +3,8 @@ import type { Course, State } from '../types/course';
 import { cleanItems, cleanPack, courseKey, extractJson, extractLists, parseWikiUrl, ROLES } from './course';
 import { courseMarkdown, nextStep, PROMPTS } from './export';
 import { EMPTY_STATE, dueIds, mergeBackup, nextDue, nextInterval, rate, streak } from './learn';
-import { courseStats, nextAction, weakTopics, weekStats } from './progress';
+import { courseStats, daysAt, levelOf, nextAction, weakTopics, weekStats } from './progress';
+import { sanitizeCourse, sanitizePack, sanitizePage, sanitizeState, pack as packLink, unpack } from './share';
 import { seed, subjectOf } from './subject';
 import { FORMULA, boldSegments, cleanTerms, outline, parseArticle, termRegex } from './reader';
 
@@ -170,4 +171,49 @@ assert.equal(nextAction({ ...EMPTY_STATE, meta: { 'fa-X': { last: 5 } } }, [cour
 assert.equal(nextAction(EMPTY_STATE, [], '2026-10-02', href).href, '#/new');
 assert.deepEqual(weakTopics({ ...EMPTY_STATE, quiz: { 'fa:A': 50, 'fa:B': 90 }, boxes: { 'fa:C#1': { box: 1, due: '' }, 'fa:A#0': { box: 1, due: '' } } }).map((w) => [w.key, w.why]), [['fa:A', 'quiz'], ['fa:C', 'cards']]);
 
-console.log('course.check ok');
+assert.equal(levelOf({ ...course, topics: [] }), 'intro');
+assert.equal(levelOf(course), 'mid', 'two prerequisites is mid');
+assert.equal(levelOf({ ...course, topics: Array.from({ length: 4 }, (_, i) => ({ ...page(`Q${i}`), role: 'prereq' as const, score: 1, why: '' })) }), 'adv');
+assert.equal(daysAt(132, 30), 5);
+assert.equal(daysAt(5, 60), 1);
+
+// Course route carries an optional topic: #/c/<key>?t=<topicKey>.
+// ---------- share links and untrusted imports ----------
+assert.equal(sanitizePage({ title: 'T', lang: 'fa', url: 'javascript:alert(1)', summary: 's' })!.url, 'https://fa.wikipedia.org/wiki/T', 'a non-Wikipedia link is replaced');
+assert.equal(sanitizePage({ title: 'T', lang: 'fa', url: 'https://evil.example/x' })!.url.startsWith('https://fa.wikipedia.org/'), true);
+assert.equal(sanitizePage({ title: 'T', lang: 'F A!' }), null);
+assert.equal(sanitizePage({ title: 'T', lang: 'fa', thumbnail: 'javascript:1' })!.thumbnail, undefined);
+const good = { ...course, topics: [...course.topics, { title: 'Bad', lang: 'fa', role: 'hacker', score: 5 }, { title: 'Hi', lang: 'fa', role: 'next', score: 999, why: 'w' }] };
+const clean = sanitizeCourse(good)!;
+assert.equal(clean.topics.length, course.topics.length + 1, 'an unknown role is dropped');
+assert.equal(clean.topics.at(-1)!.score, 100, 'scores are clamped');
+assert.equal(sanitizeCourse({ ...course, key: 'fa-Other' }), null, 'a forged key is rejected');
+assert.equal(sanitizeCourse({ ...course, topics: 'nope' }), null);
+assert.equal(sanitizeCourse(null), null);
+assert.equal(sanitizePack({ key: 'fa-P1', lang: 'fa', title: 'P1', cards: [{ q: 'a', a: 'b' }] })!.cards.length, 1);
+assert.equal(sanitizePack({ key: 'fa-WRONG', lang: 'fa', title: 'P1', cards: [{ q: 'a', a: 'b' }] }), null);
+const imported = sanitizeState({
+  known: ['fa:a', 5, ''], days: ['2026-10-01', 'yesterday'], notes: { 'fa:a': 'n', 'fa:b': 7 }, quiz: { 'fa:a': 250, 'fa:b': 'x' },
+  boxes: { 'fa:a#0': { box: 9, due: '2026-10-01' }, 'fa:b#0': { box: 1, due: 'soon' } }, pos: { 'fa:a': 3 }, log: { '2026-10-01': { cards: -4, known: 'x', quiz: 2, sec: 5 }, today: {} },
+  goal: 99, lastBackup: 'x', recent: [{ key: 'fa-X', title: 'X', lang: 'fa' }, { key: 'forged', title: 'X', lang: 'fa' }],
+});
+assert.deepEqual(imported.known, ['fa:a']);
+assert.deepEqual(imported.days, ['2026-10-01']);
+assert.deepEqual(imported.notes, { 'fa:a': 'n' });
+assert.deepEqual(imported.quiz, { 'fa:a': 100 });
+assert.deepEqual(imported.boxes, { 'fa:a#0': { box: 5, due: '2026-10-01' } });
+assert.deepEqual(imported.pos, { 'fa:a': 1 });
+assert.deepEqual(imported.log, { '2026-10-01': { cards: 0, known: 0, quiz: 2, sec: 5 } });
+assert.deepEqual(imported.recent!.map((r) => r.key), ['fa-X']);
+assert.ok(!('goal' in imported) && !('lastBackup' in imported), 'scalars are never imported');
+
+// Compression streams are async; the file runs as CommonJS, so no top-level await.
+(async () => {
+  const roundTrip = JSON.stringify({ a: 'سلام', b: 'x'.repeat(5000) });
+  assert.equal(await unpack(await packLink(roundTrip)), roundTrip, 'a link round-trips Persian text');
+  assert.ok((await packLink(roundTrip)).length < roundTrip.length / 5, 'the link is compressed');
+  assert.match(await packLink('x'), /^[A-Za-z0-9_-]+$/, 'url-safe, nothing to escape in a fragment');
+  await assert.rejects(unpack(await packLink('x'.repeat(100_000)), 1000), /too-big/, 'a small link cannot expand past the cap');
+  await assert.rejects(unpack('not-gzip'));
+  console.log('course.check ok');
+})();

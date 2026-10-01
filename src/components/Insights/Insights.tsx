@@ -35,7 +35,7 @@ export function Insights({ store }: { store: Store }) {
       </header>
 
       {empty && (
-        <EmptyState icon={ChartColumn} title="هنوز آماری نداری" text="با اولین موضوعی که بلد شدی، کارتی که مرور کردی یا آزمونی که دادی، اینجا پر می‌شود.">
+        <EmptyState icon={ChartColumn} art="math" title="هنوز آماری نداری" text="با اولین موضوعی که بلد شدی، کارتی که مرور کردی یا آزمونی که دادی، اینجا پر می‌شود.">
           <a href="#/library" className={primary}>رفتن به کتابخانه</a>
         </EmptyState>
       )}

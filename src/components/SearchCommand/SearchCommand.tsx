@@ -44,14 +44,30 @@ export function SearchCommand({ open, store, onClose, onBuild, onRead }: Props) 
           autoFocus
           value={q}
           onChange={(e) => setQ(e.target.value)}
-          onKeyDown={(e) => e.key === 'Enter' && (document.querySelector<HTMLElement>('#search-results a, #search-results button'))?.click()}
+          onKeyDown={(e) => {
+            const items = [...document.querySelectorAll<HTMLElement>('#search-results a, #search-results button')];
+            if (e.key === 'Enter') items[0]?.click();
+            else if (e.key === 'ArrowDown') (e.preventDefault(), items[0]?.focus());
+          }}
           aria-label="عبارت جست‌وجو یا لینک ویکی‌پدیا"
           placeholder="نام دوره، موضوع، یا لینک ویکی‌پدیا…"
           className="min-h-14 flex-1 bg-transparent text-base placeholder:text-muted focus:outline-none"
         />
         <kbd className="hidden text-xs text-muted sm:block">Esc</kbd>
       </div>
-      <div id="search-results" className="max-h-[60vh] space-y-1 overflow-y-auto p-2" aria-live="polite">
+      <div
+        id="search-results"
+        className="max-h-[60vh] space-y-1 overflow-y-auto p-2"
+        aria-live="polite"
+        onKeyDown={(e) => {
+          if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return;
+          e.preventDefault();
+          const items = [...e.currentTarget.querySelectorAll<HTMLElement>('a, button')];
+          const at = items.indexOf(document.activeElement as HTMLElement);
+          if (e.key === 'ArrowUp' && at <= 0) document.querySelector<HTMLInputElement>('dialog[open] input')?.focus();
+          else items[Math.min(items.length - 1, Math.max(0, at + (e.key === 'ArrowDown' ? 1 : -1)))]?.focus();
+        }}
+      >
         {!needle && <p className="p-3 text-sm text-muted">بنویس تا دوره‌ها و موضوع‌های دوره‌هایت پیدا شوند. یک لینک ویکی‌پدیا هم می‌توانی بچسبانی.</p>}
         {link && (
           <>

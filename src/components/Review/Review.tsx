@@ -73,14 +73,14 @@ export function Review({ store }: { store: Store }) {
           <Flashcards items={items} boxes={store.state.boxes} onRate={store.rateCard} done={finish} />
         </>
       ) : missing > 0 ? (
-        <EmptyState icon={Layers} title="کارت‌هایت منتظرند، ولی متنشان اینجا نیست" text={`${fa(missing)} کارت وقت مرور دارد، اما بسته‌ی مطالعه‌ی آن‌ها از این مرورگر پاک شده. پیشرفتت از بین نرفته: بسته را در همان دوره دوباره بساز یا پشتیبانت را از تنظیمات بازیابی کن.`}>
+        <EmptyState icon={Layers} art="other" title="کارت‌هایت منتظرند، ولی متنشان اینجا نیست" text={`${fa(missing)} کارت وقت مرور دارد، اما بسته‌ی مطالعه‌ی آن‌ها از این مرورگر پاک شده. پیشرفتت از بین نرفته: بسته را در همان دوره دوباره بساز یا پشتیبانت را از تنظیمات بازیابی کن.`}>
           <a href="#/library" className={primary}>
             رفتن به کتابخانه
           </a>
         </EmptyState>
       ) : (
         <EmptyState
-          icon={Sparkles}
+          icon={Sparkles} art="physics"
           title="امروز همه‌ی کارت‌هایت را مرور کرده‌ای"
           text={`${back ? `مرور بعدی ${inDays(Math.round((Date.parse(back) - Date.parse(day)) / 86_400_000))} است. ` : 'هنوز کارتی نساخته‌ای؛ در هر دوره، تب «فلش‌کارت» یک موضوع را باز کن. '}برای ادامه، یک موضوع جدید شروع کن.`}
         >

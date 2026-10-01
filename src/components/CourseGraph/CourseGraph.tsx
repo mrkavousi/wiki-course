@@ -102,7 +102,7 @@ export function CourseGraph({ course, known, selectedKey, onSelect }: Props) {
         <g transform={`translate(${view.x} ${view.y}) scale(${view.k})`}>
           {placed.map(({ t, x, y }) => (
             <g key={topicKey(t)} className="pointer-events-none">
-              <line x2={x} y2={y} strokeOpacity={0.25 + 0.5 * (t.score / 100)} strokeWidth={1 + 3 * (t.score / 100)} strokeLinecap="round" style={{ stroke: ROLE_COLOR[t.role] }} />
+              <line className="edge" x2={x} y2={y} strokeOpacity={0.25 + 0.5 * (t.score / 100)} strokeWidth={1 + 3 * (t.score / 100)} strokeLinecap="round" style={{ stroke: ROLE_COLOR[t.role] }} />
               <g transform={`translate(${x / 2} ${y / 2})`}>
                 <rect x={-26} y={-12.5} width={52} height={25} rx={12.5} className="fill-bg" style={{ stroke: ROLE_COLOR[t.role] }} />
                 <text textAnchor="middle" dy={4.5} fontSize={13} fontWeight={700} className="fill-fg">{fa(t.score)}٪</text>

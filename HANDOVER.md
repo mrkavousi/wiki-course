@@ -2,7 +2,7 @@
 
 For developers and AI agents picking this project up. Read this first, then `AGENTS.md` (the short rule list) and `graphify-out/GRAPH_REPORT.md` (the code map).
 
-- **Status (2026-10-02):** v0.3 (product redesign: app shell, dashboard, builder, library, insights), live at https://wiki-course.vercel.app. Source: github.com/mrkavousi/wiki-course. Every push to `main` auto-deploys on Vercel (about 20 s).
+- **Status (2026-10-02):** v0.4.0 (see `CHANGELOG.md`): the v0.3 product (app shell, dashboard, builder, library, insights) with a visual redesign, an installable offline PWA, and About, Privacy and 404 pages. Live at https://wiki-course.vercel.app. Source: github.com/mrkavousi/wiki-course. Every push to `main` auto-deploys on Vercel (about 20 s).
 - **Stack:** React 19, TypeScript 7, Vite 8, Tailwind 4 (`@tailwindcss/vite`), `lucide-react`. About 4,500 lines of TypeScript in `src/` and `scripts/`. No backend, no database, no server-side environment variables.
 - **Language:** the UI, README and AI-generated content are Persian (RTL). Code, comments, commits and this document are English.
 
@@ -24,13 +24,15 @@ It is a personal, local-first tool: all learner data lives in the browser.
 | `#/` | `Home` | dashboard: builder strip, the one next action, today's review, active courses, weekly progress, suggestions |
 | `#/new` (`?url=`) | `CourseBuilder` | paste, preview the article, choose depth and purpose, build with named stages |
 | `#/library` | `Library` | search, filters (language, status, subject), sort, grid/list, favourite, archive, delete |
-| `#/c/<courseKey>` | `CourseView` with `Roadmap`, `CourseGraph`, `TopicDetail` | course overview (cover, progress, mastery) and the selected topic (tabs: about, flashcards, quiz) |
+| `#/c/<courseKey>` (`?t=<topicKey>`) | `CourseView` with `Roadmap`, `CourseGraph`, `TopicDetail` | course overview (cover, level, progress, mastery) and the selected topic (tabs: about, flashcards, quiz). With `?t=` a phone shows that topic as its own screen with a breadcrumb (Back returns to the path); desktop keeps two panes and keeps the address in sync |
 | `#/read/<lang>/<title>` (`?c=<courseKey>`) | `Reader` | article reader (needs no AI in easy mode); remembers the scroll position. With `?c=` it offers the course's next topic |
 | `#/review` | `Review` | today's due flashcards across all topics, three ratings |
 | `#/discover` | `Discover` | unstarted sample courses and next topics from your own courses |
+| `#/import?d=<gzip+base64url>` | `Import` | opens a share or transfer link: previews what is inside and adds it only after confirmation |
+| `#/settings` | `Settings` | theme, weekly goal, AI endpoint, backup and restore, delete all data |
 | `#/insights` | `Insights` | weekly goal, activity, weak topics, quiz results, course completion |
 
-`AppShell` wraps every route: sidebar on desktop, bottom bar on phones, a top bar with search (Ctrl/Cmd+K), due count, streak and theme. Settings is a `<dialog>` opened from the shell, not a route.
+`AppShell` wraps every route: sidebar on desktop, bottom bar on phones, a top bar with search (Ctrl/Cmd+K), due count, streak and theme. Settings is the `#/settings` page (theme, weekly goal, AI endpoint, backup/restore, delete all data).
 
 ## 2. Quick start
 
@@ -44,7 +46,7 @@ npm run preview    # serve dist/ (a production-like check)
 
 Node 20 or newer (developed on 24).
 
-**AI settings.** Click the gear icon and enter the gateway URL (up to `/v1`), the API key and the model (default `Gemini-2.5-Flash-lite`). They are stored only in this browser's localStorage. Without them you can still open the sample courses, read articles in easy mode, and use everything that needs no AI. Building courses, study packs and key terms needs them.
+**AI settings.** Open Settings (`#/settings`) and enter the gateway URL (up to `/v1`), the API key and the model (default `Gemini-2.5-Flash-lite`). They are stored only in this browser's localStorage. Without them you can still open the sample courses, read articles in easy mode, and use everything that needs no AI. Building courses, study packs and key terms needs them.
 
 **Node CLI (optional).** `.env` (gitignored; see `.env.example`) holds `AI_BASE_URL`, `AI_API_KEY`, `AI_MODEL`. Then `npm run build:course -- <wikipedia url>` builds a course in Node, writes `public/courses/<courseKey>.json` and registers it in `src/data/samples.json`. The browser app never reads `.env`.
 
@@ -76,9 +78,11 @@ The browser calls both services directly, so requests come from the user's own n
 | `src/utils/reader.ts` | pure: `parseArticle`, `termRegex`, `cleanTerms`, `boldSegments`, `outline` |
 | `src/utils/course.check.ts` | the only test file: asserts for every pure function above |
 | `src/types/course.ts` | all shared types (`Course`, `Topic`, `Pack`, `Terms`, `State`, `AI`, ...) |
-| `src/components/*` | one folder per component; `ui.ts` has shared class strings (`btn`, `primary`, `ghost`, `outline`, `card`, `iconBtn`, `field`, `ic`), `fa()` (Persian digits), `ago()`, `inDays()`, `fmtMinutes()`. Shared pieces: `Cover`, `CourseCard`, `Progress` (`ProgressBar`, `ActivityChart`, `Heatmap`, `StreakWidget`), `States` (`EmptyState`, `ErrorState`, `Skeleton`), `Toast` (`useToast`), `ConfirmModal`, `SearchCommand` |
-| `src/index.css` | Tailwind `@theme`: color tokens (dark values in `@theme`, the editorial light palette in `[data-theme=light]`), type scale, reduced-motion guard, `.page-in`, `.dots`, `.term-flash` |
-| `index.html` | RTL shell, Vazirmatn font, inline pre-paint theme script (**must stay in sync with `applyTheme`**) |
+| `src/components/*` | one folder per component; `ui.ts` has shared class strings (`btn`, `primary`, `ghost`, `outline`, `card`, `iconBtn`, `field`, `ic`, `chip`), `fa()` (Persian digits), `ago()`, `inDays()`, `fmtMinutes()`. Shared pieces: `Cover`, `CourseCard`, `Progress` (`ProgressBar`, `ActivityChart`, `Heatmap`, `StreakWidget`), `States` (`EmptyState`, `ErrorState`, `Skeleton`), `Toast` (`useToast`), `ConfirmModal`, `SearchCommand` |
+| `src/components/Pages/Pages.tsx` | `About`, `Privacy`, `NotFound` and the `Footer` shown under static pages (routes `about`, `privacy`, `notfound` in `useRoute`; an unknown `#/x` is `notfound`, a bare `#main` stays home) |
+| `src/index.css` | `@font-face` for the self-hosted font, Tailwind `@theme`: color tokens (dark values in `@theme`, light palette in `[data-theme=light]`), type scale, reduced-motion guard, and utilities `.page-in`, `.dots`, `.term-flash`, `.hero-bg`, `.text-grad`, `.glass`, `.shimmer`, `.stagger`, `.pop`, `.flip-in`, `.edge` |
+| `public/sw.js`, `public/manifest.webmanifest` | PWA: the service worker (registered in `src/main.tsx`, production only) caches same-origin GETs; icons, `og.png` and `fonts/` live beside them |
+| `index.html` | RTL shell, font preload, manifest and `og:*` tags, inline pre-paint theme script (**must stay in sync with `applyTheme`**) |
 | `scripts/build-course.ts` | Node CLI around `buildCourse` |
 
 Rule of thumb: logic that needs no browser and no network goes in `utils/` (and gets an assert in `course.check.ts`); network and AI in `lib/build.ts`; anything that persists or routes in `data/store.ts`; React in `components/`.
@@ -126,9 +130,9 @@ Rule of thumb: logic that needs no browser and no network goes in `utils/` (and 
 
 - **Language and layout:** UI strings are Persian; digits go through `fa()`. Use logical Tailwind classes (`ms-`, `me-`, `ps-`, `pe-`, `start-`, `end-`, `text-start`). Put `dir="auto"` on any Wikipedia or AI text (English articles must lay out left to right) and `dir="ltr"` on URLs and keys. In RTL the "back" arrow is `ArrowRight`.
 - **Icons:** `lucide-react` only, sized with the `ic` class (`size-[1.15em]`). **No emoji or pictographic symbols anywhere**, including exports.
-- **Colors:** semantic tokens only (new in v0.3: `accent-soft`, `gold` for fills, `info`) (`bg-bg`, `bg-panel`, `text-fg`, `text-muted`, `border-line`, `text-accent`, `text-on-accent`, `prereq`/`next`/`related`, `danger`). Never hard-code hex. In SVG use `fill-*`/`stroke-*` classes or `var(--color-*)` in `style`.
+- **Colors:** semantic tokens only (`accent-soft`, `surface-2`, `gold` for fills, `info`, `coral`, and `sub-math`/`sub-physics`/`sub-code`/`sub-history`/`sub-biology` for subject colours) (`bg-bg`, `bg-panel`, `text-fg`, `text-muted`, `border-line`, `text-accent`, `text-on-accent`, `prereq`/`next`/`related`, `danger`). Never hard-code hex. In SVG use `fill-*`/`stroke-*` classes or `var(--color-*)` in `style`.
 - **Text size:** the scale lives in `index.css` (`text-xs` = 13 px, `text-sm` = 15 px, body 16 px, relaxed line-heights for Persian). Nothing may render smaller than 13 px, including SVG labels at zoom 1. Inputs must be 16 px or larger (iOS Safari zooms smaller ones).
-- **Touch and shape:** interactive controls are at least 44 px (`btn` has `min-h-11`, `iconBtn` is `size-11`); cards use 8 px radii (`rounded-lg`); status is always an icon plus a word, never colour alone.
+- **Touch and shape:** interactive controls are at least 44 px (`btn` has `min-h-11`, `iconBtn` is `size-11`); cards use `rounded-2xl` and controls `rounded-xl`; status is always an icon plus a word, never colour alone.
 - **Other:** animations use `motion-safe:` (and `index.css` has a global reduced-motion guard); icon-only buttons need `aria-label`; toggles use `aria-pressed`.
 - Comments explain *why*. A `ponytail:` prefix marks a deliberate shortcut and its ceiling (`grep -rn "ponytail:" src scripts`).
 
@@ -137,12 +141,12 @@ Rule of thumb: logic that needs no browser and no network goes in `utils/` (and 
 1. `npm run check`, then `npm run build`.
 2. **From a clean clone:** `git clone <repo> /tmp/x && cd /tmp/x && npm ci && npm run build`. A stray `~/node_modules/@types/node` once hid a missing dependency locally and broke the first Vercel deploy.
 3. `npm run preview` and look at it: light and dark, a 390 px wide viewport (no horizontal scroll), a Persian article and an English one, no console errors.
-4. **Contrast** (checked 2026-10-02, WCAG ratios): light text pairs 4.8 to 16.5, dark 5.9 to 15.7. The light `danger` is `#ae4341`, slightly darker than the brief's `#b94a48`, because error text on its own 10% tint needs 4.5:1; `prereq` text is the amber `#8a6410` because the brand yellow `#e9b949` is only for fills.
-5. **There is no automated browser test in the repo.** The flows below were checked by hand with ad-hoc Playwright-style scripts that were not committed. A smoke suite would be a welcome contribution: sample course opens; build a course (needs an AI key); mark known, reload, progress persists; build a pack, flip a card, take the quiz; reader easy and enhanced; backup then restore in a fresh profile; no emoji; no text under 13 px.
+4. **Contrast** (checked 2026-10-02, WCAG ratios): every text token reaches 4.5:1 on `bg`, `panel` and `accent-soft` in both themes (re-checked 2026-10-02 for v0.4.0 after the teal palette). The light `prereq` is now `#7f5c0e` and `info` `#456a82`. The light `danger` is `#ae4341`, slightly darker than the brief's `#b94a48`, because error text on its own 10% tint needs 4.5:1; `prereq` text is an amber because the brand yellow `#e9b949` is only for fills.
+5. **Browser tests:** `PW_CHANNEL=chrome npm run test:e2e` (23 tests, Wikipedia and the AI stubbed). Playwright's own Chromium download is unsupported on macOS 13, so use the installed Chrome there. Cover when extending the suite: sample course opens; build a course (needs an AI key); mark known, reload, progress persists; build a pack, flip a card, take the quiz; reader easy and enhanced; backup then restore in a fresh profile; no emoji; no text under 13 px.
 
 ## 8. Deployment
 
-Vercel imports the GitHub repo. Framework preset Vite, build `npm run build` (`tsc && vite build`), output `dist`, **no environment variables**. Routing is hash-based, so no rewrites are needed. A failing deploy is almost always a `tsc` error, because type-checking is part of `build`. Each device enters its own AI settings once.
+Vercel imports the GitHub repo. Framework preset Vite, build `npm run build` (`tsc && vite build`), output `dist`, **no environment variables**. Routing is hash-based, so no rewrites are needed. A failing deploy is almost always a `tsc` error, because type-checking is part of `build`. Each device enters its own AI settings once. The service worker (`public/sw.js`) is cache-first, so `/courses/*.json` can be stale until its `CACHE` name is bumped; bump it when you change a bundled course.
 
 ## 9. Known issues and tech debt
 
@@ -150,17 +154,19 @@ Vercel imports the GitHub repo. Framework preset Vite, build `npm run build` (`t
 2. **Duplicate `fa()`** in `components/ui.ts` and (private) in `lib/build.ts`. Move one copy to `utils/format.ts`.
 3. **AI quality.** Scores and reasons are estimates (no web search). Results are sometimes thin: the Quantum mechanics sample has only 4 topics. "ساخت دوباره" rebuilds a course.
 4. **Reader limits.** Plain-text extracts drop formulas (shown as a "formula" chip), tables, image captions and list bullets. No scroll restore, no offline. The section skip-list for references (`parseArticle`) only covers English and Persian headings.
-5. **No linter, formatter or browser tests**, and one assert script instead of a test runner. CI (`.github/workflows/ci.yml`) runs `npm ci`, `npm run check` and `npm run build` on pull requests and pushes to `main`. `npm run check` fetches `tsx` through `npx --yes` each time instead of declaring it.
-6. **Device-local data.** There is no sync; the backup file is the only transfer path.
+5. **No linter or formatter.** Pure logic is checked by one assert script; browser flows by a Playwright smoke suite (`tests/smoke.spec.ts`, `npm run test:e2e`, Wikipedia and the AI stubbed; locally `PW_CHANNEL=chrome npm run test:e2e` reuses installed Chrome). CI (`.github/workflows/ci.yml`) runs `npm ci`, `npm run check`, `npm run build` and the e2e suite on pull requests and pushes to `main`. `npm run check` fetches `tsx` through `npx --yes` each time instead of declaring it.
+6. **No accounts, by decision.** There is no server and no sync. Data moves by backup file, by a course share link (course plus study packs, no progress) or by a transfer link (a whole backup). A link is the backup JSON gzipped (`CompressionStream`) into the URL fragment, which browsers never send to a server; `MAX_LINK` (200 KB) refuses larger ones (a course is 2 to 5 KB, all eight samples 16 KB). Anyone holding a transfer link can read the notes in it. **Everything that comes in, from a link or a file, goes through `utils/share.ts` (`sanitizeCourse`, `sanitizePack`, `sanitizeTerms`, `sanitizeState`)**: keys must match their article, links are rebuilt as Wikipedia-only URLs, numbers are clamped, scalars (goal, onboarded, lastBackup) are never imported, decompression is capped at 5 MB. Keep that rule when adding stored data: extend the sanitizer and its asserts.
 7. **CORS dependency.** The static design relies on the gateway's `Access-Control-Allow-Origin: *`. If that changes, a small serverless proxy is needed.
 8. **Docs.** `README.md` is Persian only. `public/courses/en-Linear_algebra.json` is hand-made (marked by its `note`), not AI output.
 9. **Graph layout** is a fixed ring; with more than about 30 nodes labels will overlap.
 
 10. **Builder outline is an estimate.** The real outline needs the AI call, so the builder shows counts and time from the chosen depth; `buildCourse` has no partial-success mode (a failure keeps nothing).
-11. **Level** is not assessed; the course page shows the chosen depth (older courses show none). Covers come from the keyword classifier in `utils/subject.ts` (`other` is a neutral dot pattern).
+11. **Level** (`levelOf` in `utils/progress.ts`) is a heuristic from the number of prerequisites, labelled "approximate"; it is not an assessment. The builder's "minutes a day" only estimates the number of days and is not stored. Covers come from the keyword classifier in `utils/subject.ts` (`other` is a neutral dot pattern).
 12. **Review and missing packs.** A due card whose pack is gone from Cache Storage cannot be shown. The review page says so (progress is kept) instead of claiming everything is done; the header badge still counts it.
-13. **No swipe gestures** on flashcards (large touch buttons instead); search has no arrow-key navigation (Tab and Enter work).
-14. **Phase 4 not done:** accounts and sync, analytics, SEO, error monitoring. Data boundaries are clean (`State` in, backup JSON out) so sync can be added later.
+13. **Swipe grading** (right = good, left = hard, after flipping; touch and pen only) is a shortcut; the three buttons remain the accessible path. There is no "easy" swipe.
+14. **Not built, by decision:** interface language (the UI is Persian only; English is a large translation job), notification settings and a content-language preference (no feature behind them yet). Vazirmatn stays the only font, self-hosted in `public/fonts` (copied from the `@fontsource/vazirmatn` package, which is deliberately not a dependency). Empty states get subject artwork from the same generated motifs as covers; there is no hand-drawn illustration set.
+15. **Still not done:** accounts and live sync, analytics, error monitoring, notifications. Done in v0.4.0: PWA install and offline shell, social preview, About, Privacy and 404 pages.
+16. **Flashcards flip** is a single-face `flip-in` animation, not a two-face 3D flip: rendering both faces would make the hidden answer count as visible to tests and screen readers.
 
 ## 10. Suggested next steps
 
@@ -201,6 +207,7 @@ graphify update .                          # refresh the code part of the graph 
   - [ ] new persisted fields are additive and included in backup/restore
   - [ ] no secrets; the gateway URL contains a token and must not appear in code, logs or screenshots
   - [ ] graph refreshed (`graphify update .`) if the structure changed
+- **Versioning:** [Semantic Versioning](https://semver.org/spec/v2.0.0.html), `MAJOR.MINOR.PATCH`, with the single source of truth in `package.json` (`version`, mirrored in `package-lock.json`). While below 1.0.0, a **minor** bump is a user-visible feature or redesign (it may change behaviour) and a **patch** is a fix or internal change with no new feature. **1.0.0** is the first release that promises backup/share-link compatibility under compatibility rule 4 without caveats; after it, a breaking change to stored data or the backup format is a **major** bump. Every release: move `[Unreleased]` entries in `CHANGELOG.md` under a dated version heading, bump `package.json` and the lock file (`npm version <level> --no-git-tag-version`), commit as `Release vX.Y.Z`, and tag `vX.Y.Z` (annotated). Do not bump the version in feature commits.
 - **Dependencies:** the only runtime dependencies are `react`, `react-dom` and `lucide-react`. Ask before adding one.
 - **Agents:** do not commit or push unless asked; do not touch `main` without authorisation; keep diffs minimal and in the existing style; never print or commit `.env`.
 

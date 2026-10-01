@@ -4,7 +4,7 @@ import type { BuildOpts, CourseRef, Depth, Purpose } from '../../types/course';
 import { courseHref, findCourse } from '../../data/store';
 import { DEFAULT_OPTS, DEPTH_CAP, previewArticle, type Preview } from '../../lib/build';
 import { courseKey, parseWikiUrl, wikiUrl } from '../../utils/course';
-import { MIN_PER_TOPIC } from '../../utils/progress';
+import { MIN_PER_TOPIC, daysAt } from '../../utils/progress';
 import { Cover } from '../Cover/Cover';
 import { ErrorState } from '../States/States';
 import { Skeleton } from '../States/States';
@@ -38,6 +38,7 @@ export function CourseBuilder({ job, hasAI, recent, onBuild, onRead, onSettings,
   const [invalid, setInvalid] = useState('');
   const [pre, setPre] = useState<Pre>({ state: 'idle' });
   const [opts, setOpts] = useState<BuildOpts>(DEFAULT_OPTS);
+  const [perDay, setPerDay] = useState(30); // minutes a day: only used to estimate how long the path takes
   const input = useRef<HTMLInputElement>(null);
   const run = useRef(0); // ignores a preview that finished after the link was changed
   const building = !!job?.status;
@@ -264,6 +265,19 @@ export function CourseBuilder({ job, hasAI, recent, onBuild, onRead, onSettings,
                   {label}
                 </label>
               ))}
+            </div>
+          </fieldset>
+
+          <fieldset className="space-y-2" disabled={building}>
+            <legend className="mb-1 font-bold">روزی چقدر وقت داری؟</legend>
+            <div className="flex flex-wrap items-center gap-2">
+              {[15, 30, 60].map((m) => (
+                <label key={m} className="flex min-h-11 cursor-pointer items-center gap-2 rounded-lg border border-line bg-panel px-3 text-sm has-[:checked]:border-accent has-[:checked]:bg-accent-soft has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-accent">
+                  <input type="radio" name="perday" checked={perDay === m} onChange={() => setPerDay(m)} className="size-4 accent-accent" />
+                  {fa(m)} دقیقه
+                </label>
+              ))}
+              <span className="text-sm text-muted">با این ریتم، حدود {fa(daysAt(steps(opts.depth) * MIN_PER_TOPIC, perDay))} روز.</span>
             </div>
           </fieldset>
 

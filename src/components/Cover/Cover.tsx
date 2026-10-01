@@ -2,17 +2,17 @@ import { seed, subjectOf, type Subject } from '../../utils/subject';
 
 // Each subject gets its own motif and tint (tokens only). The title seeds small variations, so two math courses are siblings, not twins.
 const TINT: Record<Subject, string> = {
-  math: 'bg-accent-soft text-accent',
-  physics: 'bg-info/15 text-info',
-  code: 'bg-fg/10 text-fg',
-  history: 'bg-gold/20 text-prereq',
-  biology: 'bg-accent-soft text-accent',
-  other: 'bg-fg/5 text-muted',
+  math: 'bg-linear-to-br from-sub-math/25 to-sub-math/5 text-sub-math',
+  physics: 'bg-linear-to-br from-sub-physics/25 to-sub-physics/5 text-sub-physics',
+  code: 'bg-linear-to-br from-sub-code/25 to-sub-code/5 text-sub-code',
+  history: 'bg-linear-to-br from-sub-history/25 to-sub-history/5 text-sub-history',
+  biology: 'bg-linear-to-br from-sub-biology/25 to-sub-biology/5 text-sub-biology',
+  other: 'bg-linear-to-br from-fg/10 to-fg/0 text-muted',
 };
 
 function Motif({ subject, n }: { subject: Subject; n: number }) {
   const a = n % 5; // 0-4
-  const line = { fill: 'none', stroke: 'currentColor', strokeWidth: 1.5, opacity: 0.55 } as const;
+  const line = { fill: 'none', stroke: 'currentColor', strokeWidth: 1.5, opacity: 0.8 } as const;
   switch (subject) {
     case 'math': // grid, a circle and a triangle
       return (
@@ -67,11 +67,11 @@ function Motif({ subject, n }: { subject: Subject; n: number }) {
   }
 }
 
-type Props = { title: string; summary?: string; thumbnail?: string; className?: string };
+type Props = { title: string; summary?: string; thumbnail?: string; className?: string; subject?: Subject /* force a motif, e.g. for empty states */ };
 
 /** Subject artwork for a course. Decorative (the title is always shown next to it), so it is hidden from assistive tech. */
-export function Cover({ title, summary, thumbnail, className = '' }: Props) {
-  const subject = subjectOf({ title, summary });
+export function Cover({ title, summary, thumbnail, className = '', subject: forced }: Props) {
+  const subject = forced ?? subjectOf({ title, summary });
   return (
     <div className={`relative overflow-hidden ${TINT[subject]} ${className}`} aria-hidden="true" data-subject={subject}>
       <svg viewBox="0 0 200 120" preserveAspectRatio="xMidYMid slice" className="absolute inset-0 size-full">

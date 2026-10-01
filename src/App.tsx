@@ -10,6 +10,8 @@ import { CourseBuilder, type Job } from './components/CourseBuilder/CourseBuilde
 import { CourseView } from './components/CourseView/CourseView';
 import { Discover } from './components/Discover/Discover';
 import { Home } from './components/Home/Home';
+import { Import } from './components/Import/Import';
+import { About, Footer, NotFound, Privacy } from './components/Pages/Pages';
 import { Insights } from './components/Insights/Insights';
 import { Library } from './components/Library/Library';
 import { Reader } from './components/Reader/Reader';
@@ -24,13 +26,12 @@ const THEMES: Record<ThemePref, [typeof Sun, ThemePref, string]> = {
   light: [Sun, 'dark', 'تم: روشن'],
   dark: [Moon, 'auto', 'تم: تیره'],
 };
-const NAV: Record<string, NavId | null> = { home: 'home', library: 'library', course: 'library', read: 'library', review: 'review', discover: 'discover', insights: 'insights', new: null };
+const NAV: Record<string, NavId | null> = { home: 'home', library: 'library', course: 'library', read: 'library', review: 'review', discover: 'discover', insights: 'insights', settings: 'settings', about: null, privacy: null, notfound: null, import: null, new: null };
 
 export default function App() {
   const store = useStore();
   const route = useRoute();
   const [ai, setAi] = useState<AI>(loadAI);
-  const [settingsOpen, setSettingsOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [job, setJob] = useState<Job>(null);
   const [rev, setRev] = useState(0); // remounts the course view after a rebuild of the same course
@@ -70,9 +71,10 @@ export default function App() {
     return () => removeEventListener('keydown', f);
   }, []);
 
+  const openSettings = () => void (location.hash = '#/settings');
   const needAI = () => {
     if (hasAI) return false;
-    setSettingsOpen(true);
+    location.hash = '#/settings'; // the AI settings live there
     return true;
   };
 
@@ -111,7 +113,7 @@ export default function App() {
   const busy = !!job?.status;
   // A new key remounts the page, so every screen opens scrolled to the top.
   const page = route.name === 'read' ? `read:${route.lang}:${route.title}` : route.name;
-  const builder = <CourseBuilder job={job} hasAI={hasAI} recent={store.state.recent} onBuild={build} onRead={read} onSettings={() => setSettingsOpen(true)} />;
+  const builder = <CourseBuilder job={job} hasAI={hasAI} recent={store.state.recent} onBuild={build} onRead={read} onSettings={openSettings} />;
 
   return (
     <ToastProvider>
@@ -124,17 +126,35 @@ export default function App() {
         onDismissJob={() => setJob(null)}
         saveOk={store.saveOk}
         theme={{ icon: ThemeIcon, label: themeLabel, next: () => setTheme(nextTheme) }}
-        onSettings={() => setSettingsOpen(true)}
         onSearch={() => setSearchOpen(true)}
       >
         {route.name === 'course' ? (
-          <CourseView key={`${route.key}:${rev}`} courseKey={route.key} store={store} ai={ai} busy={busy} needAI={needAI} onBuild={build} />
+          <CourseView key={`${route.key}:${rev}`} courseKey={route.key} topicParam={route.topic} store={store} ai={ai} busy={busy} needAI={needAI} onBuild={build} />
         ) : (
           <div key={page} className="page-in min-h-0 flex-1 lg:overflow-y-auto">
             {route.name === 'read' ? (
               <Reader lang={route.lang} title={route.title} course={route.course} store={store} ai={ai} needAI={needAI} />
+            ) : route.name === 'about' ? (
+              <About />
+            ) : route.name === 'privacy' ? (
+              <Privacy />
+            ) : route.name === 'notfound' ? (
+              <NotFound />
             ) : route.name === 'review' ? (
               <Review store={store} />
+            ) : route.name === 'import' ? (
+              <Import data={route.data} store={store} />
+            ) : route.name === 'settings' ? (
+              <Settings
+                ai={ai}
+                store={store}
+                theme={theme}
+                onTheme={setTheme}
+                onSave={(next) => {
+                  saveAI(next);
+                  setAi(next);
+                }}
+              />
             ) : route.name === 'discover' ? (
               <Discover store={store} onBuild={build} />
             ) : route.name === 'insights' ? (
@@ -150,23 +170,14 @@ export default function App() {
                 {builder}
               </div>
             ) : (
-              <Home store={store} job={job} hasAI={hasAI} onBuild={build} onRead={read} onSettings={() => setSettingsOpen(true)} />
+              <Home store={store} job={job} hasAI={hasAI} onBuild={build} onRead={read} onSettings={openSettings} />
             )}
+            {route.name !== 'read' && <Footer />}
           </div>
         )}
       </AppShell>
 
       <SearchCommand open={searchOpen} store={store} onClose={() => setSearchOpen(false)} onBuild={build} onRead={read} />
-      <Settings
-        open={settingsOpen}
-        ai={ai}
-        store={store}
-        onSave={(next) => {
-          saveAI(next);
-          setAi(next);
-        }}
-        onClose={() => setSettingsOpen(false)}
-      />
     </ToastProvider>
   );
 }
