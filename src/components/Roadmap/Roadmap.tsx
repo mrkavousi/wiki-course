@@ -7,13 +7,14 @@ type Props = {
   known: Set<string>;
   selectedKey: string | null;
   onSelect: (key: string) => void;
+  due?: Record<string, number>; // due cards per topicKey
 };
 
 const Head = ({ children, className }: { children: string; className: string }) => (
-  <h3 className={`mb-1 mt-6 text-center text-sm font-bold ${className}`}>{children}</h3>
+  <h2 className={`mb-1 mt-6 text-center text-sm font-bold ${className}`}>{children}</h2>
 );
 
-export function Roadmap({ course, known, selectedKey, onSelect }: Props) {
+export function Roadmap({ course, known, selectedKey, onSelect, due }: Props) {
   const steps = pathOf(course);
   const nextIdx = steps.findIndex((s) => !known.has(topicKey(s.page))); // first unknown step
   const rootIdx = steps.findIndex((s) => !s.topic);
@@ -39,6 +40,7 @@ export function Roadmap({ course, known, selectedKey, onSelect }: Props) {
                   selected={key === selectedKey}
                   size={s.topic ? 84 : 112}
                   badge={i === nextIdx ? (i === 0 ? 'از اینجا شروع کن' : 'گام بعدی') : undefined}
+                  due={due?.[key]}
                   onClick={() => onSelect(key)}
                 />
               </div>
@@ -58,6 +60,7 @@ export function Roadmap({ course, known, selectedKey, onSelect }: Props) {
                 size={64}
                 state={known.has(topicKey(t)) ? 'known' : 'todo'}
                 selected={topicKey(t) === selectedKey}
+                due={due?.[topicKey(t)]}
                 onClick={() => onSelect(topicKey(t))}
               />
             ))}

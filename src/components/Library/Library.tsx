@@ -1,225 +1,199 @@
-import { useEffect, useState } from 'react';
-import { CircleCheck, Compass, Flame, GraduationCap, Layers, PartyPopper, PenLine, Repeat, ShieldCheck, Sparkles, Star, Target } from 'lucide-react';
-import type { Course, CourseRef, Page } from '../../types/course';
-import { courseHref, findCourse, SAMPLES, type Store } from '../../data/store';
-import { courseKey, pathOf, topicKey, wikiUrl } from '../../utils/course';
-import { dueIds, PASS, streak, today } from '../../utils/learn';
-import { badge, card, fa, ic, lift, primary } from '../ui';
-import { UrlBar } from '../UrlBar/UrlBar';
+import { useMemo, useState } from 'react';
+import { Archive, ArchiveRestore, BookOpen, LayoutGrid, List, Plus, Search, SearchX, Star, Trash2 } from 'lucide-react';
+import type { BuildOpts, Course, Page } from '../../types/course';
+import { allRefs, deleteCourse, local, useCourses, type Store } from '../../data/store';
+import { topicKey, wikiUrl } from '../../utils/course';
+import { today } from '../../utils/learn';
+import { courseStats, STATUS_LABEL, type Status } from '../../utils/progress';
+import { SUBJECT_LABEL, subjectOf, type Subject } from '../../utils/subject';
+import { ConfirmModal } from '../ConfirmModal/ConfirmModal';
+import { CourseCard, CourseCardSkeleton } from '../CourseCard/CourseCard';
+import { EmptyState } from '../States/States';
+import { useToast } from '../Toast/Toast';
+import { card, field, ghost, ic, iconBtn, primary } from '../ui';
+import { readHref } from '../../data/store';
 
-type Props = { store: Store; busy: boolean; onBuild: (url: string) => void; onRead: (url: string) => void };
+type Props = { store: Store; onBuild: (url: string, o?: { opts?: BuildOpts; force?: boolean }) => void };
+type Sort = 'last' | 'progress' | 'created';
+type View = 'grid' | 'list';
 
-// icon, title, text, icon-badge tint
-const TIPS = [
-  [Compass, 'از پیش‌نیازها شروع کن', 'مسیر به ترتیب اهمیت چیده شده. هر چه بلدی را علامت بزن تا «گام بعدی» معلوم شود.', 'bg-fg/10 text-fg'],
-  [PenLine, 'با زبان خودت بنویس', 'بعد از خواندن هر مقاله، در چند جمله توضیحش بده (تکنیک فاینمن).', 'bg-accent/10 text-accent'],
-  [Target, 'خودت را بیازما', `آزمون هر موضوع را بده؛ با ${fa(PASS)}٪ «بلدم» می‌خورد.`, 'bg-prereq/10 text-prereq'],
-  [Repeat, 'هر روز کمی مرور', 'فلش‌کارت‌ها با فاصله‌ی بیشتر و بیشتر برمی‌گردند تا در حافظه‌ی بلندمدت بمانند.', 'bg-related/10 text-related'],
-] as const;
+const select = `${field} !w-auto min-h-11 py-2 text-sm`;
 
-const starBtn = 'flex size-9 items-center justify-center rounded-full text-accent hover:bg-fg/10';
-
-const refPage = (c: CourseRef): Page => ({ title: c.title, lang: c.lang, url: wikiUrl(c.lang, c.title), summary: '', thumbnail: c.thumbnail });
-
-function Thumb({ src, title, className }: { src?: string; title: string; className: string }) {
-  // The fallback letter is always decorative: the real title renders as its own text right beside it,
-  // so it's hidden from assistive tech/text extraction here once, rather than trusting every caller to ask for it.
-  return src ? (
-    <img src={src} alt="" loading="lazy" decoding="async" className={`shrink-0 bg-fg/10 object-cover ${className}`} />
-  ) : (
-    <span className={`flex shrink-0 items-center justify-center bg-fg/10 font-bold text-muted ${className}`} aria-hidden="true">
-      {title[0]}
-    </span>
-  );
-}
-
-export function Library({ store, busy, onBuild, onRead }: Props) {
+export function Library({ store, onBuild }: Props) {
   const { state } = store;
   const day = today();
-  const due = dueIds(state.boxes, day).length;
-  const known = new Set(state.known);
-  const savedKeys = new Set(state.saved.map(topicKey));
-  const courses = [...new Map([...state.recent, ...SAMPLES].map((c) => [c.key, c])).values()];
-  const isNew = !state.recent.length && !state.saved.length && !state.known.length && !state.days.length;
-  // undefined = still loading, null = not built yet
-  const [savedCourses, setSavedCourses] = useState<Record<string, Course | null>>({});
+  const toast = useToast();
+  const refs = allRefs(state);
+  const courses = useCourses(refs);
+  const [q, setQ] = useState('');
+  const [lang, setLang] = useState('');
+  const [status, setStatus] = useState<'' | Status>('');
+  const [subject, setSubject] = useState<'' | Subject>('');
+  const [sort, setSort] = useState<Sort>('last');
+  const [favOnly, setFavOnly] = useState(false);
+  const [view, setViewState] = useState<View>(() => (local.get<View>('wc:lib', 'grid') === 'list' ? 'list' : 'grid'));
+  const [doomed, setDoomed] = useState<Course | null>(null);
+  const setView = (v: View) => (setViewState(v), local.set('wc:lib', v));
 
-  // Progress bars need each saved topic's course (built on this device or a bundled sample).
-  useEffect(() => {
-    let live = true;
-    Promise.all(state.saved.map(async (p) => [topicKey(p), await findCourse(courseKey(p.lang, p.title))] as const)).then(
-      (rows) => live && setSavedCourses(Object.fromEntries(rows)),
-    );
-    return () => {
-      live = false;
-    };
-  }, [state.saved]);
+  const rows = useMemo(
+    () =>
+      (courses ?? []).map((c) => ({ c, s: courseStats(c, state, day), subject: subjectOf({ title: c.root.title, summary: c.root.summary }), fav: state.saved.some((p) => topicKey(p) === topicKey(c.root)) })),
+    [courses, state, day],
+  );
+  const langs = [...new Set(rows.map((r) => r.c.root.lang))];
+  const needle = q.trim().toLowerCase();
+  const shown = rows
+    .filter((r) => (status ? r.s.status === status : r.s.status !== 'archived')) // archived courses only show when asked for
+    .filter((r) => (!lang || r.c.root.lang === lang) && (!subject || r.subject === subject) && (!favOnly || r.fav))
+    .filter((r) => !needle || `${r.c.root.title} ${r.c.root.summary}`.toLowerCase().includes(needle))
+    .sort((a, b) => (sort === 'progress' ? b.s.pct - a.s.pct : sort === 'created' ? b.c.generatedAt.localeCompare(a.c.generatedAt) : b.s.last - a.s.last));
+  const filtered = !!(q || lang || status || subject || favOnly);
+  const clear = () => (setQ(''), setLang(''), setStatus(''), setSubject(''), setFavOnly(false));
+
+  // Saved topics that have no course yet (a star on a course card is a favourite; these were saved from inside a course).
+  const courseTopics = new Set(rows.map((r) => topicKey(r.c.root)));
+  const loose: Page[] = state.saved.filter((p) => !courseTopics.has(topicKey(p)));
+
+  const archive = (c: Course, on: boolean) => {
+    store.setArchived(c.key, on);
+    toast(on ? 'به بایگانی رفت' : 'از بایگانی درآمد');
+  };
+  const remove = async () => {
+    const c = doomed!;
+    setDoomed(null);
+    await deleteCourse(c.key);
+    store.forgetCourse(c.key);
+    toast('دوره حذف شد');
+  };
 
   return (
-    <div className="mx-auto max-w-5xl space-y-10 px-4 py-8">
-      {/* Hero section */}
-      <section className="space-y-6 text-center">
+    <div className="mx-auto w-full max-w-6xl space-y-5 px-4 py-6">
+      <header className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="mb-2 flex items-center justify-center gap-2 text-3xl font-extrabold">
-            <GraduationCap className="size-8 text-accent" />
-            از هر مقاله، یک مسیر یادگیری هوشمند بساز
-          </h1>
-          <p className="leading-8 text-muted">
-            با چسباندن لینک هر مقاله‌ی ویکی‌پدیا (فارسی یا انگلیسی)، نقشه راه، خلاصه‌ها، فلش‌کارت‌ها و آزمون‌های اختصاصی آن را در چند ثانیه تحویل بگیر.
-          </p>
+          <h1 className="text-2xl font-extrabold">کتابخانه‌ی من</h1>
+          <p className="text-sm text-muted">{courses ? `${rows.length.toLocaleString('fa')} دوره` : 'در حال بارگذاری…'}</p>
         </div>
-        <div className="flex flex-col items-center gap-4 sm:max-w-2xl sm:mx-auto">
-          <UrlBar busy={busy} onBuild={onBuild} onRead={onRead} hero />
-          <div className="flex flex-wrap justify-center gap-2">
-            {['جبر خطی', 'یادگیری ماشین', 'شاهنشاهی اشکانی'].map((title) => (
-              <button
-                key={title}
-                disabled={busy}
-                onClick={() => onBuild(wikiUrl('fa', title))}
-                className="rounded-full border border-accent bg-accent/10 px-3 py-1 text-sm font-medium text-accent hover:bg-accent/20 disabled:opacity-50"
-              >
-                {title}
-              </button>
-            ))}
-          </div>
+        <a href="#/new" className={primary}>
+          <Plus className={ic} />
+          ساخت دوره
+        </a>
+      </header>
+
+      <div className="flex flex-wrap items-center gap-2" role="search">
+        <div className="relative min-w-48 flex-1">
+          <Search className="pointer-events-none absolute start-3 top-1/2 size-4 -translate-y-1/2 text-muted" />
+          <input type="search" value={q} onChange={(e) => setQ(e.target.value)} aria-label="جست‌وجو در کتابخانه" placeholder="جست‌وجو در عنوان و خلاصه" className={`${field} ps-9`} />
         </div>
-      </section>
+        <select aria-label="زبان" value={lang} onChange={(e) => setLang(e.target.value)} className={select}>
+          <option value="">همه‌ی زبان‌ها</option>
+          {langs.map((l) => <option key={l} value={l}>{l === 'fa' ? 'فارسی' : l === 'en' ? 'English' : l}</option>)}
+        </select>
+        <select aria-label="وضعیت" value={status} onChange={(e) => setStatus(e.target.value as Status | '')} className={select}>
+          <option value="">همه‌ی وضعیت‌ها</option>
+          {(Object.keys(STATUS_LABEL) as Status[]).map((s) => <option key={s} value={s}>{STATUS_LABEL[s]}</option>)}
+        </select>
+        <select aria-label="موضوع" value={subject} onChange={(e) => setSubject(e.target.value as Subject | '')} className={select}>
+          <option value="">همه‌ی حوزه‌ها</option>
+          {(Object.keys(SUBJECT_LABEL) as Subject[]).map((s) => <option key={s} value={s}>{SUBJECT_LABEL[s]}</option>)}
+        </select>
+        <select aria-label="مرتب‌سازی" value={sort} onChange={(e) => setSort(e.target.value as Sort)} className={select}>
+          <option value="last">آخرین فعالیت</option>
+          <option value="progress">بیشترین پیشرفت</option>
+          <option value="created">تازه‌ترین</option>
+        </select>
+        <button className={`${ghost} ${favOnly ? 'border-accent bg-accent-soft text-accent' : ''}`} aria-pressed={favOnly} onClick={() => setFavOnly(!favOnly)}>
+          <Star className={`${ic} ${favOnly ? 'fill-current' : ''}`} />
+          ذخیره‌شده‌ها
+        </button>
+        <div className="flex overflow-hidden rounded-lg border border-line" role="group" aria-label="نحوه‌ی نمایش">
+          {(
+            [
+              ['grid', 'شبکه‌ای', LayoutGrid],
+              ['list', 'فهرستی', List],
+            ] as const
+          ).map(([v, label, Icon]) => (
+            <button key={v} aria-pressed={view === v} aria-label={label} title={label} onClick={() => setView(v)} className={`${iconBtn} rounded-none ${view === v ? 'bg-accent text-on-accent hover:bg-accent' : ''}`}>
+              <Icon className="size-5" />
+            </button>
+          ))}
+        </div>
+      </div>
 
-      {isNew ? (
-        <section className={`${card} flex items-center gap-3 bg-accent/5 p-4 text-sm`}>
-          <Sparkles className="size-8 flex-none text-accent" />
-          <p className="text-muted">با یکی از پیشنهادهای بالا یا لینک خودت شروع کن؛ آمار مرور و زنجیره‌ی یادگیری بعد از اولین قدم اینجا ظاهر می‌شود.</p>
-        </section>
-      ) : (
-        <section className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-          <a href="#/review" className={`${card} ${lift} bg-accent/5 p-4 hover:border-accent`}>
-            <div className="mb-3 flex size-10 items-center justify-center rounded-xl bg-accent/10">
-              <Layers className="size-5 text-accent" />
-            </div>
-            <p className="text-sm text-muted">مرور امروز</p>
-            <p className="text-2xl font-bold">{fa(due)} کارت</p>
-            <p className="text-sm text-muted">{due ? 'بزن تا شروع کنیم' : 'امروز کارت جدیدی نداری؛ برای حفظ زنجیره سراغ یک دوره‌ی جدید برو'}</p>
-          </a>
-          <div className={`${card} bg-prereq/5 p-4`}>
-            <div className="mb-3 flex size-10 items-center justify-center rounded-xl bg-prereq/10">
-              <Flame className="size-5 text-prereq" />
-            </div>
-            <p className="text-sm text-muted">زنجیره یادگیری</p>
-            <p className="text-2xl font-bold">{fa(streak(state.days, day))}</p>
-            <p className="text-sm text-muted">با هر مرور روزانه، زنجیره‌ات را حفظ کن</p>
-          </div>
-          <div className={`${card} bg-accent/5 p-4`}>
-            <div className="mb-3 flex size-10 items-center justify-center rounded-xl bg-accent/10">
-              <CircleCheck className="size-5 text-accent" />
-            </div>
-            <p className="text-sm text-muted">جعبه‌ی دانشی که مسلط شدی</p>
-            <p className="text-2xl font-bold">{fa(state.known.length)}</p>
-            <p className="text-sm text-muted">هر موضوع بلد شده، در تمام دوره‌ها پیش‌نیاز حساب می‌شود و نیازی به دوباره خواندن ندارد</p>
-          </div>
-        </section>
-      )}
-
-      <section>
-        <h2 className="mb-3 text-xl font-bold">کتابخانه‌ی من</h2>
-        {!state.saved.length ? (
-          <p className="text-muted">هنوز دوره‌ای به کتابخانه اضافه نکرده‌ای. دوره‌های زیر را امتحان کن.</p>
-        ) : (
-          <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {state.saved.map((p) => {
-              const k = topicKey(p);
-              const c = savedCourses[k];
-              const steps = c ? pathOf(c) : [];
-              const done = steps.filter((s) => known.has(topicKey(s.page))).length;
-              return (
-                <li key={k} className={`${card} ${lift} relative`}>
-                  <button
-                    disabled={!c && busy}
-                    onClick={() => (c ? (location.hash = courseHref(c.key)) : onBuild(p.url))}
-                    className="flex w-full items-center gap-3 p-3 pe-10 text-start"
-                  >
-                    <Thumb src={p.thumbnail} title={p.title} className="h-16 w-16 rounded-xl" />
-                    <span className="min-w-0 flex-1 space-y-1.5">
-                      <span dir="auto" className="block truncate font-bold">{p.title}</span>
-                      {c ? (
-                        <>
-                          <span className="block h-1.5 overflow-hidden rounded-full bg-fg/10">
-                            <span className="block h-full rounded-full bg-accent" style={{ width: `${steps.length ? (done / steps.length) * 100 : 0}%` }} />
-                          </span>
-                          <span className="block text-xs text-muted">
-                            {fa(done)} از {fa(steps.length)} گام
-                          </span>
-                        </>
-                      ) : (
-                        <span className="block text-xs text-muted">{c === null ? 'دوره هنوز ساخته نشده؛ بزن تا ساخته شود' : '…'}</span>
-                      )}
-                    </span>
-                  </button>
-                  <button
-                    onClick={() => store.toggleSaved(p)}
-                    aria-label={`حذف «${p.title}» از کتابخانه`}
-                    title="حذف از کتابخانه"
-                    className={`${starBtn} absolute end-2 top-2`}
-                  >
-                    <Star className="size-5 fill-current" />
-                  </button>
-                </li>
-              );
-            })}
-          </ul>
-        )}
-      </section>
-
-      <section>
-        <h2 className="mb-3 text-xl font-bold">همه‌ی دوره‌ها</h2>
-        <ul className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
-          {courses.map((c) => {
-            const saved = savedKeys.has(topicKey(c));
-            return (
-              <li key={c.key} className={`${card} ${lift} flex items-center gap-3 p-2`}>
-                <Thumb src={c.thumbnail} title={c.title} className="h-11 w-11 rounded-lg" />
-                <a href={courseHref(c.key)} dir="auto" className="min-w-0 flex-1 truncate font-medium hover:text-accent">
-                  {c.title}
-                </a>
-                <span className={badge}>{c.lang}</span>
-                <button
-                  onClick={() => store.toggleSaved(refPage(c))}
-                  aria-pressed={saved}
-                  aria-label={saved ? `حذف «${c.title}» از کتابخانه` : `ذخیره‌ی «${c.title}» در کتابخانه`}
-                  className={starBtn}
-                >
-                  <Star className={`size-5 ${saved ? 'fill-current' : ''}`} />
-                </button>
-              </li>
-            );
-          })}
-        </ul>
-      </section>
-
-      <section>
-        <h2 className="mb-3 text-xl font-bold">چطور بهتر یاد بگیریم؟</h2>
-        <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          {TIPS.map(([Icon, title, text, tint]) => (
-            <li key={title} className={`${card} p-4`}>
-              <div className={`mb-3 flex size-10 items-center justify-center rounded-xl ${tint}`}>
-                <Icon className="size-5" />
-              </div>
-              <p className="mb-2 font-bold">{title}</p>
-              <p className="text-sm leading-7 text-muted">{text}</p>
+      {courses === undefined ? (
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {[0, 1, 2].map((i) => <CourseCardSkeleton key={i} />)}
+        </div>
+      ) : shown.length ? (
+        <ul className={view === 'grid' ? 'grid gap-3 sm:grid-cols-2 lg:grid-cols-3' : 'space-y-3'} aria-live="polite">
+          {shown.map(({ c, s }) => (
+            <li key={c.key}>
+              <CourseCard
+                course={c}
+                state={state}
+                day={day}
+                variant={view}
+                level={2}
+                onToggleSaved={() => store.toggleSaved(c.root)}
+                menu={
+                  <>
+                    <button onClick={() => archive(c, s.status !== 'archived')} aria-label={s.status === 'archived' ? `برگرداندن «${c.root.title}» از بایگانی` : `بایگانی «${c.root.title}»`} title={s.status === 'archived' ? 'برگرداندن از بایگانی' : 'بایگانی'} className={iconBtn}>
+                      {s.status === 'archived' ? <ArchiveRestore className="size-5" /> : <Archive className="size-5" />}
+                    </button>
+                    {state.recent.some((r) => r.key === c.key) && (
+                      <button onClick={() => setDoomed(c)} aria-label={`حذف «${c.root.title}»`} title="حذف" className={`${iconBtn} text-danger`}>
+                        <Trash2 className="size-5" />
+                      </button>
+                    )}
+                  </>
+                }
+              />
             </li>
           ))}
         </ul>
-      </section>
+      ) : filtered ? (
+        <EmptyState icon={SearchX} title="دوره‌ای پیدا نشد" text="با این جست‌وجو و فیلترها چیزی نیست. فیلترها را بردار یا عبارت دیگری امتحان کن.">
+          <button className={ghost} onClick={clear}>
+            پاک کردن فیلترها
+          </button>
+        </EmptyState>
+      ) : (
+        <EmptyState icon={BookOpen} title="کتابخانه‌ات خالی است" text="اولین دوره‌ات را از لینک یک مقاله بساز؛ همین‌جا می‌ماند و پیشرفتت دیده می‌شود.">
+          <a href="#/new" className={primary}>ساخت دوره</a>
+        </EmptyState>
+      )}
 
-      {/* Privacy notice */}
-      <section className={`${card} flex items-start gap-3 p-4 text-sm`}>
-        <ShieldCheck className="mt-0.5 size-5 flex-none text-accent" />
-        <span>
-          <span className="block font-bold">مدیریت داده‌ها و حریم خصوصی</span>
-          <span className="text-muted">
-            اطلاعات شما بدون نیاز به ثبت‌نام روی همین دستگاه ذخیره می‌شود. برای انتقال به دستگاه دیگر از تنظیمات نسخه‌ی پشتیبان بگیر.
-          </span>
-        </span>
-      </section>
+      {loose.length > 0 && (
+        <section aria-label="موضوع‌های ذخیره‌شده">
+          <h2 className="mb-2 text-lg font-bold">برای بعد ذخیره کرده‌ای</h2>
+          <ul className="space-y-2">
+            {loose.map((p) => (
+              <li key={topicKey(p)} className={`${card} flex flex-wrap items-center gap-3 p-3`}>
+                <span dir="auto" className="min-w-0 flex-1 truncate font-medium">{p.title}</span>
+                <a href={readHref(p.lang, p.title)} className={ghost}>
+                  <BookOpen className={ic} />
+                  بخوان
+                </a>
+                <button className={ghost} onClick={() => onBuild(p.url || wikiUrl(p.lang, p.title))}>
+                  ساخت دوره
+                </button>
+                <button className={iconBtn} onClick={() => store.toggleSaved(p)} aria-label={`حذف «${p.title}» از ذخیره‌شده‌ها`} title="حذف از ذخیره‌شده‌ها">
+                  <Star className="size-5 fill-current text-accent" />
+                </button>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      <ConfirmModal
+        open={!!doomed}
+        danger
+        title={`حذف «${doomed?.root.title ?? ''}»؟`}
+        text="دوره از این دستگاه پاک می‌شود. علامت «بلدم»، یادداشت‌ها، فلش‌کارت‌ها و آزمون‌های مقاله‌ها می‌مانند؛ اگر دوباره بسازی، همه سر جایشان‌اند."
+        confirmLabel="حذف دوره"
+        onConfirm={remove}
+        onCancel={() => setDoomed(null)}
+      />
     </div>
   );
 }

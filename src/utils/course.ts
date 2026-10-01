@@ -47,8 +47,8 @@ export function extractLists<K extends string>(text: string, keys: readonly K[])
 
 export type RawItem = { title: string; score: number; why: string; summary: string };
 
-/** Validate one role's list from the model: right shape, 0-100 score, ≤6, strongest first. */
-export function cleanItems(raw: unknown): RawItem[] {
+/** Validate one role's list from the model: right shape, 0-100 score, at most `max`, strongest first. */
+export function cleanItems(raw: unknown, max = 6): RawItem[] {
   if (!Array.isArray(raw)) return [];
   return raw
     .filter((x) => x && typeof x.title === 'string' && x.title.trim())
@@ -59,7 +59,7 @@ export function cleanItems(raw: unknown): RawItem[] {
       summary: String(x.summary ?? ''),
     }))
     .sort((a, b) => b.score - a.score)
-    .slice(0, 6);
+    .slice(0, max);
 }
 
 const str = (x: unknown) => (typeof x === 'string' ? x.trim() : '');

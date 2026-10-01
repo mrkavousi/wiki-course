@@ -3,17 +3,21 @@
 /* Semantic colour tokens. Dark values here; light overrides below (index.html sets data-theme before first paint). */
 @theme {
   --font-sans: Vazirmatn, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
-  --color-bg: #0b0b10;
-  --color-panel: #14141c;
-  --color-fg: #ececf1;
-  --color-muted: #a3a3b2;
-  --color-line: #2b2b38;
-  --color-accent: #5eead4;
-  --color-on-accent: #0b0b10;
-  --color-prereq: #fbbf24;
-  --color-next: #5eead4;
-  --color-related: #a78bfa;
-  --color-danger: #f87171;
+  /* Dark theme: the light palette's greens, deepened. Names are semantic so the light theme only re-assigns values. */
+  --color-bg: #0f1512;
+  --color-panel: #17201a;
+  --color-fg: #e8eee9;
+  --color-muted: #a3b0a7;
+  --color-line: #2b382f;
+  --color-accent: #7bc09b;
+  --color-on-accent: #0f1512;
+  --color-accent-soft: #1e3328;
+  --color-gold: #e9b949;
+  --color-info: #8fb3cc;
+  --color-prereq: #e9b949;
+  --color-next: #7bc09b;
+  --color-related: #8fb3cc;
+  --color-danger: #e58582;
 
   /*
    * Type scale. Tailwind's defaults (12/14px, tight line-heights) are too small and cramped for Persian, so the two small
@@ -37,32 +41,32 @@
 
 :root {
   color-scheme: dark;
-  /* Layered elevation. Dark mode: deep, dark shadows that read on a near-black bg. Light overridden below. */
-  --wc-elev: 0 1px 2px rgba(0, 0, 0, 0.4), 0 10px 28px -10px rgba(0, 0, 0, 0.6);
-  --wc-elev-hi: 0 2px 4px rgba(0, 0, 0, 0.4), 0 16px 36px -8px rgba(0, 0, 0, 0.7);
-  --wc-glow: 0 0 0 1px color-mix(in oklab, var(--color-accent) 18%, transparent),
-    0 14px 48px -14px color-mix(in oklab, var(--color-accent) 40%, transparent);
+  /* Quiet elevation: a hairline plus a short soft shadow. Light overrides below. */
+  --wc-elev: 0 1px 2px rgba(0, 0, 0, 0.35);
+  --wc-elev-hi: 0 1px 2px rgba(0, 0, 0, 0.4), 0 8px 20px -10px rgba(0, 0, 0, 0.6);
+  --wc-glow: 0 0 0 1px color-mix(in oklab, var(--color-accent) 22%, transparent);
 }
 
-/* Darker accents keep text contrast >= 4.5:1 on white. */
+/* Editorial light palette. Text colours keep >= 4.5:1 on both bg and panel (checked in HANDOVER section 7). */
 :root[data-theme="light"] {
   color-scheme: light;
-  --color-bg: #f5f5f1;
+  --color-bg: #f7f8f5;
   --color-panel: #ffffff;
-  --color-fg: #1c1c24;
-  --color-muted: #5b5b69;
-  --color-line: #dcdcd4;
-  --color-accent: #0f766e;
+  --color-fg: #17211b;
+  --color-muted: #566159;
+  --color-line: #dde3dc;
+  --color-accent: #326b52;
   --color-on-accent: #ffffff;
-  --color-prereq: #b45309;
-  --color-next: #0f766e;
-  --color-related: #6d28d9;
-  --color-danger: #c81e1e;
-  /* Light mode: soft and diffuse, not the harsh black shadows above. */
-  --wc-elev: 0 1px 2px rgba(15, 23, 42, 0.04), 0 10px 25px -8px rgba(15, 23, 42, 0.08);
-  --wc-elev-hi: 0 2px 4px rgba(15, 23, 42, 0.05), 0 16px 32px -8px rgba(15, 23, 42, 0.12);
-  --wc-glow: 0 0 0 1px color-mix(in oklab, var(--color-accent) 12%, transparent),
-    0 14px 40px -12px color-mix(in oklab, var(--color-accent) 25%, transparent);
+  --color-accent-soft: #dcebdd;
+  --color-gold: #e9b949;
+  --color-info: #4d718a;
+  --color-prereq: #8a6410; /* the brand yellow is too light for text; this amber is its AA-safe twin */
+  --color-next: #326b52;
+  --color-related: #4d718a;
+  --color-danger: #ae4341; /* the brief's #b94a48 darkened: error text on its own 10% tint must reach 4.5:1 */
+  --wc-elev: 0 1px 2px rgba(23, 33, 27, 0.05);
+  --wc-elev-hi: 0 1px 2px rgba(23, 33, 27, 0.06), 0 8px 20px -10px rgba(23, 33, 27, 0.18);
+  --wc-glow: 0 0 0 1px color-mix(in oklab, var(--color-accent) 18%, transparent);
 }
 
 body {
@@ -108,4 +112,30 @@ body {
 .dots {
   background-image: radial-gradient(circle, color-mix(in oklab, var(--color-fg) 10%, transparent) 1px, transparent 1px);
   background-size: 24px 24px;
+}
+
+/* Motion is restrained and opt-out: a short fade when a page opens, and nothing at all for people who ask for less. */
+@keyframes page-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+}
+.page-in {
+  animation: page-in 0.18s ease-out;
+}
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Room for the phone's home indicator under fixed bars. */
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom);
 }

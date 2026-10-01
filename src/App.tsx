@@ -1,17 +1,22 @@
 import { useEffect, useState } from 'react';
-import { Flame, Moon, Route, Settings as SettingsIcon, Sun, SunMoon, TriangleAlert, X } from 'lucide-react';
-import type { AI } from './types/course';
+import { Moon, Sun, SunMoon } from 'lucide-react';
+import type { AI, BuildOpts } from './types/course';
 import { applyTheme, courseHref, findCourse, loadAI, local, readHref, saveAI, saveCourse, useRoute, useStore, type ThemePref } from './data/store';
-import { buildCourse } from './lib/build';
+import { DEFAULT_OPTS, buildCourse } from './lib/build';
 import { courseKey, parseWikiUrl } from './utils/course';
-import { streak, today } from './utils/learn';
+import { dueIds, streak, today } from './utils/learn';
+import { AppShell, type NavId } from './components/AppShell/AppShell';
+import { CourseBuilder, type Job } from './components/CourseBuilder/CourseBuilder';
 import { CourseView } from './components/CourseView/CourseView';
+import { Discover } from './components/Discover/Discover';
+import { Home } from './components/Home/Home';
+import { Insights } from './components/Insights/Insights';
 import { Library } from './components/Library/Library';
 import { Reader } from './components/Reader/Reader';
 import { Review } from './components/Review/Review';
+import { SearchCommand } from './components/SearchCommand/SearchCommand';
 import { Settings } from './components/Settings/Settings';
-import { UrlBar } from './components/UrlBar/UrlBar';
-import { fa, ic } from './components/ui';
+import { ToastProvider } from './components/Toast/Toast';
 
 // icon, next preference when clicked, label
 const THEMES: Record<ThemePref, [typeof Sun, ThemePref, string]> = {
@@ -19,16 +24,18 @@ const THEMES: Record<ThemePref, [typeof Sun, ThemePref, string]> = {
   light: [Sun, 'dark', 'تم: روشن'],
   dark: [Moon, 'auto', 'تم: تیره'],
 };
-const iconBtn = 'flex size-9 items-center justify-center rounded-lg hover:bg-fg/10';
+const NAV: Record<string, NavId | null> = { home: 'home', library: 'library', course: 'library', read: 'library', review: 'review', discover: 'discover', insights: 'insights', new: null };
 
 export default function App() {
   const store = useStore();
   const route = useRoute();
   const [ai, setAi] = useState<AI>(loadAI);
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const [job, setJob] = useState<{ status: string; error: string } | null>(null);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [job, setJob] = useState<Job>(null);
   const [rev, setRev] = useState(0); // remounts the course view after a rebuild of the same course
   const [theme, setTheme] = useState<ThemePref>(() => local.get('wc:theme', 'auto'));
+  const hasAI = !!(ai.baseUrl && ai.key);
 
   useEffect(() => {
     navigator.storage?.persist?.(); // ask the browser not to evict our data under storage pressure
@@ -43,21 +50,42 @@ export default function App() {
     return () => mq.removeEventListener('change', follow);
   }, [theme]);
 
+  // Learning time: 15 s ticks while the tab is visible on a study page. ponytail: foreground time, not measured reading.
+  const studying = route.name === 'course' || route.name === 'read' || route.name === 'review';
+  useEffect(() => {
+    if (!studying) return;
+    const t = setInterval(() => document.visibilityState === 'visible' && store.addSeconds(15), 15_000);
+    return () => clearInterval(t);
+  }, [studying, store.addSeconds]);
+
+  // Ctrl/Cmd+K opens search from anywhere.
+  useEffect(() => {
+    const f = (e: KeyboardEvent) => {
+      if (e.key.toLowerCase() === 'k' && (e.ctrlKey || e.metaKey)) {
+        e.preventDefault();
+        setSearchOpen(true);
+      }
+    };
+    addEventListener('keydown', f);
+    return () => removeEventListener('keydown', f);
+  }, []);
+
   const needAI = () => {
-    if (ai.baseUrl && ai.key) return false;
+    if (hasAI) return false;
     setSettingsOpen(true);
     return true;
   };
 
   // Open the course for a link if this device has it, else build it in the browser, keep it here and open it.
-  const build = async (url: string, force = false) => {
+  const build = async (url: string, o: { opts?: BuildOpts; force?: boolean } = {}) => {
     try {
       const { lang, title } = parseWikiUrl(url);
-      const cached = !force && (await findCourse(courseKey(lang, title)));
+      const cached = !o.force && (await findCourse(courseKey(lang, title)));
       if (cached) return void (location.hash = courseHref(cached.key));
       if (needAI()) return;
-      setJob({ status: 'شروع…', error: '' });
-      const course = await buildCourse(url, ai, (status) => setJob({ status, error: '' }));
+      setJob({ status: 'شروع…', error: '', stage: 0 });
+      const course = await buildCourse(url, ai, (status, stage) => setJob((j) => ({ status, error: '', stage: stage ?? j?.stage })), o.opts ?? DEFAULT_OPTS);
+      setJob({ status: 'در حال ذخیره…', error: '', stage: 3 });
       await saveCourse(course);
       store.addRecent(course);
       setJob(null);
@@ -83,67 +111,52 @@ export default function App() {
   const busy = !!job?.status;
   // A new key remounts the page, so every screen opens scrolled to the top.
   const page = route.name === 'read' ? `read:${route.lang}:${route.title}` : route.name;
+  const builder = <CourseBuilder job={job} hasAI={hasAI} recent={store.state.recent} onBuild={build} onRead={read} onSettings={() => setSettingsOpen(true)} />;
 
   return (
-    <div className="flex min-h-dvh flex-col lg:h-dvh">
-      <header className="border-b border-line bg-panel">
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-2 px-4 py-3">
-          <a href="#/" className="order-1 flex items-center gap-2 text-lg font-extrabold tracking-tight">
-            <Route className="size-6 text-accent" />
-            Wiki Course
-          </a>
-          {/* phones: logo and icons share the first row, the link box gets its own row below */}
-          <div className="order-2 ms-auto flex items-center gap-1 sm:order-3 sm:ms-0">
-            <span className="me-1 flex items-center gap-1 text-sm font-semibold" title="زنجیره یادگیری">
-              <Flame className={`${ic} text-prereq`} />
-              {fa(streak(store.state.days, today()))}
-            </span>
-            <button className={iconBtn} onClick={() => setTheme(nextTheme)} aria-label={themeLabel} title={themeLabel}>
-              <ThemeIcon className="size-5" />
-            </button>
-            <button className={iconBtn} onClick={() => setSettingsOpen(true)} aria-label="تنظیمات" title="تنظیمات">
-              <SettingsIcon className="size-5" />
-            </button>
-          </div>
-          {route.name !== 'library' && (
-            <div className="order-3 min-w-0 basis-full sm:order-2 sm:flex-1 sm:basis-80">
-              <UrlBar busy={busy} onBuild={(url) => build(url)} onRead={read} />
-            </div>
-          )}
-        </div>
-        {job && (
-          <div role="status" className={`flex items-center gap-3 px-4 py-2 text-sm ${job.error ? 'bg-danger/10 text-danger' : 'bg-accent/10'}`}>
-            {job.status && <span className="size-3.5 shrink-0 rounded-full border-2 border-accent border-t-transparent motion-safe:animate-spin" />}
-            <span className="flex-1">{job.error || job.status}</span>
-            {job.error && (
-              <button onClick={() => setJob(null)} aria-label="بستن پیام">
-                <X className={ic} />
-              </button>
+    <ToastProvider>
+      <AppShell
+        nav={NAV[route.name]}
+        due={dueIds(store.state.boxes, today()).length}
+        streak={streak(store.state.days, today())}
+        // the builder page shows progress and errors itself
+        job={route.name === 'new' ? null : job}
+        onDismissJob={() => setJob(null)}
+        saveOk={store.saveOk}
+        theme={{ icon: ThemeIcon, label: themeLabel, next: () => setTheme(nextTheme) }}
+        onSettings={() => setSettingsOpen(true)}
+        onSearch={() => setSearchOpen(true)}
+      >
+        {route.name === 'course' ? (
+          <CourseView key={`${route.key}:${rev}`} courseKey={route.key} store={store} ai={ai} busy={busy} needAI={needAI} onBuild={build} />
+        ) : (
+          <div key={page} className="page-in min-h-0 flex-1 lg:overflow-y-auto">
+            {route.name === 'read' ? (
+              <Reader lang={route.lang} title={route.title} store={store} ai={ai} needAI={needAI} />
+            ) : route.name === 'review' ? (
+              <Review store={store} />
+            ) : route.name === 'discover' ? (
+              <Discover store={store} onBuild={build} />
+            ) : route.name === 'insights' ? (
+              <Insights store={store} />
+            ) : route.name === 'library' ? (
+              <Library store={store} onBuild={build} />
+            ) : route.name === 'new' ? (
+              <div className="mx-auto w-full max-w-3xl space-y-4 px-4 py-6">
+                <header>
+                  <h1 className="text-2xl font-extrabold">ساخت دوره</h1>
+                  <p className="text-sm text-muted">لینک مقاله را بچسبان، عمق و هدفت را انتخاب کن و مسیر یادگیری‌ات را بگیر.</p>
+                </header>
+                {builder}
+              </div>
+            ) : (
+              <Home store={store} job={job} hasAI={hasAI} onBuild={build} onRead={read} onSettings={() => setSettingsOpen(true)} />
             )}
           </div>
         )}
-        {!store.saveOk && (
-          <p className="flex items-center gap-2 bg-danger/10 px-4 py-2 text-sm text-danger">
-            <TriangleAlert className={ic} />
-            ذخیره در مرورگر ممکن نشد (حالت خصوصی یا فضای پر). تغییرات با بستن صفحه از بین می‌روند؛ از تنظیمات فایل پشتیبان بگیر.
-          </p>
-        )}
-      </header>
+      </AppShell>
 
-      {route.name === 'course' ? (
-        <CourseView key={`${route.key}:${rev}`} courseKey={route.key} store={store} ai={ai} busy={busy} needAI={needAI} onBuild={build} />
-      ) : (
-        <div key={page} className="min-h-0 flex-1 lg:overflow-y-auto">
-          {route.name === 'read' ? (
-            <Reader lang={route.lang} title={route.title} store={store} ai={ai} needAI={needAI} />
-          ) : route.name === 'review' ? (
-            <Review store={store} />
-          ) : (
-            <Library store={store} busy={busy} onBuild={build} onRead={read} />
-          )}
-        </div>
-      )}
-
+      <SearchCommand open={searchOpen} store={store} onClose={() => setSearchOpen(false)} onBuild={build} onRead={read} />
       <Settings
         open={settingsOpen}
         ai={ai}
@@ -154,6 +167,6 @@ export default function App() {
         }}
         onClose={() => setSettingsOpen(false)}
       />
-    </div>
+    </ToastProvider>
   );
 }

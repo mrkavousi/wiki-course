@@ -1,10 +1,11 @@
-import { Fragment, useEffect, useMemo, useState } from 'react';
-import { ArrowRight, BookOpen, Check, ExternalLink, Highlighter, Info, List, Minus, Plus, RefreshCw, Sparkles, Type } from 'lucide-react';
+import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
+import { ArrowRight, BookOpen, Check, ExternalLink, Highlighter, Info, List, Minus, Plus, RefreshCw, Sparkles, Star, Type } from 'lucide-react';
 import type { AI } from '../../types/course';
 import { READER_SIZES, loadTerms, saveTerms, useReaderPrefs, type ReaderMode, type Store } from '../../data/store';
 import { buildTerms, fetchArticle, type Article } from '../../lib/build';
 import { courseKey, topicKey, wikiUrl } from '../../utils/course';
 import { FORMULA, boldSegments, parseArticle, termRegex, type Seg } from '../../utils/reader';
+import { useToast } from '../Toast/Toast';
 import { card, fa, ghost, ic, outline, primary } from '../ui';
 
 type Props = { lang: string; title: string; store: Store; ai: AI; needAI: () => boolean };
@@ -45,6 +46,17 @@ function Para({ segs }: { segs: Seg[] }) {
   );
 }
 
+/** The element that scrolls the page: the nearest scrolling ancestor (desktop layout), else the window (phones). */
+function scroller(from: HTMLElement | null): { top: () => number; max: () => number; to: (y: number) => void; target: EventTarget } {
+  for (let el = from?.parentElement; el; el = el.parentElement) {
+    if (/(auto|scroll)/.test(getComputedStyle(el).overflowY) && el.scrollHeight > el.clientHeight) {
+      return { top: () => el.scrollTop, max: () => el.scrollHeight - el.clientHeight, to: (y) => el.scrollTo({ top: y }), target: el };
+    }
+  }
+  const d = document.documentElement;
+  return { top: () => scrollY, max: () => d.scrollHeight - innerHeight, to: (y) => scrollTo({ top: y }), target: window };
+}
+
 const HEADING = ['', '', 'mt-10 text-[1.4em]', 'mt-8 text-[1.2em]', 'mt-6 text-[1.08em]'];
 
 /** Distraction-free article reader. Easy: clean text. Enhanced: the AI's key terms in bold, once per section. */
@@ -58,6 +70,40 @@ export function Reader({ lang, title, store, ai, needAI }: Props) {
   const topic = topicKey({ lang, title });
   const known = store.state.known.includes(topic);
   const enhanced = prefs.mode === 'enhanced';
+  const toast = useToast();
+  const root = useRef<HTMLDivElement>(null);
+  const saved = store.state.saved.some((p) => topicKey(p) === topic);
+  const savedAt = useRef(store.state.pos[topic]);
+
+  // Reading position: restored once when the article is on screen, then saved a moment after each scroll.
+  useEffect(() => {
+    if (!article) return;
+    const sc = scroller(root.current);
+    const at = savedAt.current;
+    if (at > 0.02 && at < 0.97) {
+      sc.to(at * sc.max());
+      toast('از جایی که مانده بودی ادامه می‌دهی');
+    }
+    let t: number;
+    const save = () => {
+      clearTimeout(t);
+      t = window.setTimeout(() => sc.max() > 0 && store.setPos(topic, Math.min(1, sc.top() / sc.max())), 700);
+    };
+    sc.target.addEventListener('scroll', save, { passive: true });
+    return () => (clearTimeout(t), sc.target.removeEventListener('scroll', save));
+  }, [article, topic]); // eslint-disable-line react-hooks/exhaustive-deps -- store.setPos and toast are stable
+
+  // Desktop shortcuts: M marks the article known, + and - change the text size.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.target as HTMLElement).closest('input, textarea, select') || e.metaKey || e.ctrlKey || e.altKey) return;
+      if (e.key.toLowerCase() === 'm') store.toggleKnown(topic);
+      else if (e.key === '+' || e.key === '=') setPrefs({ size: Math.min(READER_SIZES.length - 1, prefs.size + 1) });
+      else if (e.key === '-') setPrefs({ size: Math.max(0, prefs.size - 1) });
+    };
+    addEventListener('keydown', onKey);
+    return () => removeEventListener('keydown', onKey);
+  });
 
   useEffect(() => {
     let live = true;
@@ -122,12 +168,12 @@ export function Reader({ lang, title, store, ai, needAI }: Props) {
 
   const size = prefs.size;
   const bar = 'flex items-center overflow-hidden rounded-lg border border-line text-sm';
-  const sizeBtn = 'flex h-9 w-9 items-center justify-center hover:bg-fg/5 disabled:opacity-40';
+  const sizeBtn = 'flex size-11 items-center justify-center hover:bg-fg/5 disabled:opacity-40';
 
   return (
-    <div className="mx-auto max-w-3xl px-4 pb-16">
+    <div ref={root} className="mx-auto max-w-3xl px-4 pb-36 lg:pb-16">
       <div className="sticky top-0 z-20 -mx-4 flex flex-wrap items-center gap-x-3 gap-y-2 border-b border-line bg-bg/95 px-4 py-2.5 backdrop-blur">
-        <button onClick={back} className="flex items-center gap-1 text-sm text-muted hover:text-fg">
+        <button onClick={back} className="flex min-h-11 items-center gap-1 text-sm text-muted hover:text-fg">
           <ArrowRight className={ic} />
           بازگشت
         </button>
@@ -140,7 +186,7 @@ export function Reader({ lang, title, store, ai, needAI }: Props) {
               key={m}
               aria-pressed={prefs.mode === m}
               onClick={() => setMode(m)}
-              className={`flex h-9 items-center gap-1.5 px-3 ${prefs.mode === m ? 'bg-accent text-on-accent' : 'hover:bg-fg/5'}`}
+              className={`flex h-11 items-center gap-1.5 px-3 ${prefs.mode === m ? 'bg-accent text-on-accent' : 'hover:bg-fg/5'}`}
             >
               <Icon className={ic} />
               {label}
@@ -159,7 +205,7 @@ export function Reader({ lang, title, store, ai, needAI }: Props) {
             <Plus className={ic} />
           </button>
         </div>
-        <a href={article?.url ?? wikiUrl(lang, title)} target="_blank" rel="noopener noreferrer" className={`${bar} h-9 w-9 justify-center hover:bg-fg/5`} aria-label="باز کردن در ویکی‌پدیا" title="باز کردن در ویکی‌پدیا">
+        <a href={article?.url ?? wikiUrl(lang, title)} target="_blank" rel="noopener noreferrer" className={`${bar} size-11 justify-center hover:bg-fg/5`} aria-label="باز کردن در ویکی‌پدیا" title="باز کردن در ویکی‌پدیا">
           <ExternalLink className={ic} />
         </a>
       </div>
@@ -179,13 +225,20 @@ export function Reader({ lang, title, store, ai, needAI }: Props) {
         </p>
       ) : (
         <article style={{ fontSize: `${READER_SIZES[size]}rem` }} className="mx-auto mt-6 max-w-[38em]">
-          {article.thumbnail && <img src={article.thumbnail} alt="" decoding="async" className="mb-6 max-h-72 w-full rounded-2xl bg-fg/5 object-cover" />}
+          {article.thumbnail && <img src={article.thumbnail} alt="" decoding="async" className="mb-6 max-h-72 w-full rounded-lg bg-fg/5 object-cover" />}
           <h1 dir="auto" className="mb-3 text-[1.9em] font-extrabold leading-tight">
             {article.title}
           </h1>
+          <p className="mb-5 text-[0.8em] leading-7 text-muted">
+            منبع:{' '}
+            <a href={article.url} target="_blank" rel="noopener noreferrer" className="underline hover:text-fg">
+              ویکی‌پدیا
+            </a>{' '}
+            · CC BY-SA 4.0 · متن همین است که در ویکی‌پدیا آمده؛ هیچ بخشی را هوش مصنوعی نوشته یا تغییر نداده است.
+          </p>
 
           {hasFormula && (
-            <p className="mb-5 flex items-start gap-2 rounded-xl bg-fg/5 p-3 text-[0.85em] leading-7 text-muted">
+            <p className="mb-5 flex items-start gap-2 rounded-lg bg-fg/5 p-3 text-[0.85em] leading-7 text-muted">
               <Info className={`${ic} mt-1.5`} />
               فرمول‌ها در این نمای ساده نشان داده نمی‌شوند. برای دیدنشان مقاله را در ویکی‌پدیا باز کن.
             </p>
@@ -229,7 +282,7 @@ export function Reader({ lang, title, store, ai, needAI }: Props) {
           )}
 
           {blocks.length > 2 && (
-            <details className="mb-6 rounded-xl border border-line bg-panel px-4 py-2 text-[0.85em]">
+            <details className="mb-6 rounded-lg border border-line bg-panel px-4 py-2 text-[0.85em]">
               <summary className="flex cursor-pointer list-none items-center gap-2 font-semibold">
                 <List className={ic} />
                 فهرست مطالب
@@ -237,7 +290,7 @@ export function Reader({ lang, title, store, ai, needAI }: Props) {
               <ul className="mt-2 space-y-1">
                 {blocks.slice(1).map((s, i) => (
                   <li key={i} style={{ paddingInlineStart: `${(s.level - 2) * 1}rem` }}>
-                    <button dir="auto" onClick={() => jump(`sec-${i + 1}`, 'start')} className="text-start hover:text-accent">
+                    <button dir="auto" onClick={() => jump(`sec-${i + 1}`, 'start')} className="min-h-11 text-start hover:text-accent">
                       {s.title}
                     </button>
                   </li>
@@ -263,7 +316,7 @@ export function Reader({ lang, title, store, ai, needAI }: Props) {
           })}
 
           <footer className="mt-12 space-y-4 border-t border-line pt-6 text-base">
-            <button className={known ? outline : primary} aria-pressed={known} onClick={() => store.toggleKnown(topic)}>
+            <button className={`${known ? outline : primary} max-lg:hidden`} aria-pressed={known} onClick={() => store.toggleKnown(topic)}>
               <Check className={ic} />
               {known ? 'بلدم (برای برداشتن بزن)' : 'خواندم و بلدم'}
             </button>
@@ -277,8 +330,25 @@ export function Reader({ lang, title, store, ai, needAI }: Props) {
                 صفحه‌ی اصلی و فهرست نویسندگان
               </a>
             </p>
+            <p className="hidden text-sm text-muted lg:block">میان‌بر: <kbd>M</kbd> بلدم · <kbd>+</kbd> و <kbd>-</kbd> اندازه‌ی متن</p>
           </footer>
         </article>
+      )}
+
+      {/* Phones: the actions stay within thumb reach, above the bottom navigation. */}
+      {article && (
+        <div className="fixed inset-x-0 bottom-16 z-30 border-t border-line bg-panel/95 p-2 backdrop-blur lg:hidden">
+          <div className="mx-auto flex max-w-3xl gap-2">
+            <button className={`${known ? outline : primary} flex-1`} aria-pressed={known} onClick={() => store.toggleKnown(topic)}>
+              <Check className={ic} />
+              {known ? 'بلدم' : 'خواندم و بلدم'}
+            </button>
+            <button className={ghost} aria-pressed={saved} onClick={() => store.toggleSaved({ title: article.title, lang, url: article.url, summary: '', thumbnail: article.thumbnail })} aria-label={saved ? 'حذف از ذخیره‌شده‌ها' : 'ذخیره برای بعد'}>
+              <Star className={`${ic} ${saved ? 'fill-current' : ''}`} />
+              {saved ? 'ذخیره‌شده' : 'ذخیره'}
+            </button>
+          </div>
+        </div>
       )}
     </div>
   );
