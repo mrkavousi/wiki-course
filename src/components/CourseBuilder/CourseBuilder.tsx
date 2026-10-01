@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
-import { BookOpen, Check, ClipboardPaste, ExternalLink, KeyRound, Loader, Sparkles } from 'lucide-react';
+import { BookOpen, Check, ClipboardPaste, Search, ExternalLink, KeyRound, Loader, Sparkles } from 'lucide-react';
 import type { BuildOpts, CourseRef, Depth, Purpose } from '../../types/course';
 import { courseHref, findCourse } from '../../data/store';
-import { DEFAULT_OPTS, DEPTH_CAP, previewArticle, type Preview } from '../../lib/build';
+import { DEFAULT_OPTS, DEPTH_CAP, previewArticle, searchArticles, type Hit, type Preview } from '../../lib/build';
 import { courseKey, parseWikiUrl, wikiUrl } from '../../utils/course';
 import { MIN_PER_TOPIC, daysAt } from '../../utils/progress';
 import { Cover } from '../Cover/Cover';
@@ -32,12 +32,20 @@ type Props = {
   compact?: boolean;
 };
 
+type Found = { state: 'idle' } | { state: 'loading' } | { state: 'done'; items: Hit[] } | { state: 'error' };
+/** Looks like a web address (so a bad one gets the "invalid link" message) rather than words to search for. */
+const urlLike = (s: string) => /^(https?:\/\/|www\.)|\.[a-z]{2,}\//i.test(s.trim());
+const guessLang = (s: string) => (/[\u0600-\u06FF]/.test(s) ? 'fa' : 'en');
+
 type Pre = { state: 'idle' } | { state: 'loading' } | { state: 'ready'; p: Preview; exists: boolean } | { state: 'error'; kind: string; message: string };
 
 export function CourseBuilder({ job, hasAI, recent, onBuild, onRead, onSettings, compact }: Props) {
-  const [url, setUrl] = useState(() => (compact ? '' : new URLSearchParams(location.hash.split('?')[1]).get('url') ?? ''));
+  const [url, setUrl] = useState(() => (compact ? '' : (() => { const q = new URLSearchParams(location.hash.split('?')[1]); return q.get('url') ?? q.get('q') ?? ''; })()));
   const [invalid, setInvalid] = useState('');
   const [pre, setPre] = useState<Pre>({ state: 'idle' });
+  const [found, setFound] = useState<Found>({ state: 'idle' });
+  const [sLang, setSLang] = useState<string | null>(null); // null = follow the script of what was typed
+  const searchRun = useRef(0);
   const [opts, setOpts] = useState<BuildOpts>(DEFAULT_OPTS);
   const [perDay, setPerDay] = useState(30); // minutes a day: only used to estimate how long the path takes
   const input = useRef<HTMLInputElement>(null);
@@ -56,9 +64,24 @@ export function CourseBuilder({ job, hasAI, recent, onBuild, onRead, onSettings,
     else if (!modal && d.open) d.close();
   }, [modal]);
 
+  const search = async (q: string, lang: string) => {
+    const me = ++searchRun.current;
+    setFound({ state: 'loading' });
+    try {
+      const items = await searchArticles(lang, q);
+      if (me === searchRun.current) setFound({ state: 'done', items });
+    } catch {
+      if (me === searchRun.current) setFound({ state: 'error' });
+    }
+  };
+
   const check = async (raw: string) => {
     const link = raw.trim();
     if (!link) return;
+    if (!urlLike(link)) {
+      if (compact) return void (location.hash = `#/new?q=${encodeURIComponent(link)}`);
+      return void search(link, sLang ?? guessLang(link));
+    }
     try {
       parseWikiUrl(link);
     } catch (e: any) {
@@ -82,6 +105,17 @@ export function CourseBuilder({ job, hasAI, recent, onBuild, onRead, onSettings,
     else if (!compact) input.current?.focus();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps -- only a link carried in the address is checked on arrival
 
+  // Typing words (not a link) searches Wikipedia after a short pause.
+  useEffect(() => {
+    const q = url.trim();
+    if (compact || building || q.length < 2 || urlLike(q)) {
+      searchRun.current++;
+      return setFound({ state: 'idle' });
+    }
+    const t = setTimeout(() => search(q, sLang ?? guessLang(q)), 350);
+    return () => clearTimeout(t);
+  }, [url, sLang, building]); // eslint-disable-line react-hooks/exhaustive-deps -- `search` only reads refs and setters
+
   const paste = async () => {
     try {
       const text = (await navigator.clipboard.readText()).trim();
@@ -95,6 +129,7 @@ export function CourseBuilder({ job, hasAI, recent, onBuild, onRead, onSettings,
     setUrl(u);
     check(u);
   };
+  const choose = (h: Hit) => pick(wikiUrl(sLang ?? guessLang(url), h.title));
 
   const form = (
     <form
@@ -106,15 +141,14 @@ export function CourseBuilder({ job, hasAI, recent, onBuild, onRead, onSettings,
       noValidate
     >
       <label htmlFor="wiki-url" className="block text-sm font-semibold">
-        لینک مقاله‌ی ویکی‌پدیا
+        لینک مقاله‌ی ویکی‌پدیا یا نام مقاله
       </label>
       <div className="flex flex-col gap-2 sm:flex-row">
         <div className="flex min-w-0 flex-1 gap-2">
           <input
             ref={input}
             id="wiki-url"
-            dir="ltr"
-            inputMode="url"
+            dir="auto"
             value={url}
             disabled={building}
             onChange={(e) => {
@@ -122,7 +156,7 @@ export function CourseBuilder({ job, hasAI, recent, onBuild, onRead, onSettings,
               setInvalid('');
               if (pre.state !== 'idle') setPre({ state: 'idle' });
             }}
-            placeholder="https://fa.wikipedia.org/wiki/…"
+            placeholder="جبر خطی، یا https://fa.wikipedia.org/wiki/…"
             aria-invalid={!!invalid}
             aria-describedby={invalid ? 'wiki-url-err' : undefined}
             className={`${field} min-w-0 flex-1 py-3 text-start text-lg ${invalid ? 'border-danger' : ''}`}
@@ -132,7 +166,7 @@ export function CourseBuilder({ job, hasAI, recent, onBuild, onRead, onSettings,
           </button>
         </div>
         <button disabled={building || !url.trim() || pre.state === 'loading'} className={`${primary} sm:px-6`}>
-          {compact ? <Sparkles className={ic} /> : pre.state === 'loading' ? <Loader className={`${ic} motion-safe:animate-spin`} /> : <Sparkles className={ic} />}
+          {compact ? <Sparkles className={ic} /> : found.state === 'loading' || pre.state === 'loading' ? <Loader className={`${ic} motion-safe:animate-spin`} /> : <Sparkles className={ic} />}
           {compact ? 'ساخت دوره' : pre.state === 'loading' ? 'در حال بررسی…' : 'بررسی مقاله'}
         </button>
       </div>
@@ -165,9 +199,65 @@ export function CourseBuilder({ job, hasAI, recent, onBuild, onRead, onSettings,
 
   if (compact) return form;
 
+  const lang = sLang ?? guessLang(url);
+  const results = found.state !== 'idle' && (
+    <section aria-label="نتیجه‌های جست‌وجو" className={`${card} overflow-hidden`}>
+      <div className="flex items-center justify-between gap-2 border-b border-line px-4 py-2">
+        <h2 className="flex items-center gap-2 text-sm font-bold">
+          <Search className={ic} />
+          مقاله‌ها در ویکی‌پدیا
+        </h2>
+        <div className="flex overflow-hidden rounded-lg border border-line text-sm" role="group" aria-label="زبان جست‌وجو">
+          {([['fa', 'فارسی'], ['en', 'English']] as const).map(([l, label]) => (
+            <button key={l} type="button" aria-pressed={lang === l} onClick={() => setSLang(l)} className={`min-h-9 px-3 ${lang === l ? 'bg-accent text-on-accent' : 'hover:bg-fg/5'}`}>
+              {label}
+            </button>
+          ))}
+        </div>
+      </div>
+      {found.state === 'loading' && (
+        <ul className="divide-y divide-line" aria-hidden="true">
+          {[0, 1, 2].map((i) => (
+            <li key={i} className="flex gap-3 p-3">
+              <Skeleton className="size-12 shrink-0" />
+              <div className="flex-1 space-y-2">
+                <Skeleton className="h-4 w-1/3" />
+                <Skeleton className="h-4 w-2/3" />
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
+      {found.state === 'error' && <p className="p-4 text-sm text-danger" role="alert">جست‌وجو انجام نشد؛ اتصال را بررسی کن و دوباره امتحان کن.</p>}
+      {found.state === 'done' &&
+        (found.items.length ? (
+          <ul className="divide-y divide-line">
+            {found.items.map((h) => (
+              <li key={h.title}>
+                <button type="button" onClick={() => choose(h)} disabled={building} className="flex min-h-14 w-full items-center gap-3 p-3 text-start hover:bg-fg/5 disabled:opacity-50">
+                  {h.thumbnail ? (
+                    <img src={h.thumbnail} alt="" loading="lazy" className="size-12 shrink-0 rounded-lg bg-fg/5 object-cover" />
+                  ) : (
+                    <span className="flex size-12 shrink-0 items-center justify-center rounded-lg bg-fg/5 text-lg font-bold text-muted" aria-hidden="true">{h.title[0]}</span>
+                  )}
+                  <span className="min-w-0">
+                    <span dir="auto" className="block truncate font-semibold">{h.title}</span>
+                    {h.description && <span dir="auto" className="block truncate text-sm text-muted">{h.description}</span>}
+                  </span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="p-4 text-sm text-muted" role="status">مقاله‌ای پیدا نشد. نوشته را کوتاه‌تر کن یا زبان دیگری را امتحان کن.</p>
+        ))}
+    </section>
+  );
+
   return (
     <div className="space-y-6">
       {form}
+      {results}
 
       {/* Progress as a modal over a blurred page, so the build is the only thing on screen; Esc or the button sends it to the background. */}
       <dialog

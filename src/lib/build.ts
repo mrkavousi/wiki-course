@@ -64,6 +64,15 @@ export async function previewArticle(url: string): Promise<Preview> {
   return { title: r.title, lang, url: r.content_urls.desktop.page, summary: r.extract ?? '', thumbnail: r.thumbnail?.source, description: r.description, updated: r.timestamp };
 }
 
+/** Articles matching free text, best first, with Wikipedia's one-line description and a small thumbnail. */
+export type Hit = { title: string; description?: string; thumbnail?: string };
+export async function searchArticles(lang: string, q: string): Promise<Hit[]> {
+  const r = await wiki(lang, { action: 'query', generator: 'search', gsrsearch: q, gsrlimit: '8', gsrnamespace: '0', prop: 'pageimages|description', piprop: 'thumbnail', pithumbsize: '96' });
+  return (r.query?.pages ?? [])
+    .sort((a: any, b: any) => a.index - b.index)
+    .map((p: any) => ({ title: p.title, description: p.description, thumbnail: p.thumbnail?.source }));
+}
+
 /** The title as given, or the closest real article (the model often misses ی/ي, ZWNJ or capitalisation). */
 async function resolve(lang: string, title: string) {
   const exact = await summary(lang, title);

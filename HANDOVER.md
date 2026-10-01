@@ -22,7 +22,7 @@ It is a personal, local-first tool: all learner data lives in the browser.
 | Route (hash) | Component | Purpose |
 |---|---|---|
 | `#/` | `Home` | dashboard: builder strip, the one next action, today's review, active courses, weekly progress, suggestions |
-| `#/new` (`?url=`) | `CourseBuilder` | paste, preview the article, choose depth and purpose, build with named stages |
+| `#/new` (`?url=` or `?q=`) | `CourseBuilder` | paste a link or type words (Wikipedia search), preview the article, choose depth and purpose, build; progress is a blurred modal with named stages |
 | `#/library` | `Library` | search, filters (language, status, subject), sort, grid/list, favourite, archive, delete |
 | `#/c/<courseKey>` (`?t=<topicKey>`) | `CourseView` with `Roadmap`, `CourseGraph`, `TopicDetail` | course overview (cover, level, progress, mastery) and the selected topic (tabs: about, flashcards, quiz). With `?t=` a phone shows that topic as its own screen with a breadcrumb (Back returns to the path); desktop keeps two panes and keeps the address in sync |
 | `#/read/<lang>/<title>` (`?c=<courseKey>`) | `Reader` | article reader (needs no AI in easy mode); remembers the scroll position. With `?c=` it offers the course's next topic |
@@ -32,7 +32,7 @@ It is a personal, local-first tool: all learner data lives in the browser.
 | `#/settings` | `Settings` | theme, weekly goal, AI endpoint, backup and restore, delete all data |
 | `#/insights` | `Insights` | weekly goal, activity, weak topics, quiz results, course completion |
 
-`AppShell` wraps every route: sidebar on desktop, bottom bar on phones, a top bar with search (Ctrl/Cmd+K), due count, streak and theme. Settings is the `#/settings` page (theme, weekly goal, AI endpoint, backup/restore, delete all data).
+`AppShell` wraps every route: sidebar on desktop, bottom bar and a hamburger drawer on phones, a top bar with search (Ctrl/Cmd+K), due count, streak and theme. Settings is the `#/settings` page (theme, weekly goal, AI endpoint, backup/restore, delete all data).
 
 ## 2. Quick start
 
@@ -69,7 +69,7 @@ The browser calls both services directly, so requests come from the user's own n
 | `src/App.tsx` | state and orchestration: route switch, `build(url, {opts, force})`, `read()`, theme, search shortcut, learning-time ticker |
 | `src/data/store.ts` | **all persistence and routing:** guarded `local`, `kv` (Cache Storage with a localStorage fallback), `SAMPLES`, `findCourse`/`saveCourse`, `loadPack`/`savePack`, `loadTerms`/`saveTerms`, `backupJson`/`restoreJson`, AI settings, `applyTheme`; hooks `useStore` (learner state and actions), `useCourses` (loads full courses for a list, cached), `deleteCourse`, `wipeAll`, `useReaderPrefs`, `useRoute`; `courseHref`/`readHref` |
 | `src/data/samples.json` | list of bundled sample courses (their bodies are `public/courses/*.json`) |
-| `src/lib/build.ts` | **network and AI** (browser and Node): Wikipedia fetchers, `previewArticle` (builder preview), `DEPTH_CAP`, `getJson` retry, `chat`, `askJson`, prompts, `buildCourse`, `buildPack`, `buildTerms`, `fetchArticle`, `testAI` |
+| `src/lib/build.ts` | **network and AI** (browser and Node): Wikipedia fetchers, `previewArticle` (builder preview), `searchArticles` (builder search), `DEPTH_CAP`, `getJson` retry, `chat`, `askJson`, prompts, `buildCourse`, `buildPack`, `buildTerms`, `fetchArticle`, `testAI` |
 | `src/utils/course.ts` | pure: `topicKey`, `courseKey`, `parseWikiUrl`, `extractJson`/`extractLists`, `cleanItems`, `cleanPack`, `pathOf` |
 | `src/utils/learn.ts` | pure: Leitner `rate(prev, 'hard'\|'good'\|'easy')`, `nextInterval`, `nextDue`, `dueIds`, `streak`, `mergeBackup`, `PASS`, `EMPTY_STATE` |
 | `src/utils/progress.ts` | pure: `courseStats` (done, status, due), `weekStats`, `nextAction` (the single recommended CTA), `weakTopics` |
@@ -78,9 +78,9 @@ The browser calls both services directly, so requests come from the user's own n
 | `src/utils/reader.ts` | pure: `parseArticle`, `termRegex`, `cleanTerms`, `boldSegments`, `outline` |
 | `src/utils/course.check.ts` | the only test file: asserts for every pure function above |
 | `src/types/course.ts` | all shared types (`Course`, `Topic`, `Pack`, `Terms`, `State`, `AI`, ...) |
-| `src/components/*` | one folder per component; `ui.ts` has shared class strings (`btn`, `primary`, `ghost`, `outline`, `card`, `iconBtn`, `field`, `ic`, `chip`), `fa()` (Persian digits), `ago()`, `inDays()`, `fmtMinutes()`. Shared pieces: `Cover`, `CourseCard`, `Progress` (`ProgressBar`, `ActivityChart`, `Heatmap`, `StreakWidget`), `States` (`EmptyState`, `ErrorState`, `Skeleton`), `Toast` (`useToast`), `ConfirmModal`, `SearchCommand` |
+| `src/components/*` | one folder per component; `ui.ts` has shared class strings (`btn`, `primary`, `ghost`, `outline`, `card`, `iconBtn`, `field`, `ic`, `chip`), `fa()` (Persian digits), `ago()`, `inDays()`, `fmtMinutes()`. Shared pieces: `Cover`, `CourseCard`, `Progress` (`ProgressBar`, `ActivityChart`, `Heatmap`, `StreakWidget`), `States` (`EmptyState`, `ErrorState`, `Skeleton`), `Toast` (`useToast`), `ConfirmModal`, `SearchCommand`, `CourseView/ExportMenu` (portal popover on desktop, bottom sheet on phones) |
 | `src/components/Pages/Pages.tsx` | `About`, `Privacy`, `NotFound` and the `Footer` shown under static pages (routes `about`, `privacy`, `notfound` in `useRoute`; an unknown `#/x` is `notfound`, a bare `#main` stays home) |
-| `src/index.css` | `@font-face` for the self-hosted font, Tailwind `@theme`: color tokens (dark values in `@theme`, light palette in `[data-theme=light]`), type scale, reduced-motion guard, and utilities `.page-in`, `.dots`, `.term-flash`, `.hero-bg`, `.text-grad`, `.glass`, `.shimmer`, `.stagger`, `.pop`, `.flip-in`, `.edge` |
+| `src/index.css` | `@font-face` for the self-hosted font, Tailwind `@theme`: color tokens (dark values in `@theme`, light palette in `[data-theme=light]`), type scale, reduced-motion guard, and utilities `.page-in`, `.dots`, `.term-flash`, `.hero-bg`, `.text-grad`, `.glass`, `.shimmer`, `.stagger`, `.pop`, `.flip-in`, `.edge`, `.drawer`, `.sheet`, `.rail` (a card row that becomes a swipeable rail below 640 px) |
 | `public/sw.js`, `public/manifest.webmanifest` | PWA: the service worker (registered in `src/main.tsx`, production only) caches same-origin GETs; icons, `og.png` and `fonts/` live beside them |
 | `index.html` | RTL shell, font preload, manifest and `og:*` tags, inline pre-paint theme script (**must stay in sync with `applyTheme`**) |
 | `scripts/build-course.ts` | Node CLI around `buildCourse` |
@@ -89,7 +89,7 @@ Rule of thumb: logic that needs no browser and no network goes in `utils/` (and 
 
 ### Main flows
 
-1. **Build a course** (`App.build` → `buildCourse`): parse the URL → `summary()` and `leadLinks()` in parallel → `askJson(coursePrompt)` returns prereq/next/related → each title is verified with `resolve()` (REST summary, then a search fallback; the model often misses ی/ي, ZWNJ or capitalisation) → titles are de-duplicated across roles → `saveCourse` + `addRecent` → navigate to `#/c/<key>`.
+1. **Build a course** (`App.build` → `buildCourse`): the builder first turns words into a link (`searchArticles`, debounced), then parse the URL → `summary()` and `leadLinks()` in parallel → `askJson(coursePrompt)` returns prereq/next/related → each title is verified with `resolve()` (REST summary, then a search fallback; the model often misses ی/ي, ZWNJ or capitalisation) → titles are de-duplicated across roles → `saveCourse` + `addRecent` → navigate to `#/c/<key>`.
 2. **Study pack** (`CourseView.makePack` → `buildPack`): first 8,000 characters of the article text → `askJson(packPrompt)` → `cleanPack` → `savePack`.
 3. **Reader** (`Reader`): `fetchArticle` returns the whole plain-text extract → `parseArticle` → sections. Enhanced mode: `loadTerms`, or `buildTerms` (an outline goes to the AI; `cleanTerms` keeps only terms that really occur in the text) → `termRegex` + `boldSegments` bold each term at its first mention per section.
 

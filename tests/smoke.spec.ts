@@ -307,3 +307,20 @@ test('share: a broken or malicious link is refused and changes nothing', async (
   await expect(page.getByText('لینک ناقص است')).toBeVisible();
   expect((await state(page)).recent ?? []).toEqual([]);
 });
+
+test('builder: typing words searches Wikipedia, and picking a result previews that article', async ({ page }) => {
+  await seed(page);
+  await stubWikipedia(page);
+  // registered after stubWikipedia, so it wins for search requests
+  await page.route('**/w/api.php**', (r, req = r.request()) => {
+    const q = new URL(req.url()).searchParams;
+    if (q.get('generator') !== 'search') return r.fallback();
+    return r.fulfill({ json: { query: { pages: [{ title: 'Calculus', index: 1, description: 'Branch of maths' }, { title: 'Calculus (dental)', index: 2 }] } } });
+  });
+  await page.goto('#/new');
+  await page.getByLabel('لینک مقاله‌ی ویکی‌پدیا').fill('calcul');
+  await expect(page.getByRole('button', { name: /Calculus.*Branch of maths/ })).toBeVisible();
+  await page.getByRole('button', { name: /Calculus.*Branch of maths/ }).click();
+  await expect(page.getByRole('heading', { name: 'Calculus' })).toBeVisible();
+  await expect(page.getByText('آنچه ساخته می‌شود')).toBeVisible();
+});

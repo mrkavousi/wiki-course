@@ -6,6 +6,23 @@ Versions 0.1.0 to 0.3.0 were assigned afterwards from the commit history and tag
 
 ## [Unreleased]
 
+### Added
+- Course builder: type words instead of a link and Wikipedia is searched (`searchArticles` in `src/lib/build.ts`); results show a thumbnail and description, a fa/English toggle follows the script typed, and picking one opens the usual preview. From the home input, words continue on `#/new?q=`.
+- Phones: a hamburger drawer (every destination, including Insights, About and Privacy) next to the bottom bar.
+- Build progress opens as a modal over a blurred page, with a progress bar and the four stages; Esc or "continue in background" closes it while the build goes on.
+- Course roadmap: animated connectors between the steps (solid for learned, flowing for the next step, faint dashes for the rest) and from the main article to related topics.
+- Graph: a "show all" button that re-fits the view.
+- `ExportMenu` (`src/components/CourseView/`): export, share, AI prompts and course upkeep (archive, rebuild) in grouped sections.
+
+### Changed
+- Home on phones: compact hero, swipeable card rails (`.rail`) for courses, suggestions and the quick-start guide; the weekly chart and the "review done" card are hidden.
+- Graph layout: nodes sit on concentric rings inside one wedge per role (higher score nearer the centre), then overlaps are relaxed away and the view zooms to fit; edge percentage labels are hidden above 16 topics.
+- Export and prompts menu is a popover that stays inside the viewport (and scrolls) on desktop and a bottom sheet on phones; it no longer pushes the page down.
+- Course header meta (status, level, depth, time, source) and topic tags are `chip`s; topic actions are a primary row ("read", "I know this") plus a three-cell toolbar (save, Wikipedia, topic course). The flashcard and quiz shortcuts were dropped because the tabs cover them.
+
+### Fixed
+- Horizontal overflow on the home and insights pages (grid tracks without `min-w-0`) and a document-level scrollbar on desktop (`sr-only` elements escaping the inner scroller).
+
 ## [0.4.0] - 2026-10-02
 
 Visual redesign, installable offline app, and the static pages a real product needs. No change to stored data or the backup format (still version 2).
