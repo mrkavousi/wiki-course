@@ -1,0 +1,199 @@
+// Smoke tests for the main learner flows. Wikipedia and the AI gateway are stubbed, so nothing here touches the network.
+import { expect, test, type Page } from '@playwright/test';
+
+const COURSE = '#/c/fa-%D8%AC%D8%A8%D8%B1_%D8%AE%D8%B7%DB%8C'; // bundled sample: جبر خطی
+const state = (page: Page) => page.evaluate(() => JSON.parse(localStorage.getItem('wc:state') || '{}'));
+
+/** Seeds localStorage before the app starts (a plain evaluate would be overwritten by the running app). */
+const seed = (page: Page, s: Record<string, unknown> = {}) =>
+  page.addInitScript((v) => {
+    if (!sessionStorage.getItem('seeded')) {
+      localStorage.clear();
+      localStorage.setItem('wc:state', JSON.stringify({ onboarded: true, ...v }));
+      sessionStorage.setItem('seeded', '1'); // only the first load: later reloads keep what the app saved
+    }
+  }, s);
+
+const putKv = (page: Page, key: string, value: unknown) =>
+  page.evaluate(async ([k, v]) => (await caches.open('wiki-course')).put(`/__kv/${encodeURIComponent(k as string)}`, new Response(JSON.stringify(v), { headers: { 'content-type': 'application/json' } })), [key, value]);
+
+const PACK = {
+  key: 'fa-ریاضیات', lang: 'fa', title: 'ریاضیات', keyPoints: ['نکته'], generatedAt: '',
+  cards: [1, 2, 3].map((i) => ({ q: `سؤال ${i}`, a: `جواب ${i}` })),
+  quiz: [0, 1, 2, 3].map((i) => ({ q: `پرسش ${i}`, options: ['الف', 'ب', 'ج', 'د'], answer: 1, explain: `توضیح ${i}` })),
+};
+
+/** A tiny Wikipedia: summaries by title, a long article, no search hits. */
+async function stubWikipedia(page: Page) {
+  await page.route('**/api/rest_v1/page/summary/**', (r) => {
+    const title = decodeURIComponent(new URL(r.request().url()).pathname.split('/').pop()!).replace(/_/g, ' ');
+    return r.fulfill({ json: { title, type: 'standard', extract: `خلاصه‌ی ${title}`, description: 'Test article', timestamp: '2026-01-01T00:00:00Z', content_urls: { desktop: { page: `https://en.wikipedia.org/wiki/${encodeURIComponent(title)}` } } } });
+  });
+  await page.route('**/w/api.php**', (r) => {
+    const q = new URL(r.request().url()).searchParams;
+    if (q.get('action') === 'parse') return r.fulfill({ json: { parse: { links: [] } } });
+    if (q.get('list') === 'search') return r.fulfill({ json: { query: { search: [] } } });
+    const body = Array.from({ length: 40 }, (_, i) => `== Section ${i} ==\n${'Linear algebra text. '.repeat(60)}`).join('\n');
+    return r.fulfill({ json: { query: { pages: [{ title: q.get('titles'), fullurl: 'https://en.wikipedia.org/wiki/X', extract: `Intro paragraph.\n${body}` }] } } });
+  });
+}
+
+test('home: onboarding dismiss persists', async ({ page }) => {
+  await page.addInitScript(() => localStorage.getItem('wc:state') || localStorage.setItem('wc:state', '{}'));
+  await page.goto('/');
+  await page.getByRole('button', { name: 'بستن راهنما' }).click();
+  await page.reload();
+  await expect(page.getByRole('heading', { name: 'از هر مقاله، یک مسیر یادگیری' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'بستن راهنما' })).toHaveCount(0);
+});
+
+test('course: mark known shows the next step and records activity', async ({ page }) => {
+  await seed(page);
+  await page.goto(COURSE);
+  await page.locator('button[aria-pressed]', { hasText: 'ریاضیات' }).first().click();
+  await page.getByRole('button', { name: 'این را بلدم' }).click();
+  await expect(page.getByText('موضوع بعدی:').first()).toBeVisible();
+  const s = await state(page);
+  const day = Object.keys(s.log)[0];
+  expect(s.known).toEqual(['fa:ریاضیات']);
+  expect(s.log[day].known).toBe(1);
+  expect(s.meta['fa-جبر_خطی'].last).toBeGreaterThan(0);
+});
+
+test('cards: hard/good/easy ratings show intervals and schedule boxes', async ({ page }) => {
+  await seed(page);
+  await page.goto(COURSE);
+  await putKv(page, 'pack/fa-ریاضیات', PACK);
+  await page.reload();
+  await page.locator('button[aria-pressed]', { hasText: 'ریاضیات' }).first().click();
+  await page.getByRole('tab', { name: /فلش‌کارت/ }).click();
+  await page.getByRole('button', { name: 'نمایش جواب' }).click();
+  await expect(page.getByRole('group', { name: 'چقدر یادت بود؟' })).toContainText('فردا');
+  await page.keyboard.press('1');
+  await page.getByRole('button', { name: 'نمایش جواب' }).click();
+  await page.keyboard.press('2');
+  await page.getByRole('button', { name: 'نمایش جواب' }).click();
+  await page.keyboard.press('3');
+  await expect(page.getByText('مرور تمام شد')).toBeVisible();
+  const s = await state(page);
+  expect(Object.values<any>(s.boxes).map((b) => b.box)).toEqual([1, 1, 2]);
+  expect(s.log[Object.keys(s.log)[0]].cards).toBe(3);
+});
+
+test('quiz: failing recommends review, then passing marks known', async ({ page }) => {
+  await seed(page);
+  await page.goto(COURSE);
+  await putKv(page, 'pack/fa-ریاضیات', PACK);
+  await page.reload();
+  await page.locator('button[aria-pressed]', { hasText: 'ریاضیات' }).first().click();
+  await page.getByRole('tab', { name: /آزمون/ }).click();
+  await expect(page.getByText('آستانه‌ی قبولی')).toBeVisible();
+  for (let i = 0; i < 4; i++) { // always the first (wrong) option
+    await page.locator('main li button').first().click();
+    await page.getByRole('button', { name: /سؤال بعد|دیدن نتیجه/ }).click();
+  }
+  await expect(page.getByRole('button', { name: 'مرور فلش‌کارت‌ها' })).toBeVisible();
+  expect((await state(page)).known).toEqual([]);
+  await page.getByRole('button', { name: 'آزمون دوباره' }).click();
+  await page.getByRole('button', { name: /نمی‌دانم/ }).click(); // a skip counts as wrong: 3/4 = 75% still passes
+  for (let i = 0; i < 3; i++) {
+    await page.locator('main li button').nth(1).click();
+    await page.getByRole('button', { name: /سؤال بعد|دیدن نتیجه/ }).click();
+  }
+  await expect(page.getByText(/تسلط کافی/)).toBeVisible();
+  const s = await state(page);
+  expect(s.quiz['fa:ریاضیات']).toBe(75);
+  expect(s.known).toContain('fa:ریاضیات');
+});
+
+test('review: due card with a missing pack says so instead of "all done"', async ({ page }) => {
+  await seed(page, { boxes: { 'fa:ghost#0': { box: 1, due: '2020-01-01' } } });
+  await page.goto('#/review');
+  await expect(page.getByText('کارت‌هایت منتظرند')).toBeVisible();
+});
+
+test('library: search with no hits, archive and filter', async ({ page }) => {
+  await seed(page);
+  await page.goto('#/library');
+  const cards = page.locator('article');
+  await cards.first().waitFor();
+  const all = await cards.count();
+  await page.getByRole('button', { name: /بایگانی «جبر خطی»/ }).click();
+  await expect(cards).toHaveCount(all - 1);
+  await page.getByLabel('وضعیت').selectOption('archived');
+  await expect(cards).toHaveCount(1);
+  await page.getByLabel('وضعیت').selectOption('');
+  await page.getByLabel('جست‌وجو در کتابخانه').fill('zzzz');
+  await expect(page.getByText('دوره‌ای پیدا نشد')).toBeVisible();
+});
+
+test('builder: preview, depth and purpose reach the prompt, build, then delete', async ({ page }) => {
+  await stubWikipedia(page);
+  let prompt = '';
+  await page.route('https://stub.test/**', async (r) => {
+    prompt = JSON.parse(r.request().postData()!).messages[0].content;
+    const it = (title: string, score: number) => ({ title, score, why: 'دلیل', summary: 'خلاصه' });
+    const body = { prereq: [it('Function', 90), it('Limit', 80)], next: [it('Integral', 90), it('Series', 80)], related: [it('Derivative', 60), it('Physics', 50)] };
+    await r.fulfill({ status: 200, headers: { 'access-control-allow-origin': '*' }, json: { choices: [{ message: { content: JSON.stringify(body) } }] } });
+  });
+  await seed(page);
+  await page.addInitScript(() => localStorage.setItem('wc:ai', JSON.stringify({ baseUrl: 'https://stub.test/v1', key: 'k', model: 'm' })));
+  await page.goto('#/new');
+  await page.getByLabel('لینک مقاله‌ی ویکی‌پدیا').fill('https://example.com/x');
+  await page.getByRole('button', { name: 'بررسی مقاله' }).click();
+  await expect(page.locator('#wiki-url-err')).toContainText('لینک ویکی‌پدیا معتبر نیست');
+  await page.getByLabel('لینک مقاله‌ی ویکی‌پدیا').fill('https://en.wikipedia.org/wiki/Calculus');
+  await page.getByRole('button', { name: 'بررسی مقاله' }).click();
+  await expect(page.getByText('آنچه ساخته می‌شود')).toBeVisible();
+  await page.getByLabel('سریع').check();
+  await page.getByLabel('امتحان').check();
+  await page.getByRole('button', { name: 'ساخت دوره', exact: true }).click();
+  await page.waitForURL(/#\/c\/en-Calculus/);
+  expect(prompt).toContain('up to 3 topics');
+  expect(prompt).toContain('preparing for an exam');
+  const s = await state(page);
+  expect(s.recent.map((r: any) => r.key)).toEqual(['en-Calculus']);
+  await page.goto('#/library');
+  await page.getByRole('button', { name: 'حذف «Calculus»' }).click();
+  await page.getByRole('button', { name: 'حذف دوره' }).click();
+  await expect(page.getByRole('heading', { name: 'Calculus' })).toHaveCount(0);
+});
+
+test('backup: invalid, too-new and v1 files are handled; v1 merges', async ({ page }) => {
+  await seed(page);
+  await page.goto('/');
+  await page.getByRole('button', { name: 'تنظیمات' }).first().click();
+  const pick = (name: string, data: unknown) => page.locator('dialog[open] input[type=file]').setInputFiles({ name, mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(data)) });
+  await pick('bad.json', { app: 'other' });
+  await expect(page.getByText('این فایل پشتیبان Wiki Course نیست')).toBeVisible();
+  await pick('new.json', { app: 'wiki-course', version: 9 });
+  await expect(page.getByText('نسخه‌ی جدیدتری')).toBeVisible();
+  await pick('v1.json', { app: 'wiki-course', version: 1, state: { known: ['fa:zz'], days: ['2020-01-01'] }, courses: [], packs: [], terms: [] });
+  await expect(page.getByText('پشتیبان بازیابی شد')).toBeVisible();
+  const s = await state(page);
+  expect(s.known).toContain('fa:zz');
+  expect(s.lastBackup).toBeTruthy();
+});
+
+test('reader: scroll position is restored and the next topic is offered', async ({ page }) => {
+  await stubWikipedia(page);
+  await seed(page);
+  await page.goto('#/read/fa/ریاضیات?c=fa-جبر_خطی');
+  await page.locator('article h1').waitFor();
+  const next = page.locator('div.fixed.bottom-16 a, a:has-text("موضوع بعدی")').first();
+  await expect(next).toContainText('دستگاه معادلات خطی');
+  await page.evaluate(() => { const sc = document.querySelector<HTMLElement>('.page-in')!; const el = sc.scrollHeight > sc.clientHeight && getComputedStyle(sc).overflowY === 'auto' ? sc : document.documentElement; const max = el.scrollHeight - el.clientHeight; el === sc ? sc.scrollTo({ top: max / 2 }) : scrollTo({ top: max / 2 }); });
+  await expect.poll(async () => (await state(page)).pos?.['fa:ریاضیات'] ?? 0, { timeout: 5000 }).toBeGreaterThan(0.4);
+  await page.reload();
+  await expect(page.getByText('از جایی که مانده بودی ادامه می‌دهی')).toBeVisible();
+});
+
+for (const route of ['#/', '#/new', '#/library', '#/discover', '#/insights', '#/review', COURSE]) {
+  test(`phone layout: no horizontal overflow at ${route}`, async ({ page }) => {
+    await page.setViewportSize({ width: 375, height: 800 });
+    await seed(page);
+    await page.goto(route);
+    await page.waitForLoadState('networkidle');
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  });
+}

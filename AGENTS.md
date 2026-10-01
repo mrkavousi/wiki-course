@@ -14,6 +14,7 @@ npm install
 npm run dev        # http://localhost:5173
 npm run check      # assertions for pure logic: must pass
 npm run build      # tsc && vite build: what Vercel runs
+npm run test:e2e   # Playwright smoke suite (PW_CHANNEL=chrome to reuse installed Chrome)
 ```
 Before you say "done": `npm run check`, `npm run build`, and look at the UI (`npm run preview`) in light and dark at 390 px wide.
 
@@ -22,6 +23,6 @@ Before you say "done": `npm run check`, `npm run build`, and look at the UI (`np
 2. **Persisted data is additive.** Do not change the `topicKey` / `courseKey` formats; add `State` fields only with a default in `EMPTY_STATE`; update backup/restore for any new stored data. See HANDOVER section 4.
 3. **UI:** Persian strings, logical Tailwind classes (`ms-`, `pe-`, `start-`), `dir="auto"` on Wikipedia/AI text. Icons from `lucide-react` only: **no emoji**. Colors from tokens only. Nothing smaller than 13 px.
 4. **Never trust model output.** Go through `askJson` and the cleaners; render AI and Wikipedia text as React text, never as HTML.
-5. **Dependencies:** `react`, `react-dom`, `lucide-react` only. Ask before adding one.
+5. **Dependencies:** runtime `react`, `react-dom`, `lucide-react` only; dev-only `@playwright/test` for the e2e suite. Ask before adding one.
 6. **Git:** do not commit or push unless asked. Keep diffs minimal and in the existing style (single quotes, 2 spaces, comments say *why*).
 7. **Verify from a clean clone** (`npm ci && npm run build`) when you touch dependencies or `tsconfig.json`; a stray global `@types/node` once hid a missing dependency.
