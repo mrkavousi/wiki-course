@@ -1,0 +1,6 @@
+# Keep the graph about the code and docs, not data/config key-by-key.
+public/courses/
+package.json
+package-lock.json
+tsconfig.json
+CLAUDE.md

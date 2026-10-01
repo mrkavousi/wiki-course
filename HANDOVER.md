@@ -1,0 +1,200 @@
+# Wiki Course — Handover
+
+For developers and AI agents picking this project up. Read this first, then `AGENTS.md` (the short rule list) and `graphify-out/GRAPH_REPORT.md` (the code map).
+
+- **Status (2026-10-02):** v0.2, live at https://wiki-course.vercel.app. Source: github.com/mrkavousi/wiki-course. Every push to `main` auto-deploys on Vercel (about 20 s).
+- **Stack:** React 19, TypeScript 7, Vite 8, Tailwind 4 (`@tailwindcss/vite`), `lucide-react`. About 2,600 lines of TypeScript in `src/` and `scripts/`. No backend, no database, no server-side environment variables.
+- **Language:** the UI, README and AI-generated content are Persian (RTL). Code, comments, commits and this document are English.
+
+## 1. What it is
+
+Paste a Wikipedia link (any language) and get a **course**: prerequisites, next steps and related articles, each with a thumbnail, a summary, an AI score (0–100) and a one-sentence reason. The learner:
+
+- follows the course as a Duolingo-style **roadmap** or a radial **graph**, and marks topics as known;
+- reads any article in an in-app **reader** (easy mode, or enhanced mode with AI-picked key terms in bold);
+- builds a per-topic **study pack** on demand (key points, 6 flashcards, 4 quiz questions) and reviews cards with Leitner boxes;
+- saves topics to a **library**, writes own-words notes (Feynman technique), and keeps a day streak;
+- exports the roadmap as Markdown or copies one of 4 ready-made prompts for ChatGPT, Gemini or Claude;
+- backs everything up to a JSON file to move it to another device.
+
+It is a personal, local-first tool: all learner data lives in the browser.
+
+| Route (hash) | Component | Purpose |
+|---|---|---|
+| `#/` | `Library` | stats, saved topics, all courses, study tips |
+| `#/c/<courseKey>` | `CourseView` with `Roadmap`, `CourseGraph`, `TopicDetail` | one course and the selected topic (tabs: about, flashcards, quiz) |
+| `#/read/<lang>/<title>` | `Reader` | article reader (needs no AI in easy mode) |
+| `#/review` | `Review` | today's due flashcards across all topics |
+
+The header is always visible: logo, link box (**ساخت دوره** builds a course, **بخوان** opens the reader), streak, theme toggle, settings dialog.
+
+## 2. Quick start
+
+```bash
+npm install
+npm run dev        # http://localhost:5173
+npm run check      # assertions for all pure logic (src/utils/course.check.ts) - must pass
+npm run build      # tsc && vite build: exactly what Vercel runs
+npm run preview    # serve dist/ (a production-like check)
+```
+
+Node 20 or newer (developed on 24).
+
+**AI settings.** Click the gear icon and enter the gateway URL (up to `/v1`), the API key and the model (default `Gemini-2.5-Flash-lite`). They are stored only in this browser's localStorage. Without them you can still open the sample courses, read articles in easy mode, and use everything that needs no AI. Building courses, study packs and key terms needs them.
+
+**Node CLI (optional).** `.env` (gitignored; see `.env.example`) holds `AI_BASE_URL`, `AI_API_KEY`, `AI_MODEL`. Then `npm run build:course -- <wikipedia url>` builds a course in Node, writes `public/courses/<courseKey>.json` and registers it in `src/data/samples.json`. The browser app never reads `.env`.
+
+## 3. Architecture
+
+```
+Browser (React SPA, static files on Vercel)
+  |-- Wikipedia: REST page summary + Action API       (CORS: origin=*)   src/lib/build.ts
+  |-- AI gateway: OpenAI-compatible /chat/completions (CORS: *)          src/lib/build.ts
+  '-- Storage: localStorage (state, prefs, AI settings)
+               Cache Storage "wiki-course" (courses, packs, terms)       src/data/store.ts
+```
+
+The browser calls both services directly, so requests come from the user's own network and no server is needed. (Google's own AI endpoints were unreachable from the owner's network, HTTP 403, which is why an Iranian OpenAI-compatible gateway is used.)
+
+### Module map
+
+| Path | Responsibility |
+|---|---|
+| `src/App.tsx` | header, job status bar, route switch; `build()` orchestrates course creation, `read()` opens the reader |
+| `src/data/store.ts` | **all persistence and routing:** guarded `local`, `kv` (Cache Storage with a localStorage fallback), `SAMPLES`, `findCourse`/`saveCourse`, `loadPack`/`savePack`, `loadTerms`/`saveTerms`, `backupJson`/`restoreJson`, AI settings, `applyTheme`; hooks `useStore` (learner state and actions), `useReaderPrefs`, `useRoute`; `courseHref`/`readHref` |
+| `src/data/samples.json` | list of bundled sample courses (their bodies are `public/courses/*.json`) |
+| `src/lib/build.ts` | **network and AI** (browser and Node): Wikipedia fetchers, `getJson` retry, `chat`, `askJson`, prompts, `buildCourse`, `buildPack`, `buildTerms`, `fetchArticle`, `testAI` |
+| `src/utils/course.ts` | pure: `topicKey`, `courseKey`, `parseWikiUrl`, `extractJson`/`extractLists`, `cleanItems`, `cleanPack`, `pathOf` |
+| `src/utils/learn.ts` | pure: Leitner `rate`, `dueIds`, `streak`, `mergeBackup`, `PASS`, `EMPTY_STATE` |
+| `src/utils/export.ts` | pure: `courseMarkdown`, `PROMPTS`, `nextStep`; plus `download` (browser only) |
+| `src/utils/reader.ts` | pure: `parseArticle`, `termRegex`, `cleanTerms`, `boldSegments`, `outline` |
+| `src/utils/course.check.ts` | the only test file: asserts for every pure function above |
+| `src/types/course.ts` | all shared types (`Course`, `Topic`, `Pack`, `Terms`, `State`, `AI`, ...) |
+| `src/components/*` | one folder per component; `ui.ts` has shared class strings (`btn`, `primary`, `ghost`, `outline`, `card`, `ic`) and `fa()` (Persian digits) |
+| `src/index.css` | Tailwind `@theme`: color tokens (dark by default, light overrides), type scale, `.dots`, `.term-flash` |
+| `index.html` | RTL shell, Vazirmatn font, inline pre-paint theme script (**must stay in sync with `applyTheme`**) |
+| `scripts/build-course.ts` | Node CLI around `buildCourse` |
+
+Rule of thumb: logic that needs no browser and no network goes in `utils/` (and gets an assert in `course.check.ts`); network and AI in `lib/build.ts`; anything that persists or routes in `data/store.ts`; React in `components/`.
+
+### Main flows
+
+1. **Build a course** (`App.build` → `buildCourse`): parse the URL → `summary()` and `leadLinks()` in parallel → `askJson(coursePrompt)` returns prereq/next/related → each title is verified with `resolve()` (REST summary, then a search fallback; the model often misses ی/ي, ZWNJ or capitalisation) → titles are de-duplicated across roles → `saveCourse` + `addRecent` → navigate to `#/c/<key>`.
+2. **Study pack** (`CourseView.makePack` → `buildPack`): first 8,000 characters of the article text → `askJson(packPrompt)` → `cleanPack` → `savePack`.
+3. **Reader** (`Reader`): `fetchArticle` returns the whole plain-text extract → `parseArticle` → sections. Enhanced mode: `loadTerms`, or `buildTerms` (an outline goes to the AI; `cleanTerms` keeps only terms that really occur in the text) → `termRegex` + `boldSegments` bold each term at its first mention per section.
+
+## 4. Data model and compatibility rules
+
+- `topicKey(page) = "<lang>:<title>"` identifies an article inside learner state.
+- `courseKey(lang, title) = "<lang>-<title with runs of non-letters/digits replaced by _>"` is the storage key for courses, packs and terms, and the sample file name.
+- `State` (localStorage `wc:state`): `known: topicKey[]`, `saved: Page[]`, `recent: CourseRef[]`, `notes: {topicKey: text}`, `boxes: {"<topicKey>#<cardIndex>": {box 1-5, due YYYY-MM-DD}}`, `quiz: {topicKey: best %}`, `days: YYYY-MM-DD[]`.
+- Cache Storage cache `wiki-course`, synthetic URLs `/__kv/<encoded "prefix/key">`, prefixes `course/`, `pack/`, `terms/`. Where `caches` is unavailable (insecure context) the same keys go to localStorage as `wc:kv:<prefix/key>`.
+- Other localStorage keys: `wc:ai` (`{baseUrl, key, model}`), `wc:theme` (`auto|light|dark`), `wc:reader` (`{mode: easy|enhanced, size: 0-4}`). The old `wiki-course:known` is migrated once.
+- Backup file: `{app: "wiki-course", version: 1, exportedAt, state, courses[], packs[], terms[]}`. It never contains the AI settings. Restore merges state (`mergeBackup`) and overwrites kv entries.
+
+**Compatibility rules (users' data lives in their browsers, so these are hard rules):**
+
+1. The formats of `topicKey` and `courseKey` must not change without a migration. They are persisted in browsers and in sample file names.
+2. `State` fields are additive only. New fields need a default in `EMPTY_STATE` (loading does `{...EMPTY_STATE, ...stored}`).
+3. kv payload shapes are additive only.
+4. A breaking change to the backup format bumps `version`, and `restoreJson` must keep reading older versions.
+
+## 5. AI integration
+
+- **Contract:** `POST <baseUrl>/chat/completions`, header `Authorization: apikey <key>`, body `{model, messages: [{role: "user", content}]}`, reads `choices[0].message.content`. No streaming, no tools, **no web search**. Model: Gemini 2.5 Flash-lite through the ArvanCloud AI gateway. The gateway URL contains a secret token in its path, so `getJson` puts only the host in error messages.
+- **Observed quirks:** the gateway sometimes answers with an empty string, with just an opening code fence, or with half a JSON object, always with `finish_reason: stop` and whatever `max_tokens` says. The model sometimes writes broken JSON and invents titles.
+- **`askJson(ai, prompt, keys, status, judge)`:** up to `TRIES = 6` attempts with growing sleeps. `extractLists` parses the whole JSON or salvages every complete item from truncated text. `judge.clean` normalises, `judge.enough` decides when to stop, and otherwise the fullest result wins. If nothing is usable it throws a Persian error message.
+- **Prompt rules:** English instructions, Persian outputs; "raw JSON, no code fence"; put the most important keys first (truncation loses the tail); keep outputs small.
+- **Trust rules:** never trust the model. Titles are verified on Wikipedia, terms must occur in the article text, scores are clamped to 0–100, lists are capped. Wikipedia and AI text is always rendered as React text. **Never use `dangerouslySetInnerHTML` for it.**
+- **Recipe for a new AI-generated artifact** (this is exactly how `Terms` was added):
+  1. type in `types/course.ts`;
+  2. pure cleaner in `utils/`;
+  3. prompt and builder in `lib/build.ts` using `askJson` with a `Judge`;
+  4. `load`/`save` in `store.ts` under a new kv prefix;
+  5. include it in `backupJson`/`restoreJson`;
+  6. asserts in `course.check.ts`.
+- **Wikipedia:** the browser sends `Api-User-Agent` (it cannot set `User-Agent`), Node sends `User-Agent`. `getJson` retries 429 and 5xx up to 4 times, honouring `Retry-After` (capped at 20 s).
+
+## 6. UI conventions
+
+- **Language and layout:** UI strings are Persian; digits go through `fa()`. Use logical Tailwind classes (`ms-`, `me-`, `ps-`, `pe-`, `start-`, `end-`, `text-start`). Put `dir="auto"` on any Wikipedia or AI text (English articles must lay out left to right) and `dir="ltr"` on URLs and keys. In RTL the "back" arrow is `ArrowRight`.
+- **Icons:** `lucide-react` only, sized with the `ic` class (`size-[1.15em]`). **No emoji or pictographic symbols anywhere**, including exports.
+- **Colors:** semantic tokens only (`bg-bg`, `bg-panel`, `text-fg`, `text-muted`, `border-line`, `text-accent`, `text-on-accent`, `prereq`/`next`/`related`, `danger`). Never hard-code hex. In SVG use `fill-*`/`stroke-*` classes or `var(--color-*)` in `style`.
+- **Text size:** the scale lives in `index.css` (`text-xs` = 13 px, `text-sm` = 15 px, body 16 px, relaxed line-heights for Persian). Nothing may render smaller than 13 px, including SVG labels at zoom 1. Inputs must be 16 px or larger (iOS Safari zooms smaller ones).
+- **Other:** animations use `motion-safe:`; icon-only buttons need `aria-label`; toggles use `aria-pressed`.
+- Comments explain *why*. A `ponytail:` prefix marks a deliberate shortcut and its ceiling (`grep -rn "ponytail:" src scripts`).
+
+## 7. Verifying a change
+
+1. `npm run check`, then `npm run build`.
+2. **From a clean clone:** `git clone <repo> /tmp/x && cd /tmp/x && npm ci && npm run build`. A stray `~/node_modules/@types/node` once hid a missing dependency locally and broke the first Vercel deploy.
+3. `npm run preview` and look at it: light and dark, a 390 px wide viewport (no horizontal scroll), a Persian article and an English one, no console errors.
+4. **There is no automated browser test in the repo.** The flows below were checked by hand with ad-hoc Playwright-style scripts that were not committed. A smoke suite would be a welcome contribution: sample course opens; build a course (needs an AI key); mark known, reload, progress persists; build a pack, flip a card, take the quiz; reader easy and enhanced; backup then restore in a fresh profile; no emoji; no text under 13 px.
+
+## 8. Deployment
+
+Vercel imports the GitHub repo. Framework preset Vite, build `npm run build` (`tsc && vite build`), output `dist`, **no environment variables**. Routing is hash-based, so no rewrites are needed. A failing deploy is almost always a `tsc` error, because type-checking is part of `build`. Each device enters its own AI settings once.
+
+## 9. Known issues and tech debt
+
+1. **`courseKey` collisions.** `C++` and `C#` both become `en-C_`; so do `AT&T` and `AT T`. The second course, pack or terms entry overwrites the first. Fix with a short hash of the exact title, plus a migration (see compatibility rule 1).
+2. **Duplicate `fa()`** in `components/ui.ts` and (private) in `lib/build.ts`. Move one copy to `utils/format.ts`.
+3. **AI quality.** Scores and reasons are estimates (no web search). Results are sometimes thin: the Quantum mechanics sample has only 4 topics. "ساخت دوباره" rebuilds a course.
+4. **Reader limits.** Plain-text extracts drop formulas (shown as a "formula" chip), tables, image captions and list bullets. No scroll restore, no offline. The section skip-list for references (`parseArticle`) only covers English and Persian headings.
+5. **No CI, linter or formatter**, and one assert script instead of a test runner. `npm run check` fetches `tsx` through `npx --yes` each time instead of declaring it.
+6. **Device-local data.** There is no sync; the backup file is the only transfer path.
+7. **CORS dependency.** The static design relies on the gateway's `Access-Control-Allow-Origin: *`. If that changes, a small serverless proxy is needed.
+8. **Docs.** `README.md` is Persian only. `public/courses/en-Linear_algebra.json` is hand-made (marked by its `note`), not AI output.
+9. **Graph layout** is a fixed ring; with more than about 30 nodes labels will overlap.
+
+## 10. Suggested next steps
+
+- Fix `courseKey` collisions (with migration) and dedupe `fa()`.
+- GitHub Actions: `npm ci && npm run check && npm run build` on every PR.
+- Move the asserts to Vitest; add the Playwright smoke suite from section 7.
+- Grounded scoring: use a search-capable model or a search API and store the sources in `Course.sources` (the field exists and is empty today).
+- Reader: real math (Parsoid/MathML images), scroll restore, offline cache.
+- Global text-size setting (the type scale is rem-based, so setting `html` font-size scales everything).
+- English UI and English README; optional share-by-link for a course; PDF/print export; optional sync.
+
+## 11. Working with the knowledge graph (graphify)
+
+`graphify-out/` holds a graph of the code and docs, built with graphify (`pip install graphifyy`). `.graphifyignore` leaves out sample data and config JSON.
+
+- `GRAPH_REPORT.md`: communities, most-connected nodes, surprising links. `graph.html`: interactive view (open it in a browser). `graph.json`: the raw graph.
+- **Most-connected nodes:** `fa()`, `topicKey()`, `courseKey()`, `App()`, `buildCourse()`, `Reader()`. The two key functions are used everywhere, which is why compatibility rule 1 exists.
+- Useful commands (run from the repo root):
+
+```bash
+graphify query "how does the enhanced reader choose terms to bold?"
+graphify explain "buildTerms()"
+graphify path "Reader()" "chat()"          # Reader() -> buildTerms() -> askJson() -> chat()
+graphify affected "topicKey()" --depth 1   # blast radius BEFORE changing a hub
+graphify update .                          # refresh the code part of the graph (AST only, no LLM, seconds)
+```
+
+- After changing code structure, run `graphify update .` and commit `graphify-out/graph.json`, `graph.html` and `GRAPH_REPORT.md`. Do not hand-edit them. Machine-local files in `graphify-out/` are gitignored.
+- What `graphify update .` does (checked): it keeps the nodes derived from the docs, adds the headings of Markdown files as nodes, renames the communities after their hub function, and writes a dated backup folder `graphify-out/YYYY-MM-DD/` (gitignored). It never calls an LLM, so edits to `README.md`, `HANDOVER.md`, `AGENTS.md` or `index.html` are only picked up structurally; for the concept-level links run `/graphify . --update` in an agent session.
+- The corpus is small (~15k words): the graph is a navigation aid, not a replacement for reading the code. About 4% of edges are `INFERRED` (they come from the docs) and the rest are `EXTRACTED` from the AST.
+
+## 12. Contributing
+
+- Branch `feat/<topic>` or `fix/<topic>`; small PRs. Commit subject in the imperative, up to about 72 characters, with a body that says *why* (`git log` shows the style). AI agents add their co-author trailer.
+- **PR checklist:**
+  - [ ] `npm run check` and `npm run build` pass, and `npm ci && npm run build` passes in a clean clone
+  - [ ] UI changes checked in light and dark, at 390 px wide, RTL, plus an English article if the reader changed
+  - [ ] no emoji, no text under 13 px, colors from tokens only
+  - [ ] new persisted fields are additive and included in backup/restore
+  - [ ] no secrets; the gateway URL contains a token and must not appear in code, logs or screenshots
+  - [ ] graph refreshed (`graphify update .`) if the structure changed
+- **Dependencies:** the only runtime dependencies are `react`, `react-dom` and `lucide-react`. Ask before adding one.
+- **Agents:** do not commit or push unless asked; do not touch `main` without authorisation; keep diffs minimal and in the existing style; never print or commit `.env`.
+
+## 13. Glossary
+
+- **Course:** one root article plus up to about 15 scored topics (`Course` in `types/course.ts`, stored by `courseKey`).
+- **Topic:** an article inside a course with a `role` (`prereq`, `next` or `related`), a `score` and a `why`.
+- **Path (`pathOf`):** prerequisites by score (highest first), then the root article, then next steps. Related topics sit beside the path, not on it.
+- **Known:** the learner's own mark for an article. It is shared by all courses (keyed by `topicKey`). A quiz score of 75% or more sets it automatically (`PASS`).
+- **Pack:** key points, flashcards and quiz for one article, built on demand. **Terms:** the key terms the enhanced reader bolds.
+- **Leitner boxes:** 1–5, review gaps 1, 2, 4, 8 and 16 days; a wrong answer goes back to box 1 and is due today.
