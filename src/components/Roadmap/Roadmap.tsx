@@ -71,8 +71,8 @@ export function Roadmap({ course, known, selectedKey, onSelect, due }: Props) {
   }, [sig, nextIdx, known]);
 
   return (
-    <div ref={box} className="relative mx-auto max-w-md px-4 pb-10 pt-2">
-      <svg aria-hidden="true" className="pointer-events-none absolute inset-x-0 top-0 w-full" height={h} style={{ overflow: 'visible' }}>
+    <div ref={box} className="relative isolate mx-auto max-w-md px-4 pb-10 pt-2">
+      <svg aria-hidden="true" className="pointer-events-none absolute inset-x-0 top-0 -z-10 w-full" height={h} style={{ overflow: 'visible' }}>
         {links.map((l, i) => (
           <path key={i} d={l.d} fill="none" strokeLinecap="round" className={LINK[l.state]} />
         ))}

@@ -1,12 +1,13 @@
 import { useEffect, useState } from 'react';
-import { Archive, ArchiveRestore, ArrowLeft, ArrowRight, ChevronDown, CircleCheck, CircleDashed, CirclePlay, ClipboardCopy, Clock, Download, ExternalLink, Link2, Network, PartyPopper, RefreshCw, Route, Star } from 'lucide-react';
+import { Archive, ArrowLeft, ArrowRight, CircleCheck, CircleDashed, CirclePlay, Clock, ExternalLink, Gauge, Layers, Network, PartyPopper, Route, Star } from 'lucide-react';
 import type { AI, Course, Pack, Page } from '../../types/course';
-import { MAX_LINK, courseHref, courseShareLink, findCourse, loadPack, savePack, type Store } from '../../data/store';
+import { courseHref, findCourse, loadPack, savePack, type Store } from '../../data/store';
 import { buildPack } from '../../lib/build';
 import { PASS, dueIds, today } from '../../utils/learn';
 import { LEVEL_LABEL, STATUS_LABEL, courseStats, levelOf } from '../../utils/progress';
 import { courseKey, pathOf, topicKey } from '../../utils/course';
-import { PROMPTS, courseMarkdown, download, nextStep, type ExportCtx } from '../../utils/export';
+import { nextStep, type ExportCtx } from '../../utils/export';
+import { ExportMenu } from './ExportMenu';
 import { CourseGraph } from '../CourseGraph/CourseGraph';
 import { Roadmap } from '../Roadmap/Roadmap';
 import { TopicDetail } from '../TopicDetail/TopicDetail';
@@ -14,7 +15,7 @@ import { Cover } from '../Cover/Cover';
 import { ProgressBar } from '../Progress/Progress';
 import { ErrorState, Skeleton } from '../States/States';
 import { useToast } from '../Toast/Toast';
-import { badge, fa, fmtMinutes, ghost, ic, primary } from '../ui';
+import { badge, chip, fa, fmtMinutes, ghost, ic, primary } from '../ui';
 
 type Props = {
   courseKey: string;
@@ -27,22 +28,6 @@ type Props = {
 };
 
 const DEPTH_LABEL = { quick: 'سریع', standard: 'استاندارد', deep: 'عمیق' };
-
-/** A <details> menu entry that closes the menu when picked. */
-function MenuItem({ onClick, disabled, children }: { onClick: () => void; disabled?: boolean; children: React.ReactNode }) {
-  return (
-    <button
-      disabled={disabled}
-      className="flex w-full items-center gap-2 min-h-11 rounded-lg px-3 py-2 text-start text-sm hover:bg-fg/5 disabled:opacity-50"
-      onClick={(e) => {
-        e.currentTarget.closest('details')!.open = false;
-        onClick();
-      }}
-    >
-      {children}
-    </button>
-  );
-}
 
 export function CourseView({ courseKey: key, topicParam, store, ai, busy, needAI, onBuild }: Props) {
   const [course, setCourse] = useState<Course | null>(); // undefined = loading, null = not on this device
@@ -147,17 +132,25 @@ export function CourseView({ courseKey: key, topicParam, store, ai, busy, needAI
               کتابخانه
             </a>
             <span className={badge}>{course.root.lang}</span>
-            <span className="flex items-center gap-1 font-medium">
+            <span className={`${chip} ${stats.status === 'active' ? 'bg-accent-soft text-accent' : ''}`}>
               <StatusIcon className={ic} aria-hidden="true" />
               {STATUS_LABEL[stats.status]}
             </span>
-            <span className="text-muted">سطح تقریبی: {LEVEL_LABEL[levelOf(course)]}</span>
-            {course.opts && <span className="text-muted">عمق: {DEPTH_LABEL[course.opts.depth]}</span>}
-            <span className="flex items-center gap-1 text-muted">
+            <span className={chip}>
+              <Gauge className={ic} aria-hidden="true" />
+              سطح تقریبی: {LEVEL_LABEL[levelOf(course)]}
+            </span>
+            {course.opts && (
+              <span className={chip}>
+                <Layers className={ic} aria-hidden="true" />
+                عمق {DEPTH_LABEL[course.opts.depth]}
+              </span>
+            )}
+            <span className={chip}>
               <Clock className={ic} aria-hidden="true" />
               {stats.minutes ? `${fmtMinutes(stats.minutes)} مانده` : 'تمام شد'}
             </span>
-            <a href={course.root.url} target="_blank" rel="noopener noreferrer" className="flex min-h-11 items-center gap-1 text-muted hover:text-fg hover:underline">
+            <a href={course.root.url} target="_blank" rel="noopener noreferrer" className={`${chip} min-h-8 hover:text-fg`}>
               <ExternalLink className={ic} aria-hidden="true" />
               منبع: ویکی‌پدیا
             </a>
@@ -192,16 +185,6 @@ export function CourseView({ courseKey: key, topicParam, store, ai, busy, needAI
               <Star className={`${ic} ${saved ? 'fill-current' : ''}`} />
               {saved ? 'ذخیره‌شده' : 'ذخیره'}
             </button>
-            <button
-              className={ghost}
-              onClick={() => {
-                store.setArchived(course.key, !archived);
-                toast(archived ? 'از بایگانی درآمد' : 'به بایگانی رفت');
-              }}
-            >
-              {archived ? <ArchiveRestore className={ic} /> : <Archive className={ic} />}
-              {archived ? 'برگرداندن از بایگانی' : 'بایگانی'}
-            </button>
             <div className="flex overflow-hidden rounded-lg border border-line text-sm" role="group" aria-label="نما">
               {(
                 [
@@ -215,41 +198,18 @@ export function CourseView({ courseKey: key, topicParam, store, ai, busy, needAI
                 </button>
               ))}
             </div>
-            <details className="relative">
-              <summary className={`${ghost} cursor-pointer list-none`}>
-                خروجی و پرامپت
-                <ChevronDown className={ic} />
-              </summary>
-              {/* in the flow on phones (a dropdown would run off-screen), a dropdown from lg up */}
-              <div className="z-30 mt-2 w-72 max-w-full space-y-0.5 rounded-lg border border-line bg-panel p-2 shadow-lg lg:absolute lg:end-0">
-                <MenuItem onClick={() => download(`${course.root.title}.md`, courseMarkdown(ctx))}>
-                  <Download className={ic} />
-                  دانلود رودمپ (Markdown)
-                </MenuItem>
-                <MenuItem
-                  onClick={async () => {
-                    const link = await courseShareLink(course);
-                    if (link.length > MAX_LINK) return toast('این دوره برای یک لینک زیادی بزرگ است؛ از «دانلود رودمپ» استفاده کن');
-                    await copy(link, 'لینک دوره کپی شد؛ هر کس بازش کند می‌تواند این دوره را اضافه کند');
-                  }}
-                >
-                  <Link2 className={ic} />
-                  کپی لینک اشتراک‌گذاری دوره
-                </MenuItem>
-                <p className="px-3 pt-2 text-xs text-muted">کپی پرامپت آماده برای هوش مصنوعی:</p>
-                {PROMPTS.map((p) => (
-                  <MenuItem key={p.id} onClick={() => copy(p.build(ctx))}>
-                    <ClipboardCopy className={ic} />
-                    {p.label}
-                  </MenuItem>
-                ))}
-                <hr className="my-1 border-line" />
-                <MenuItem disabled={busy} onClick={() => onBuild(course.root.url, { force: true, opts: course.opts })}>
-                  <RefreshCw className={ic} />
-                  ساخت دوباره‌ی این دوره
-                </MenuItem>
-              </div>
-            </details>
+            <ExportMenu
+              ctx={ctx}
+              busy={busy}
+              archived={archived}
+              copy={copy}
+              toast={toast}
+              onArchive={() => {
+                store.setArchived(course.key, !archived);
+                toast(archived ? 'از بایگانی درآمد' : 'به بایگانی رفت');
+              }}
+              onRebuild={() => onBuild(course.root.url, { force: true, opts: course.opts })}
+            />
           </div>
         </div>
       </header>

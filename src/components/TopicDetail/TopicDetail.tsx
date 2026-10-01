@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react';
-import { ArrowLeft, BookOpen, Check, ClipboardCheck, ExternalLink, KeyRound, Layers, PenLine, Route, Sparkles, Star } from 'lucide-react';
+import { ArrowLeft, BookOpen, Check, ClipboardCheck, ExternalLink, KeyRound, PenLine, Route, Sparkles, Star } from 'lucide-react';
 import type { Course, Pack, Page, Role, Topic } from '../../types/course';
 import { readHref, type Store } from '../../data/store';
 import { topicKey } from '../../utils/course';
 import { Flashcards } from '../Flashcards/Flashcards';
 import { Quiz } from '../Quiz/Quiz';
-import { fa, ghost, ic, outline, primary } from '../ui';
+import { chip, fa, ghost, ic, outline, primary } from '../ui';
 
 type Job = { status: string; error: string } | null;
 type Props = {
@@ -28,6 +28,7 @@ const ROLE: Record<Role | 'root', [string, string]> = {
   next: ['پس‌نیاز', 'bg-next/15 text-next'],
   related: ['مرتبط', 'bg-related/15 text-related'],
 };
+const tool = 'flex min-h-14 flex-col items-center justify-center gap-1 px-2 py-2 text-center text-sm font-medium hover:bg-fg/5';
 const TABS = [['about', 'درباره'], ['cards', 'فلش‌کارت'], ['quiz', 'آزمون']] as const;
 
 export function TopicDetail({ course, page, topic, store, pack, packJob, busy, onBuildPack, onBuildCourse, next, onNext }: Props) {
@@ -57,10 +58,16 @@ export function TopicDetail({ course, page, topic, store, pack, packJob, busy, o
     <div className="space-y-5">
       {page.thumbnail && <img src={page.thumbnail} alt="" loading="lazy" decoding="async" className="aspect-video w-full rounded-lg bg-fg/5 object-cover" />}
       <div className="space-y-2">
-        <div className="flex flex-wrap items-center gap-2 text-xs font-semibold">
-          <span className={`rounded-full px-2.5 py-0.5 ${roleChip}`}>{roleLabel}</span>
-          {topic && <span className="text-muted">ارتباط {fa(topic.score)}٪</span>}
-          {state.quiz[key] !== undefined && <span className="text-muted">· بهترین آزمون {fa(state.quiz[key])}٪</span>}
+        <div className="flex flex-wrap items-center gap-1.5">
+          <span className={`${chip} font-semibold ${roleChip}`}>{roleLabel}</span>
+          {topic && <span className={chip}>ارتباط {fa(topic.score)}٪</span>}
+          {state.quiz[key] !== undefined && <span className={chip}>بهترین آزمون {fa(state.quiz[key])}٪</span>}
+          {known && (
+            <span className={`${chip} bg-accent-soft text-accent`}>
+              <Check className={ic} aria-hidden="true" />
+              بلدم
+            </span>
+          )}
         </div>
         <h2 dir="auto" className="text-2xl font-bold leading-snug">{page.title}</h2>
       </div>
@@ -123,44 +130,41 @@ export function TopicDetail({ course, page, topic, store, pack, packJob, busy, o
         </div>
       )}
 
-      <div className="grid grid-cols-2 gap-2">
-        <a className={`${primary} col-span-2`} href={readHref(page.lang, page.title, course.key)}>
-          <BookOpen className={ic} />
-          مطالعه‌ی مقاله
-        </a>
-        <button
-          className={known ? outline : ghost}
-          aria-pressed={known}
-          onClick={() => {
-            store.toggleKnown(key, course.key);
-            setLearned(!known);
-          }}
-        >
-          <Check className={ic} />
-          {known ? 'بلدم' : 'این را بلدم'}
-        </button>
-        <button className={ghost} onClick={() => setTab('cards')}>
-          <Layers className={ic} />
-          نیاز به مرور دارم
-        </button>
-        <button className={ghost} aria-pressed={saved} onClick={() => store.toggleSaved(page)}>
-          <Star className={`${ic} ${saved ? 'fill-current' : ''}`} />
-          {saved ? 'ذخیره‌شده' : 'ذخیره برای بعد'}
-        </button>
-        <button className={ghost} onClick={() => setTab('quiz')}>
-          <ClipboardCheck className={ic} />
-          آزمون این موضوع
-        </button>
-        <a className={`${ghost} ${topic ? '' : 'col-span-2'}`} href={page.url} target="_blank" rel="noopener noreferrer">
-          <ExternalLink className={ic} />
-          ویکی‌پدیا
-        </a>
-        {topic && (
-          <button className={ghost} disabled={busy} onClick={() => onBuildCourse(page.url)}>
-            <Route className={ic} />
-            دوره‌ی این موضوع
+      <div className="space-y-2">
+        <div className="flex gap-2">
+          <a className={`${primary} min-w-0 flex-1`} href={readHref(page.lang, page.title, course.key)}>
+            <BookOpen className={ic} />
+            مطالعه‌ی مقاله
+          </a>
+          <button
+            className={`${known ? outline : ghost} shrink-0`}
+            aria-pressed={known}
+            onClick={() => {
+              store.toggleKnown(key, course.key);
+              setLearned(!known);
+            }}
+          >
+            <Check className={ic} />
+            {known ? 'بلدم' : 'این را بلدم'}
           </button>
-        )}
+        </div>
+        {/* secondary actions as one segmented toolbar; flashcards and the quiz have their own tabs above */}
+        <div className="grid grid-flow-col auto-cols-fr divide-x divide-x-reverse divide-line overflow-hidden rounded-xl border border-line" role="group" aria-label="اقدام‌های بیشتر">
+          <button className={tool} aria-pressed={saved} onClick={() => store.toggleSaved(page)}>
+            <Star className={`size-5 ${saved ? 'fill-current text-accent' : ''}`} />
+            {saved ? 'ذخیره‌شده' : 'ذخیره'}
+          </button>
+          <a className={tool} href={page.url} target="_blank" rel="noopener noreferrer">
+            <ExternalLink className="size-5" />
+            ویکی‌پدیا
+          </a>
+          {topic && (
+            <button className={`${tool} disabled:opacity-50`} disabled={busy} onClick={() => onBuildCourse(page.url)}>
+              <Route className="size-5" />
+              دوره‌ی این موضوع
+            </button>
+          )}
+        </div>
       </div>
 
       <label className="block space-y-1.5">

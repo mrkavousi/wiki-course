@@ -237,3 +237,6 @@ body {
   .rail::-webkit-scrollbar { display: none; }
   .rail > * { flex: 0 0 80%; scroll-snap-align: center; }
 }
+/* Bottom sheet (phones): slides up. */
+@keyframes sheet-in { from { transform: translateY(100%); } }
+.sheet { animation: sheet-in 0.22s ease-out; }
