@@ -27,14 +27,14 @@ const Group = ({ title, children }: { title: string; children: React.ReactNode }
 /** Export, share, AI prompts and course upkeep in one menu: a popover under its button on desktop, a bottom sheet on phones (never pushes the page down). */
 export function ExportMenu({ ctx, busy, archived, onArchive, onRebuild, copy, toast }: Props) {
   const [open, setOpen] = useState(false);
-  const [pos, setPos] = useState<{ top: number; left: number } | null>(null); // null = bottom sheet
+  const [pos, setPos] = useState<{ top: number; left: number; maxH: number } | null>(null); // null = bottom sheet
   const btn = useRef<HTMLButtonElement>(null);
   const panel = useRef<HTMLDivElement>(null);
   const { course } = ctx;
 
   const show = () => {
     const r = btn.current!.getBoundingClientRect();
-    setPos(innerWidth >= 1024 ? { top: r.bottom + 8, left: Math.max(8, Math.min(r.right - W, innerWidth - W - 8)) } : null);
+    setPos(innerWidth >= 1024 ? { top: r.bottom + 8, maxH: innerHeight - r.bottom - 16, left: Math.max(8, Math.min(r.right - W, innerWidth - W - 8)) } : null);
     setOpen(true);
   };
   const close = () => {
@@ -83,8 +83,8 @@ export function ExportMenu({ ctx, busy, archived, onArchive, onRebuild, copy, to
               role="group"
               aria-label="خروجی و پرامپت"
               onClick={(e) => e.stopPropagation()}
-              style={pos ? { top: pos.top, left: pos.left, width: W } : undefined}
-              className={`absolute divide-y divide-line overflow-y-auto border border-line bg-panel shadow-2xl ${pos ? 'max-h-[min(34rem,calc(100dvh-6rem))] rounded-2xl p-1.5' : 'sheet pb-safe inset-x-0 bottom-0 max-h-[85dvh] rounded-t-3xl p-3'}`}
+              style={pos ? { top: pos.top, left: pos.left, width: W, maxHeight: Math.max(pos.maxH, 200) } : undefined}
+              className={`absolute divide-y divide-line overflow-y-auto border border-line bg-panel shadow-2xl ${pos ? 'overscroll-contain rounded-2xl p-1.5' : 'sheet pb-safe inset-x-0 bottom-0 max-h-[85dvh] rounded-t-3xl p-3'}`}
             >
               {!pos && (
                 <div className="flex items-center justify-between pb-2">
