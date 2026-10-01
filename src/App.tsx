@@ -1,0 +1,130 @@
+import { useEffect, useState } from 'react';
+import type { AI, CourseRef } from './types/course';
+import { applyTheme, courseHref, findCourse, loadAI, loadSamples, local, saveAI, saveCourse, useRoute, useStore, type ThemePref } from './data/store';
+import { buildCourse } from './lib/build';
+import { courseKey, parseWikiUrl } from './utils/course';
+import { streak, today } from './utils/learn';
+import { CourseView } from './components/CourseView/CourseView';
+import { Library } from './components/Library/Library';
+import { Review } from './components/Review/Review';
+import { Settings } from './components/Settings/Settings';
+import { UrlBar } from './components/UrlBar/UrlBar';
+import { fa } from './components/ui';
+
+// icon, next preference when clicked, label
+const THEMES: Record<ThemePref, [string, ThemePref, string]> = {
+  auto: ['🌓', 'light', 'تم: خودکار (مثل سیستم)'],
+  light: ['☀️', 'dark', 'تم: روشن'],
+  dark: ['🌙', 'auto', 'تم: تیره'],
+};
+const iconBtn = 'rounded-lg px-2 py-1 text-lg leading-none hover:bg-fg/10';
+
+export default function App() {
+  const store = useStore();
+  const route = useRoute();
+  const [samples, setSamples] = useState<CourseRef[]>([]);
+  const [ai, setAi] = useState<AI>(loadAI);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [job, setJob] = useState<{ status: string; error: string } | null>(null);
+  const [rev, setRev] = useState(0); // remounts the course view after a rebuild of the same course
+  const [theme, setTheme] = useState<ThemePref>(() => local.get('wc:theme', 'auto'));
+
+  useEffect(() => {
+    loadSamples().then(setSamples);
+    navigator.storage?.persist?.(); // ask the browser not to evict our data under storage pressure
+  }, []);
+
+  useEffect(() => {
+    local.set('wc:theme', theme);
+    applyTheme(theme);
+    const mq = matchMedia('(prefers-color-scheme: dark)');
+    const follow = () => applyTheme(theme);
+    mq.addEventListener('change', follow);
+    return () => mq.removeEventListener('change', follow);
+  }, [theme]);
+
+  const needAI = () => {
+    if (ai.baseUrl && ai.key) return false;
+    setSettingsOpen(true);
+    return true;
+  };
+
+  // Open the course for a link if this device has it, else build it in the browser, keep it here and open it.
+  const build = async (url: string, force = false) => {
+    try {
+      const { lang, title } = parseWikiUrl(url);
+      const cached = !force && (await findCourse(courseKey(lang, title), samples));
+      if (cached) return void (location.hash = courseHref(cached.key));
+      if (needAI()) return;
+      setJob({ status: 'شروع…', error: '' });
+      const course = await buildCourse(url, ai, (status) => setJob({ status, error: '' }));
+      await saveCourse(course);
+      store.addRecent(course);
+      setJob(null);
+      setRev((n) => n + 1);
+      location.hash = courseHref(course.key);
+    } catch (e: any) {
+      setJob({ status: '', error: String(e.message ?? e) });
+    }
+  };
+
+  const [themeIcon, nextTheme, themeLabel] = THEMES[theme];
+  const busy = !!job?.status;
+
+  return (
+    <div className="flex min-h-dvh flex-col lg:h-dvh">
+      <header className="border-b border-line bg-panel">
+        <div className="flex flex-wrap items-center gap-3 px-4 py-3">
+          <a href="#/" className="text-lg font-extrabold tracking-tight">
+            <span className="text-accent">●</span> Wiki Course
+          </a>
+          <UrlBar busy={busy} onBuild={(url) => build(url)} />
+          <span className="text-sm font-semibold" title="روزهای پشت‌سرهم یادگیری">
+            🔥 {fa(streak(store.state.days, today()))}
+          </span>
+          <button className={iconBtn} onClick={() => setTheme(nextTheme)} aria-label={themeLabel} title={themeLabel}>
+            {themeIcon}
+          </button>
+          <button className={iconBtn} onClick={() => setSettingsOpen(true)} aria-label="تنظیمات" title="تنظیمات">
+            ⚙️
+          </button>
+        </div>
+        {job && (
+          <div role="status" className={`flex items-center gap-3 px-4 py-2 text-sm ${job.error ? 'bg-danger/10 text-danger' : 'bg-accent/10'}`}>
+            {job.status && <span className="h-3.5 w-3.5 shrink-0 rounded-full border-2 border-accent border-t-transparent motion-safe:animate-spin" />}
+            <span className="flex-1">{job.error || job.status}</span>
+            {job.error && (
+              <button onClick={() => setJob(null)} aria-label="بستن پیام">
+                ✕
+              </button>
+            )}
+          </div>
+        )}
+        {!store.saveOk && (
+          <p className="bg-danger/10 px-4 py-2 text-sm text-danger">
+            ⚠ ذخیره در مرورگر ممکن نشد (حالت خصوصی یا فضای پر). تغییرات با بستن صفحه از بین می‌روند؛ از تنظیمات فایل پشتیبان بگیر.
+          </p>
+        )}
+      </header>
+
+      {route.name === 'course' ? (
+        <CourseView key={`${route.key}:${rev}`} courseKey={route.key} store={store} ai={ai} busy={busy} needAI={needAI} onBuild={build} />
+      ) : (
+        <div className="min-h-0 flex-1 lg:overflow-y-auto">
+          {route.name === 'review' ? <Review store={store} /> : <Library store={store} samples={samples} busy={busy} onBuild={build} />}
+        </div>
+      )}
+
+      <Settings
+        open={settingsOpen}
+        ai={ai}
+        store={store}
+        onSave={(next) => {
+          saveAI(next);
+          setAi(next);
+        }}
+        onClose={() => setSettingsOpen(false)}
+      />
+    </div>
+  );
+}

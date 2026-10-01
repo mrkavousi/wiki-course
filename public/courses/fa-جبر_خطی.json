@@ -1,0 +1,72 @@
+{
+ "key": "fa-جبر_خطی",
+ "root": {
+  "title": "جبر خطی",
+  "lang": "fa",
+  "url": "https://fa.wikipedia.org/wiki/%D8%AC%D8%A8%D8%B1_%D8%AE%D8%B7%DB%8C",
+  "summary": "جبر خطی شاخه‌ای از علم ریاضیات است که به بررسی و مطالعهٔ ماتریس‌ها، بردارها، فضاهای برداری ، تبدیلات خطی و دستگاه‌های معادلات خطی می‌پردازد."
+ },
+ "topics": [
+  {
+   "title": "ریاضیات",
+   "lang": "fa",
+   "url": "https://fa.wikipedia.org/wiki/%D8%B1%DB%8C%D8%A7%D8%B6%DB%8C%D8%A7%D8%AA",
+   "summary": "دانش جامع و پایه‌ای از مفاهیم کمّی، منطقی و ساختارهای ریاضی.",
+   "thumbnail": "https://thumb.wikimedia.org/wikipedia/commons/thumb/a/a2/Nuvola_Math_and_Inf.svg/langfa-330px-Nuvola_Math_and_Inf.svg.png?utm_source=fa.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+   "role": "prereq",
+   "score": 95,
+   "why": "بر اساس سرفصل‌های دانشگاهی، تسلط بر مفاهیم پایه ریاضیات پیش‌نیاز ورود به جبر خطی است."
+  },
+  {
+   "title": "دستگاه معادلات خطی",
+   "lang": "fa",
+   "url": "https://fa.wikipedia.org/wiki/%D8%AF%D8%B3%D8%AA%DA%AF%D8%A7%D9%87_%D9%85%D8%B9%D8%A7%D8%AF%D9%84%D8%A7%D8%AA_%D8%AE%D8%B7%DB%8C",
+   "summary": "مجموعه‌ای از چند معادله خطی که باید مقادیر مجهول مشترک آن‌ها یافت شود.",
+   "thumbnail": "https://thumb.wikimedia.org/wikipedia/commons/thumb/a/ab/Secretsharing_3-point.svg/langfa-330px-Secretsharing_3-point.svg.png?utm_source=fa.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+   "role": "prereq",
+   "score": 90,
+   "why": "مطالعه کتب مرجع نشان می‌دهد حل مقدماتی معادلات خطی نقطه شروع مطالعه ماتریس‌هاست."
+  },
+  {
+   "title": "ماتریس",
+   "lang": "fa",
+   "url": "https://fa.wikipedia.org/wiki/%D9%85%D8%A7%D8%AA%D8%B1%DB%8C%D8%B3",
+   "summary": "آرایه‌ای مستطیلی از اعداد یا ارقام است که در جبر خطی برای نمایش و حل دستگاه‌ها استفاده می‌شود.",
+   "thumbnail": "https://thumb.wikimedia.org/wikipedia/commons/thumb/6/68/Matrix_fa.svg/langfa-330px-Matrix_fa.svg.png?utm_source=fa.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+   "role": "next",
+   "score": 100,
+   "why": "در تمام کتاب‌های مرجع جبر خطی، مطالعه ماتریس‌ها و عملیات روی آن‌ها بلافاصله پس از مقدمه می‌آید."
+  },
+  {
+   "title": "فضای برداری",
+   "lang": "fa",
+   "url": "https://fa.wikipedia.org/wiki/%D9%81%D8%B6%D8%A7%DB%8C_%D8%A8%D8%B1%D8%AF%D8%A7%D8%B1%DB%8C",
+   "summary": "ساختاری جبری شامل مجموعه‌ای از بردارها که تحت عمل جمع و ضرب اسکلری بسته‌اند.",
+   "thumbnail": "https://thumb.wikimedia.org/wikipedia/commons/thumb/3/33/Vector-space-illust-transparent-background.png/330px-Vector-space-illust-transparent-background.png?utm_source=fa.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+   "role": "next",
+   "score": 90,
+   "why": "نقشه‌های درسی دانشگاهی فضاهای برداری را بلافاصله پس از مباحث اولیه ماتریسی تدریس می‌کنند."
+  },
+  {
+   "title": "نگاشت خطی",
+   "lang": "fa",
+   "url": "https://fa.wikipedia.org/wiki/%D9%86%DA%AF%D8%A7%D8%B4%D8%AA_%D8%AE%D8%B7%DB%8C",
+   "summary": "تابعی میان فضاهای برداری که ساختار جمع برداری و ضرب اسکلار را حفظ می‌کند.",
+   "role": "next",
+   "score": 85,
+   "why": "پس از شناخت فضاهای برداری، بررسی توابع و نگاشت‌های سازگار با ساختار آن‌ها منطقی‌ترین قدم است."
+  },
+  {
+   "title": "آنالیز ریاضی",
+   "lang": "fa",
+   "url": "https://fa.wikipedia.org/wiki/%D8%A2%D9%86%D8%A7%D9%84%DB%8C%D8%B2_%D8%B1%DB%8C%D8%A7%D8%B6%DB%8C",
+   "summary": "شاخه‌ای از ریاضیات که به مطالعه دقیق مفاهیم حد، پیوستگی و توابع می‌پردازد.",
+   "thumbnail": "https://thumb.wikimedia.org/wikipedia/commons/thumb/a/a2/Nuvola_Math_and_Inf.svg/langfa-330px-Nuvola_Math_and_Inf.svg.png?utm_source=fa.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+   "role": "related",
+   "score": 80,
+   "why": "سرفصل‌های دانشگاهی معمولاً آنالیز ریاضی و جبر خطی را به عنوان دو ستون موازی در دروس پایه ارائه می‌دهند."
+  }
+ ],
+ "sources": [],
+ "generatedAt": "2026-10-01T19:16:25.016Z"
+}

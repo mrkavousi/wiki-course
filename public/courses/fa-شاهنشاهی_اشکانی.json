@@ -1,0 +1,154 @@
+{
+ "key": "fa-شاهنشاهی_اشکانی",
+ "root": {
+  "title": "شاهنشاهی اشکانی",
+  "lang": "fa",
+  "url": "https://fa.wikipedia.org/wiki/%D8%B4%D8%A7%D9%87%D9%86%D8%B4%D8%A7%D9%87%DB%8C_%D8%A7%D8%B4%DA%A9%D8%A7%D9%86%DB%8C",
+  "summary": "شاهنشاهی اشکانی که در ادبیات غرب با نام امپراتوری پارت‌ها شناخته می‌شود، یکی از بزرگ‌ترین قدرت‌های سیاسی و فرهنگی ایران بود که از سال ۲۴۷ پیش از میلاد تا ۲۲۴ میلادی در ایران باستان مرکزیت داشت. این شاهنشاهی در قرن سوم پیش از میلاد توسط اَرشَک رهبر قبایل ایرانی پَرنی، پس از فتح پارت در شمال شرقی ایران تأسیس گردید. وی سپس با متحد کردن پارتیان و دیگر اقوام ایرانی علیه سلوکیان قیام کرد و با تثبیت اقتدار، بنیان سلسلهٔ خود را از تبار هخامنشیان برشمارد. مهرداد یکم با فتح سرزمین ماد و میان‌رودان، قلمرو اشکانی را تا حد زیادی گسترش داد و سرانجام شاهنشاهی اشکانی در دوران مهرداد دوم به اوج گستره خود رسید. پهناوری دولت اشکانی در دورهٔ اقتدارش از رود فرات تا هندوکش و از کوه‌های قفقاز تا خلیج فارس را شامل می‌شد. به‌دلیل قرار گرفتن جاده ابریشم در گسترهٔ حکومت اشکانی و قرار گرفتن در مسیر بازرگانی بین جمهوری روم و حوضه مدیترانه و دودمان هان در چین، این امپراتوری به مرکزی برای بازرگانی جهانی تبدیل شد.",
+  "thumbnail": "https://thumb.wikimedia.org/wikipedia/commons/thumb/5/5d/Map_of_the_Parthian_Empire_under_Mithridates_II.svg/langfa-330px-Map_of_the_Parthian_Empire_under_Mithridates_II.svg.png?utm_source=fa.wikipedia.org&utm_campaign=api&utm_content=thumbnail"
+ },
+ "topics": [
+  {
+   "title": "امپراتوری سلوکی",
+   "lang": "fa",
+   "url": "https://fa.wikipedia.org/wiki/%D8%A7%D9%85%D9%BE%D8%B1%D8%A7%D8%AA%D9%88%D8%B1%DB%8C_%D8%B3%D9%84%D9%88%DA%A9%DB%8C",
+   "summary": "دودمانی هلنیستی که پس از اسکندر مقدونی بر بخش بزرگی از ایران و میان‌رودان حکومت کرد.",
+   "thumbnail": "https://thumb.wikimedia.org/wikipedia/commons/thumb/c/c8/201209071746a_Berlin_Pergamonmuseum%2C_Tetradrachme_Seleukos%27_I%2C_Silber%2C_Pergamon%2C_281-280_v.u.Z.jpg/330px-201209071746a_Berlin_Pergamonmuseum%2C_Tetradrachme_Seleukos%27_I%2C_Silber%2C_Pergamon%2C_281-280_v.u.Z.jpg?utm_source=fa.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+   "role": "prereq",
+   "score": 95,
+   "why": "شناخت امپراتوری سلوکی به عنوان قدرت حاکم پیشین که اشکانیان علیه آن قیام کردند ضروری است."
+  },
+  {
+   "title": "تاریخ ایران باستان",
+   "lang": "fa",
+   "url": "https://fa.wikipedia.org/wiki/%D8%AA%D8%A7%D8%B1%DB%8C%D8%AE_%D8%A7%DB%8C%D8%B1%D8%A7%D9%86_%D8%A8%D8%A7%D8%B3%D8%AA%D8%A7%D9%86",
+   "summary": "دوره‌ای از تاریخ ایران که از مهاجرت آریایی‌ها تا حمله عرب‌ها را در بر می‌گیرد.",
+   "thumbnail": "https://thumb.wikimedia.org/wikipedia/commons/thumb/3/35/Cyrus_Cylinder.jpg/330px-Cyrus_Cylinder.jpg?utm_source=fa.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+   "role": "prereq",
+   "score": 90,
+   "why": "آشنایی با بستر کلی تاریخ ایران باستان برای درک جایگاه شاهنشاهی اشکانی لازم است."
+  },
+  {
+   "title": "شاهنشاهی هخامنشی",
+   "lang": "fa",
+   "url": "https://fa.wikipedia.org/wiki/%D8%B4%D8%A7%D9%87%D9%86%D8%B4%D8%A7%D9%87%DB%8C_%D9%87%D8%AE%D8%A7%D9%85%D9%86%D8%B4%DB%8C",
+   "summary": "نخستین شاهنشاهی بزرگ پارسی که توسط کوروش بزرگ تأسیس شد.",
+   "thumbnail": "https://thumb.wikimedia.org/wikipedia/commons/thumb/8/87/Standard_of_Cyrus_the_Great.svg/langfa-330px-Standard_of_Cyrus_the_Great.svg.png?utm_source=fa.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+   "role": "prereq",
+   "score": 85,
+   "why": "اشکانیان خود را از تبار هخامنشیان می‌دانستند و این ارتباط تبرایی باید شناخته شود."
+  },
+  {
+   "title": "پارت",
+   "lang": "fa",
+   "url": "https://fa.wikipedia.org/wiki/%D9%BE%D8%A7%D8%B1%D8%AA",
+   "summary": "سرزمینی باستانی در شمال شرقی ایران که هسته اولیه حکومت اشکانی را شکل داد.",
+   "thumbnail": "https://thumb.wikimedia.org/wikipedia/commons/thumb/1/12/Parthia_circa_200_BCE.jpg/330px-Parthia_circa_200_BCE.jpg?utm_source=fa.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+   "role": "prereq",
+   "score": 85,
+   "why": "منطقهٔ پارت خاستگاه اولیه و جغرافیایی ظهور ارشک و قبیله پرنی بوده است."
+  },
+  {
+   "title": "بین‌النهرین",
+   "lang": "fa",
+   "url": "https://fa.wikipedia.org/wiki/%D8%A8%DB%8C%D9%86%E2%80%8C%D8%A7%D9%84%D9%86%D9%87%D8%B1%DB%8C%D9%86",
+   "summary": "منطقه‌ای تاریخی در میان دو رود دجله و فرات که مهد تمدن‌های کهن بوده است.",
+   "thumbnail": "https://thumb.wikimedia.org/wikipedia/commons/thumb/e/ed/N-Mesopotamia_and_Syria_english.svg/langfa-330px-N-Mesopotamia_and_Syria_english.svg.png?utm_source=fa.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+   "role": "prereq",
+   "score": 80,
+   "why": "گسترش قلمرو اشکانیان تا میان‌رودان و تسلط بر آن از نقاط عطف این شاهنشاهی است."
+  },
+  {
+   "title": "ارتش اشکانی",
+   "lang": "fa",
+   "url": "https://fa.wikipedia.org/wiki/%D8%A7%D8%B1%D8%AA%D8%B4_%D8%A7%D8%B4%DA%A9%D8%A7%D9%86%DB%8C",
+   "summary": "ساختار نظامی، تاکتیک‌های جنگی و تسلیحات امپراتوری پارت‌ها به ویژه تیراندازی سواره.",
+   "thumbnail": "https://thumb.wikimedia.org/wikipedia/commons/thumb/8/8a/Azadegan_Kaviani_Flag.png/330px-Azadegan_Kaviani_Flag.png?utm_source=fa.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+   "role": "next",
+   "score": 95,
+   "why": "مطالعه سازمان نظامی و روش‌های جنگی اشکانیان گام طبیعی بعدی پس از آشنایی با کلیات تاریخ آن‌هاست."
+  },
+  {
+   "title": "جاده ابریشم",
+   "lang": "fa",
+   "url": "https://fa.wikipedia.org/wiki/%D8%AC%D8%A7%D8%AF%D9%87_%D8%A7%D8%A8%D8%B1%DB%8C%D8%B4%D9%85",
+   "summary": "شبکه باستانی از راه‌های بازرگانی که آسیا را به اروپا و مدیترانه متصل می‌کرد.",
+   "thumbnail": "https://thumb.wikimedia.org/wikipedia/commons/thumb/e/ed/Transasia_trade_routes_1stC_CE_gr2.png/330px-Transasia_trade_routes_1stC_CE_gr2.png?utm_source=fa.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+   "role": "next",
+   "score": 85,
+   "why": "نقش کلیدی جاده ابریشم در اقتصاد اشکانی موضوعی است که باید به طور تخصصی پیگیری شود."
+  },
+  {
+   "title": "آتورپاتکان",
+   "lang": "fa",
+   "url": "https://fa.wikipedia.org/wiki/%D8%A2%D8%AA%D9%88%D8%B1%D9%BE%D8%A7%D8%AA%DA%A9%D8%A7%D9%86",
+   "summary": "سرزمینی باستانی در شمال غربی ایران (آذربایجان امروزی) که استقلال خود را حفظ کرد.",
+   "thumbnail": "https://thumb.wikimedia.org/wikipedia/commons/thumb/5/52/Atropatene_as_a_vassal_of_Seleucids.png/330px-Atropatene_as_a_vassal_of_Seleucids.png?utm_source=fa.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+   "role": "next",
+   "score": 80,
+   "why": "بررسی وضعیت مناطق پیرامونی و نیمه‌مستقل هم‌عصر با اشکانیان گام بعدی مناسبی است."
+  },
+  {
+   "title": "ارمنستان بزرگ",
+   "lang": "fa",
+   "url": "https://fa.wikipedia.org/wiki/%D8%A7%D8%B1%D9%85%D9%86%D8%B3%D8%AA%D8%A7%D9%86_%D8%A8%D8%B2%D8%B1%DA%AF",
+   "summary": "پادشاهی باستانی در قفقاز که میدان رقابت سیاسی و نظامی میان ایران و روم بود.",
+   "thumbnail": "https://thumb.wikimedia.org/wikipedia/commons/thumb/6/61/Artaxiad_coat_of_arms_by_PeopleOfAr.svg/langfa-330px-Artaxiad_coat_of_arms_by_PeopleOfAr.svg.png?utm_source=fa.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+   "role": "next",
+   "score": 75,
+   "why": "مناقشات و روابط میان اشکانیان و روم بر سر ارمنستان نیاز به مطالعه مستقل دارد."
+  },
+  {
+   "title": "امپراتوری روم",
+   "lang": "fa",
+   "url": "https://fa.wikipedia.org/wiki/%D8%A7%D9%85%D9%BE%D8%B1%D8%A7%D8%AA%D9%88%D8%B1%DB%8C_%D8%B1%D9%88%D9%85",
+   "summary": "قدرت بزرگ جهان باستان که در مدیترانه و غرب آسیا با اشکانیان هم‌مرز و در جنگ بود.",
+   "thumbnail": "https://thumb.wikimedia.org/wikipedia/commons/thumb/8/83/Vexilloid_of_the_Roman_Empire.svg/langfa-330px-Vexilloid_of_the_Roman_Empire.svg.png?utm_source=fa.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+   "role": "related",
+   "score": 90,
+   "why": "روم مهم‌ترین رقیب هم‌عصر و هم مرز با شاهنشاهی اشکانی در غرب بود."
+  },
+  {
+   "title": "اسکندر مقدونی",
+   "lang": "fa",
+   "url": "https://fa.wikipedia.org/wiki/%D8%A7%D8%B3%DA%A9%D9%86%D8%AF%D8%B1_%D9%85%D9%82%D8%AF%D9%88%D9%86%DB%8C",
+   "summary": "پادشاه مقدونی که با فتح ایران به حکومت هخامنشیان پایان داد.",
+   "thumbnail": "https://thumb.wikimedia.org/wikipedia/commons/thumb/8/84/Alexander_the_Great_mosaic_%28cropped%29.jpg/330px-Alexander_the_Great_mosaic_%28cropped%29.jpg?utm_source=fa.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+   "role": "related",
+   "score": 85,
+   "why": "فروپاشی شاهنشاهی هخامنشی توسط اسکندر زمینه ساز ظهور سلوکیان و سپس اشکانیان شد."
+  },
+  {
+   "title": "مهرداد یکم",
+   "lang": "fa",
+   "url": "https://fa.wikipedia.org/wiki/%D9%85%D9%87%D8%B1%D8%AF%D8%A7%D8%AF_%DB%8C%DA%A9%D9%85",
+   "summary": "پادشاه بزرگ اشکانی که با فتح ماد و میان‌رودان قلمرو امپراتوری را به شدت گسترش داد.",
+   "thumbnail": "https://thumb.wikimedia.org/wikipedia/commons/thumb/8/8f/Coin_of_Mithradates_I_of_Parthia%2C_Seleucia_mint.jpg/330px-Coin_of_Mithradates_I_of_Parthia%2C_Seleucia_mint.jpg?utm_source=fa.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+   "role": "related",
+   "score": 85,
+   "why": "یکی از برجسته‌ترین پادشاهان اشکانی که نقش اساسی در توسعه قلمرو داشت."
+  },
+  {
+   "title": "آتروپات",
+   "lang": "fa",
+   "url": "https://fa.wikipedia.org/wiki/%D8%A2%D8%AA%D8%B1%D9%88%D9%BE%D8%A7%D8%AA",
+   "summary": "ساتراپ ایرانی که پس از حمله اسکندر حکومت مستقل آتروپاتن را بنیان نهاد.",
+   "thumbnail": "https://thumb.wikimedia.org/wikipedia/commons/thumb/e/e0/Atropatena_h%C3%B6kmdar%C4%B1_-_Atropat.jpg/330px-Atropatena_h%C3%B6kmdar%C4%B1_-_Atropat.jpg?utm_source=fa.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+   "role": "related",
+   "score": 75,
+   "why": "شخصیت تاریخی آتروپات ریشه نام و هویت منطقه شمال غربی ایران در دوران باستان است."
+  },
+  {
+   "title": "زبان پارتی",
+   "lang": "fa",
+   "url": "https://fa.wikipedia.org/wiki/%D8%B2%D8%A8%D8%A7%D9%86_%D9%BE%D8%A7%D8%B1%D8%AA%DB%8C",
+   "summary": "یکی از زبان‌های ایرانی میانه که در دوران اشکانی کاربرد گسترده‌ای داشت.",
+   "thumbnail": "https://thumb.wikimedia.org/wikipedia/commons/thumb/b/bc/A_block_from_the_Paikuli_Tower_inscribed_with_Parthian_language._Sassanian%2C_reign_of_Narseh%2C_late_3rd_century_AD._From_Sulaymaniyah%2C_Iraq._Sulaymaniyah_Museum.jpg/330px-thumbnail.jpg?utm_source=fa.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+   "role": "related",
+   "score": 70,
+   "why": "زبان رسمی و اداری حکومت اشکانیان است که ارتباط نزدیکی با فرهنگ آن‌ها دارد."
+  }
+ ],
+ "sources": [],
+ "generatedAt": "2026-10-01T18:51:01.179Z"
+}

@@ -1,0 +1,48 @@
+[
+ {
+  "key": "fa-جبر_خطی",
+  "title": "جبر خطی",
+  "lang": "fa"
+ },
+ {
+  "key": "fa-شاهنشاهی_اشکانی",
+  "title": "شاهنشاهی اشکانی",
+  "lang": "fa",
+  "thumbnail": "https://thumb.wikimedia.org/wikipedia/commons/thumb/5/5d/Map_of_the_Parthian_Empire_under_Mithridates_II.svg/langfa-330px-Map_of_the_Parthian_Empire_under_Mithridates_II.svg.png?utm_source=fa.wikipedia.org&utm_campaign=api&utm_content=thumbnail"
+ },
+ {
+  "key": "en-Machine_learning",
+  "title": "Machine learning",
+  "lang": "en"
+ },
+ {
+  "key": "fa-مهرداد_دوم",
+  "title": "مهرداد دوم",
+  "lang": "fa",
+  "thumbnail": "https://thumb.wikimedia.org/wikipedia/commons/thumb/0/0d/Coin_of_Mithridates_II_of_Parthia%2C_Ray_mint.jpg/330px-Coin_of_Mithridates_II_of_Parthia%2C_Ray_mint.jpg?utm_source=fa.wikipedia.org&utm_campaign=api&utm_content=thumbnail"
+ },
+ {
+  "key": "fa-ایران",
+  "title": "ایران",
+  "lang": "fa",
+  "thumbnail": "https://thumb.wikimedia.org/wikipedia/commons/thumb/c/ca/Flag_of_Iran.svg/langfa-330px-Flag_of_Iran.svg.png?utm_source=fa.wikipedia.org&utm_campaign=api&utm_content=thumbnail"
+ },
+ {
+  "key": "en-Quantum_mechanics",
+  "title": "Quantum mechanics",
+  "lang": "en",
+  "thumbnail": "https://thumb.wikimedia.org/wikipedia/commons/thumb/e/e7/Hydrogen_Density_Plots.png/330px-Hydrogen_Density_Plots.png?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail"
+ },
+ {
+  "key": "en-Python_programming_language_",
+  "title": "Python (programming language)",
+  "lang": "en",
+  "thumbnail": "https://thumb.wikimedia.org/wikipedia/commons/thumb/c/c3/Python-logo-notext.svg/330px-Python-logo-notext.svg.png?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail"
+ },
+ {
+  "key": "en-Linear_algebra",
+  "title": "Linear algebra",
+  "lang": "en",
+  "thumbnail": "https://thumb.wikimedia.org/wikipedia/commons/thumb/2/2f/Linear_subspaces_with_shading.svg/330px-Linear_subspaces_with_shading.svg.png?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail"
+ }
+]

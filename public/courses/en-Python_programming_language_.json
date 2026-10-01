@@ -1,0 +1,174 @@
+{
+ "key": "en-Python_programming_language_",
+ "root": {
+  "title": "Python (programming language)",
+  "lang": "en",
+  "url": "https://en.wikipedia.org/wiki/Python_(programming_language)",
+  "summary": "Python is a high-level, general-purpose programming language that emphasizes code readability, simplicity, and ease-of-writing with the use of significant indentation, an extensive (\"batteries-included\") standard library, and garbage collection. Python supports multiple programming paradigms but with an emphasis on object-oriented programming and dynamic typing.",
+  "thumbnail": "https://thumb.wikimedia.org/wikipedia/commons/thumb/c/c3/Python-logo-notext.svg/330px-Python-logo-notext.svg.png?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail"
+ },
+ "topics": [
+  {
+   "title": "Computer programming",
+   "lang": "en",
+   "url": "https://en.wikipedia.org/wiki/Computer_programming",
+   "summary": "برنامه‌نویسی کامپیوتر فرآیند طراحی، نوشتن، تست، اشکال‌زدایی و نگهداری کد منبع نرم‌افزار است. این شامل دستورالعمل‌هایی است که کامپیوتر برای انجام وظایف خاص دنبال می‌کند.",
+   "role": "prereq",
+   "score": 95,
+   "why": "آموزش برنامه‌نویسی معمولاً با مفاهیم کلی برنامه‌نویسی آغاز می‌شود."
+  },
+  {
+   "title": "High-level programming language",
+   "lang": "en",
+   "url": "https://en.wikipedia.org/wiki/High-level_programming_language",
+   "summary": "زبان‌های برنامه‌نویسی سطح بالا به زبان انسان نزدیک‌تر هستند و انتزاعات زیادی از جزئیات سخت‌افزاری را ارائه می‌دهند. این امر برنامه‌نویسی را آسان‌تر و خواناتر می‌کند.",
+   "role": "prereq",
+   "score": 90,
+   "why": "مقاله‌ی پایتون به صراحت آن را یک زبان سطح بالا معرفی می‌کند."
+  },
+  {
+   "title": "General-purpose programming language",
+   "lang": "en",
+   "url": "https://en.wikipedia.org/wiki/General-purpose_programming_language",
+   "summary": "زبان‌های برنامه‌نویسی عمومی برای انواع مختلفی از وظایف و کاربردها طراحی شده‌اند، بر خلاف زبان‌های تخصصی که برای حوزه‌های خاصی مانند گرافیک یا بازی‌سازی ساخته شده‌اند.",
+   "role": "prereq",
+   "score": 85,
+   "why": "عنوان مقاله پایتون آن را به عنوان یک زبان عمومی معرفی می‌کند."
+  },
+  {
+   "title": "Assignment (computer science)",
+   "lang": "en",
+   "url": "https://en.wikipedia.org/wiki/Assignment_(computer_science)",
+   "summary": "انتساب به فرآیند اختصاص دادن یک مقدار به یک نام یا متغیر در برنامه‌نویسی اشاره دارد. این یکی از عملیات اساسی در اجرای برنامه‌ها است.",
+   "role": "prereq",
+   "score": 70,
+   "why": "انتساب متغیرها یک مفهوم پایه‌ای در اکثر زبان‌های برنامه‌نویسی از جمله پایتون است."
+  },
+  {
+   "title": "Data type",
+   "lang": "en",
+   "url": "https://en.wikipedia.org/wiki/Data_type",
+   "summary": "نوع داده به دسته‌بندی انواع مختلف داده اشاره دارد که مقادیر می‌توانند داشته باشند، مانند اعداد، رشته‌ها و مقادیر بولی. این امر نحوه پردازش و تفسیر داده‌ها را تعیین می‌کند.",
+   "thumbnail": "https://thumb.wikimedia.org/wikipedia/commons/thumb/c/c4/Python_3._The_standard_type_hierarchy-en.svg/330px-Python_3._The_standard_type_hierarchy-en.svg.png?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+   "role": "prereq",
+   "score": 70,
+   "why": "درک انواع داده برای کار با پایتون و سایر زبان‌های برنامه‌نویسی ضروری است."
+  },
+  {
+   "title": "CPython",
+   "lang": "en",
+   "url": "https://en.wikipedia.org/wiki/CPython",
+   "summary": "CPython پیاده‌سازی مرجع و اصلی زبان برنامه‌نویسی پایتون است. بیشتر کاربران پایتون از این پیاده‌سازی استفاده می‌کنند.",
+   "role": "next",
+   "score": 95,
+   "why": "CPython پیاده‌سازی استاندارد و رایج پایتون است و گام بعدی طبیعی برای درک نحوه اجرای پایتون است."
+  },
+  {
+   "title": "List of Python software",
+   "lang": "en",
+   "url": "https://en.wikipedia.org/wiki/List_of_Python_software",
+   "summary": "این مقاله لیستی از نرم‌افزارها، چارچوب‌ها و کتابخانه‌هایی را ارائه می‌دهد که با استفاده از زبان برنامه‌نویسی پایتون توسعه یافته‌اند.",
+   "role": "next",
+   "score": 90,
+   "why": "پس از یادگیری زبان، کاوش در نرم‌افزارها و کتابخانه‌های موجود یک گام منطقی است."
+  },
+  {
+   "title": "Integrated development environment",
+   "lang": "en",
+   "url": "https://en.wikipedia.org/wiki/Integrated_development_environment",
+   "summary": "محیط توسعه یکپارچه (IDE) یک برنامه نرم‌افزاری است که ابزار اساسی را برای توسعه‌دهندگان نرم‌افزار فراهم می‌کند. معمولاً شامل یک ویرایشگر کد، دیباگر و کامپایلر/مفسر است.",
+   "thumbnail": "https://thumb.wikimedia.org/wikipedia/commons/thumb/9/97/JGRASP%2Bhello_world.png/330px-JGRASP%2Bhello_world.png?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+   "role": "next",
+   "score": 85,
+   "why": "IDEs ابزارهایی هستند که توسعه‌دهندگان پایتون از آن‌ها برای نوشتن و اجرای کد استفاده می‌کنند."
+  },
+  {
+   "title": "Object-oriented programming",
+   "lang": "en",
+   "url": "https://en.wikipedia.org/wiki/Object-oriented_programming",
+   "summary": "برنامه‌نویسی شی‌گرا یک پارادایم برنامه‌نویسی است که بر روی اشیاء تمرکز دارد، که می‌توانند داده‌ها و رفتارها را در خود داشته باشند. این پارادایم کد را سازمان‌یافته‌تر و قابل استفاده مجدد می‌کند.",
+   "thumbnail": "https://thumb.wikimedia.org/wikipedia/commons/thumb/8/86/Oop-uml-class-example.svg/330px-Oop-uml-class-example.svg.png?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+   "role": "next",
+   "score": 80,
+   "why": "مقاله‌ی پایتون به صراحت بر شی‌گرایی تأکید دارد و یادگیری این پارادایم ضروری است."
+  },
+  {
+   "title": "Type system",
+   "lang": "en",
+   "url": "https://en.wikipedia.org/wiki/Type_system",
+   "summary": "تایپ پویا یک ویژگی در زبان‌های برنامه‌نویسی است که در آن انواع متغیرها در زمان اجرا تعیین می‌شوند، نه در زمان کامپایل. این انعطاف‌پذیری بیشتری را فراهم می‌کند.",
+   "role": "next",
+   "score": 80,
+   "why": "مقاله‌ی پایتون به صراحت به تایپ پویا اشاره می‌کند که یک ویژگی مهم در پایتون است."
+  },
+  {
+   "title": "Garbage collection (computer science)",
+   "lang": "en",
+   "url": "https://en.wikipedia.org/wiki/Garbage_collection_(computer_science)",
+   "summary": "جمع‌آوری زباله یک فرآیند مدیریت حافظه خودکار است که در آن اشیاء غیرقابل استفاده که دیگر توسط برنامه مورد نیاز نیستند، شناسایی و حافظه آن‌ها آزاد می‌شود.",
+   "thumbnail": "https://thumb.wikimedia.org/wikipedia/commons/thumb/b/bc/Structure_and_Interpretation_of_Computer_Programs_p.764a.gif/330px-Structure_and_Interpretation_of_Computer_Programs_p.764a.gif?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+   "role": "next",
+   "score": 75,
+   "why": "مقاله‌ی پایتون به طور خاص به جمع‌آوری زباله به عنوان یک ویژگی اشاره می‌کند."
+  },
+  {
+   "title": "ABC (programming language)",
+   "lang": "en",
+   "url": "https://en.wikipedia.org/wiki/ABC_(programming_language)",
+   "summary": "ABC یک زبان برنامه‌نویسی آموزشی است که در دهه ۱۹۸۰ توسعه یافته و دارای شباهت‌هایی با پایتون است. این زبان بر سادگی و خوانایی تأکید دارد.",
+   "role": "related",
+   "score": 80,
+   "why": "ABC به عنوان پیش‌زمینه و الهام‌بخش پایتون ذکر شده است."
+  },
+  {
+   "title": "Guido van Rossum",
+   "lang": "en",
+   "url": "https://en.wikipedia.org/wiki/Guido_van_Rossum",
+   "summary": "گیدو ون روسوم یک برنامه‌نویس هلندی است که زبان برنامه‌نویسی پایتون را ایجاد کرده است. او اغلب به عنوان «پدرخوانده» پایتون شناخته می‌شود.",
+   "thumbnail": "https://thumb.wikimedia.org/wikipedia/commons/thumb/6/6b/Guido_van_Rossum_in_PyConUS24_%28cropped%29.jpg/330px-Guido_van_Rossum_in_PyConUS24_%28cropped%29.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+   "role": "related",
+   "score": 75,
+   "why": "او خالق پایتون است و درک پیشینه او به درک فلسفه زبان کمک می‌کند."
+  },
+  {
+   "title": "Comparison of programming languages",
+   "lang": "en",
+   "url": "https://en.wikipedia.org/wiki/Comparison_of_programming_languages",
+   "summary": "این مقاله به مقایسه‌ی ویژگی‌ها، کاربردها و نقاط قوت و ضعف زبان‌های برنامه‌نویسی مختلف می‌پردازد.",
+   "role": "related",
+   "score": 70,
+   "why": "این مقاله به مقایسه‌ی پایتون با سایر زبان‌ها کمک می‌کند."
+  },
+  {
+   "title": "History of Python",
+   "lang": "en",
+   "url": "https://en.wikipedia.org/wiki/History_of_Python",
+   "summary": "این مقاله به بررسی تاریخچه توسعه زبان برنامه‌نویسی پایتون، از ایده‌های اولیه تا وضعیت فعلی آن می‌پردازد.",
+   "thumbnail": "https://thumb.wikimedia.org/wikipedia/commons/thumb/d/da/Guido-portrait-2014.jpg/330px-Guido-portrait-2014.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+   "role": "related",
+   "score": 70,
+   "why": "این مقاله تاریخچه و تکامل زبان پایتون را پوشش می‌دهد."
+  },
+  {
+   "title": "Imperative programming",
+   "lang": "en",
+   "url": "https://en.wikipedia.org/wiki/Imperative_programming",
+   "summary": "برنامه‌نویسی امری یک پارادایم برنامه‌نویسی است که بر اساس دستورالعمل‌هایی است که وضعیت برنامه را تغییر می‌دهند. این رویکردی گام به گام برای حل مسئله است.",
+   "role": "related",
+   "score": 65,
+   "why": "پایتون از پارادایم‌های مختلفی پشتیبانی می‌کند و برنامه‌نویسی امری یکی از آن‌هاست."
+  },
+  {
+   "title": "Algol",
+   "lang": "en",
+   "url": "https://en.wikipedia.org/wiki/Algol",
+   "summary": "ALGOL (Algorithmic Language) خانواده‌ای از زبان‌های برنامه‌نویسی است که تأثیر قابل توجهی بر زبان‌های بعدی داشته‌اند. این زبان‌ها بر ساختار و خوانایی تأکید داشتند.",
+   "thumbnail": "https://thumb.wikimedia.org/wikipedia/commons/thumb/e/ef/Perseus_constellation_map.svg/330px-Perseus_constellation_map.svg.png?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+   "role": "related",
+   "score": 60,
+   "why": "ALGOL یکی از زبان‌های برنامه‌نویسی تأثیرگذار تاریخی است که در مقایسه با زبان‌های مدرن مانند پایتون بررسی می‌شود."
+  }
+ ],
+ "sources": [],
+ "generatedAt": "2026-10-01T18:23:01.929Z"
+}

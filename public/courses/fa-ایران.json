@@ -1,0 +1,151 @@
+{
+ "key": "fa-ایران",
+ "root": {
+  "title": "ایران",
+  "lang": "fa",
+  "url": "https://fa.wikipedia.org/wiki/%D8%A7%DB%8C%D8%B1%D8%A7%D9%86",
+  "summary": "ایران با نام رسمیِ جمهوری اسلامی ایران، کشوری در غرب آسیا است. این کشور از غرب با عراق، از شمال غربی با ترکیه، جمهوری آذربایجان و ارمنستان، از شمال با دریای خزر، از شمال شرق با ترکمنستان، از شرق با افغانستان، از جنوب شرقی با پاکستان و از جنوب با دریای عمان و خلیج فارس هم‌مرز است. ایران با ۱٫۶۴ میلیون کیلومتر مربع گستره، هفدهمین کشور پهناور جهان، و با ۹۲ میلیون نفر جمعیت، هفدهمین کشور پرجمعیت جهان است. ایران در تقسیمات کشوری به پنج منطقه و ۳۱ استان تقسیم می‌شود. زبان رسمی ایران فارسی است. پایتخت و پرجمعیت‌ترین شهر این کشور تهران است.",
+  "thumbnail": "https://thumb.wikimedia.org/wikipedia/commons/thumb/c/ca/Flag_of_Iran.svg/langfa-330px-Flag_of_Iran.svg.png?utm_source=fa.wikipedia.org&utm_campaign=api&utm_content=thumbnail"
+ },
+ "topics": [
+  {
+   "title": "جغرافیای آسیا",
+   "lang": "fa",
+   "url": "https://fa.wikipedia.org/wiki/%D8%AC%D8%BA%D8%B1%D8%A7%D9%81%DB%8C%D8%A7%DB%8C_%D8%A2%D8%B3%DB%8C%D8%A7",
+   "summary": "بررسی ویژگی‌های جغرافیایی، عوارض طبیعی و وسعت قاره آسیا.",
+   "thumbnail": "https://thumb.wikimedia.org/wikipedia/commons/thumb/2/2a/Asia_satellite_orthographic.jpg/330px-Asia_satellite_orthographic.jpg?utm_source=fa.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+   "role": "prereq",
+   "score": 90,
+   "why": "شناخت موقعیت جغرافیایی و قاره‌ای ایران نیازمند آشنایی پایه با جغرافیای قاره آسیا است."
+  },
+  {
+   "title": "علوم سیاسی",
+   "lang": "fa",
+   "url": "https://fa.wikipedia.org/wiki/%D8%B9%D9%84%D9%88%D9%85_%D8%B3%DB%8C%D8%A7%D8%B3%DB%8C",
+   "summary": "دانش پایه درباره دولت‌ها، حکومت‌ها، نظام‌های سیاسی و ساختارهای قدرت.",
+   "role": "prereq",
+   "score": 80,
+   "why": "درک ساختار حکومتی جمهوری اسلامی ایران و تقسیمات کشوری مستلزم آشنایی اولیه با مفاهیم علوم سیاسی است."
+  },
+  {
+   "title": "اقتصاد کلان",
+   "lang": "fa",
+   "url": "https://fa.wikipedia.org/wiki/%D8%A7%D9%82%D8%AA%D8%B5%D8%A7%D8%AF_%DA%A9%D9%84%D8%A7%D9%86",
+   "summary": "شاخص‌های کلان اقتصادی مانند تولید ناخالص داخلی، تورم و جمعیت‌شناسی اقتصادی.",
+   "thumbnail": "https://thumb.wikimedia.org/wikipedia/commons/thumb/c/c5/Ferdowsi-Ave-1962.jpg/330px-Ferdowsi-Ave-1962.jpg?utm_source=fa.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+   "role": "prereq",
+   "score": 75,
+   "why": "بررسی جایگاه اقتصادی و آمارهای کلان کشور نیازمند درک اصول اولیه علم اقتصاد است."
+  },
+  {
+   "title": "جغرافیای انسانی",
+   "lang": "fa",
+   "url": "https://fa.wikipedia.org/wiki/%D8%AC%D8%BA%D8%B1%D8%A7%D9%81%DB%8C%D8%A7%DB%8C_%D8%A7%D9%86%D8%B3%D8%A7%D9%86%DB%8C",
+   "summary": "مطالعه الگوهای جمعیتی، زبان‌ها، فرهنگ‌ها و سکونتگاه‌های انسانی در پهنه زمین.",
+   "role": "prereq",
+   "score": 70,
+   "why": "تحلیل جمعیت، زبان‌ها و پراکندگی جغرافیایی ملت‌ها بر پایه مباحث جغرافیای انسانی شکل می‌گیرد."
+  },
+  {
+   "title": "تاریخ ایران",
+   "lang": "fa",
+   "url": "https://fa.wikipedia.org/wiki/%D8%AA%D8%A7%D8%B1%DB%8C%D8%AE_%D8%A7%DB%8C%D8%B1%D8%A7%D9%86",
+   "summary": "بررسی سیر تحولات تاریخی ایران از دوران پیش از تاریخ تا عصر معاصر.",
+   "thumbnail": "https://thumb.wikimedia.org/wikipedia/commons/thumb/3/35/Cyrus_Cylinder.jpg/330px-Cyrus_Cylinder.jpg?utm_source=fa.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+   "role": "next",
+   "score": 95,
+   "why": "پس از آشنایی با کلیات جغرافیایی و سیاسی ایران، مطالعه عمیق‌تر تاریخ این سرزمین گام بعدی طبیعی است."
+  },
+  {
+   "title": "جغرافیای ایران",
+   "lang": "fa",
+   "url": "https://fa.wikipedia.org/wiki/%D8%AC%D8%BA%D8%B1%D8%A7%D9%81%DB%8C%D8%A7%DB%8C_%D8%A7%DB%8C%D8%B1%D8%A7%D9%86",
+   "summary": "مطالعه دقیق عوارض طبیعی، اقلیم، منابع آب و ویژگی‌های محیطی ایران.",
+   "thumbnail": "https://thumb.wikimedia.org/wikipedia/commons/thumb/9/94/IranOMC.png/330px-IranOMC.png?utm_source=fa.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+   "role": "next",
+   "score": 90,
+   "why": "آشنایی با مرزها و استان‌ها در مقاله اصلی، راه را برای مطالعه تخصصی‌تر اقلیم، عوارض و آب‌وهوای ایران هموار می‌کند."
+  },
+  {
+   "title": "اقتصاد ایران",
+   "lang": "fa",
+   "url": "https://fa.wikipedia.org/wiki/%D8%A7%D9%82%D8%AA%D8%B5%D8%A7%D8%AF_%D8%A7%DB%8C%D8%B1%D8%A7%D9%86",
+   "summary": "بررسی ساختار اقتصادی، صنایع، بخش نفت و گاز و مسائل مالی و تجاری ایران.",
+   "thumbnail": "https://thumb.wikimedia.org/wikipedia/commons/thumb/9/9a/Tehran_Panoramic_View.jpg/330px-Tehran_Panoramic_View.jpg?utm_source=fa.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+   "role": "next",
+   "score": 85,
+   "why": "اطلاع از مشخصات عمومی کشور، زمینه مناسبی برای واکاوی ساختار اقتصادی، منابع و چالش‌های مالی آن فراهم می‌سازد."
+  },
+  {
+   "title": "سیاست در ایران",
+   "lang": "fa",
+   "url": "https://fa.wikipedia.org/wiki/%D8%B3%DB%8C%D8%A7%D8%B3%D8%AA_%D8%AF%D8%B1_%D8%A7%DB%8C%D8%B1%D8%A7%D9%86",
+   "summary": "تحلیل ساختار قدرت، نهادهای حکومتی و تحولات سیاسی در ایران معاصر.",
+   "role": "next",
+   "score": 80,
+   "why": "شناخت نام رسمی و ساختار حکومتی کشور، مقدمه‌ای برای بررسی جریان‌ها و نظام سیاسی جاری است."
+  },
+  {
+   "title": "فرهنگ ایرانی",
+   "lang": "fa",
+   "url": "https://fa.wikipedia.org/wiki/%D9%81%D8%B1%D9%87%D9%86%DA%AF_%D8%A7%DB%8C%D8%B1%D8%A7%D9%86%DB%8C",
+   "summary": "مجموعه سنت‌ها، آداب‌ورسوم، هنر، ادبیات و ارزش‌های فرهنگی حاکم بر جامعه ایران.",
+   "thumbnail": "https://thumb.wikimedia.org/wikipedia/commons/thumb/d/da/Arash_Kamangir_statue.jpg/330px-Arash_Kamangir_statue.jpg?utm_source=fa.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+   "role": "next",
+   "score": 75,
+   "why": "زبان رسمی و پیشینه معرفی‌شده در مقاله، پژوهش درباره مؤلفه‌های فرهنگی، هنر و ادبیات ایران را ایجاب می‌کند."
+  },
+  {
+   "title": "استان‌های ایران",
+   "lang": "fa",
+   "url": "https://fa.wikipedia.org/wiki/%D8%A7%D8%B3%D8%AA%D8%A7%D9%86%E2%80%8C%D9%87%D8%A7%DB%8C_%D8%A7%DB%8C%D8%B1%D8%A7%D9%86",
+   "summary": "فهرست و ویژگی‌های کلی استان‌ها و تقسیمات کشوری جمهوری اسلامی ایران.",
+   "thumbnail": "https://thumb.wikimedia.org/wikipedia/commons/thumb/2/2d/Iran_provinces_in_Farsi.svg/langfa-330px-Iran_provinces_in_Farsi.svg.png?utm_source=fa.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+   "role": "related",
+   "score": 95,
+   "why": "تقسیمات کشوری و ۳۱ استان ایران که در مقاله ذکر شده‌اند، موضوع این مقاله وابسته را تشکیل می‌دهند."
+  },
+  {
+   "title": "زبان فارسی",
+   "lang": "fa",
+   "url": "https://fa.wikipedia.org/wiki/%D8%B2%D8%A8%D8%A7%D9%86_%D9%81%D8%A7%D8%B1%D8%B3%DB%8C",
+   "summary": "بررسی تاریخچه، گویش‌ها و ویژگی‌های زبانی زبان فارسی به عنوان زبان رسمی ایران.",
+   "thumbnail": "https://thumb.wikimedia.org/wikipedia/commons/thumb/5/53/Persian_Language_Location_Map.svg/langfa-330px-Persian_Language_Location_Map.svg.png?utm_source=fa.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+   "role": "related",
+   "score": 90,
+   "why": "زبان رسمی ایران که در خلاصه مقاله معرفی شده، موضوع اصلی این نوشتار پیوندیافته است."
+  },
+  {
+   "title": "تهران",
+   "lang": "fa",
+   "url": "https://fa.wikipedia.org/wiki/%D8%AA%D9%87%D8%B1%D8%A7%D9%86",
+   "summary": "معرفی پایتخت ایران از نظر جغرافیایی، اقتصادی، جمعیتی و تاریخی.",
+   "thumbnail": "https://thumb.wikimedia.org/wikipedia/commons/thumb/2/23/Azadi_Tower_%2829358497718%29.jpg/330px-Azadi_Tower_%2829358497718%29.jpg?utm_source=fa.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+   "role": "related",
+   "score": 88,
+   "why": "پایتخت و پرجمعیت‌ترین شهر ایران که در مقاله معرفی شده، به طور مستقیم در این مقاله بررسی می‌شود."
+  },
+  {
+   "title": "خلیج فارس",
+   "lang": "fa",
+   "url": "https://fa.wikipedia.org/wiki/%D8%AE%D9%84%DB%8C%D8%AC_%D9%81%D8%A7%D8%B1%D8%B3",
+   "summary": "حوضه آبی مهم جنوبی ایران با اهمیت راهبردی، تاریخی و اقتصادی.",
+   "thumbnail": "https://thumb.wikimedia.org/wikipedia/commons/thumb/b/be/PersianGulf_vue_satellite_du_golfe_persique.jpg/330px-PersianGulf_vue_satellite_du_golfe_persique.jpg?utm_source=fa.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+   "role": "related",
+   "score": 85,
+   "why": "یکی از مرزهای آبی مهم ایران که در متن مقاله به آن اشاره شده است."
+  },
+  {
+   "title": "نشان رسمی ایران",
+   "lang": "fa",
+   "url": "https://fa.wikipedia.org/wiki/%D9%86%D8%B4%D8%A7%D9%86_%D8%B1%D8%B3%D9%85%DB%8C_%D8%A7%DB%8C%D8%B1%D8%A7%D9%86",
+   "summary": "بررسی نماد و نشان رسمی حکومت ایران و تاریخچه آن.",
+   "thumbnail": "https://thumb.wikimedia.org/wikipedia/commons/thumb/4/4e/Emblem_of_Iran.svg/langfa-330px-Emblem_of_Iran.svg.png?utm_source=fa.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+   "role": "related",
+   "score": 80,
+   "why": "نماد رسمی و حکومتی جمهوری اسلامی ایران که مکمل اطلاعات شناسنامه‌ای کشور است."
+  }
+ ],
+ "sources": [],
+ "generatedAt": "2026-10-01T18:29:01.081Z"
+}

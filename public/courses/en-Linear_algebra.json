@@ -1,0 +1,109 @@
+{
+ "key": "en-Linear_algebra",
+ "root": {
+  "title": "Linear algebra",
+  "lang": "en",
+  "url": "https://en.wikipedia.org/wiki/Linear_algebra",
+  "summary": "Linear algebra is the branch of mathematics concerning linear equations such as\n\nlinear maps such as the following:\n\nand their representations in vector spaces and through matrices.",
+  "thumbnail": "https://thumb.wikimedia.org/wikipedia/commons/thumb/2/2f/Linear_subspaces_with_shading.svg/330px-Linear_subspaces_with_shading.svg.png?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail"
+ },
+ "topics": [
+  {
+   "title": "Algebra",
+   "lang": "en",
+   "url": "https://en.wikipedia.org/wiki/Algebra",
+   "summary": "پایه‌ی کار با متغیر و معادله.",
+   "role": "prereq",
+   "score": 90,
+   "why": "نمونه"
+  },
+  {
+   "title": "Vector (mathematics and physics)",
+   "lang": "en",
+   "url": "https://en.wikipedia.org/wiki/Vector_(mathematics_and_physics)",
+   "summary": "مفهوم بردار.",
+   "role": "prereq",
+   "score": 80,
+   "why": "نمونه"
+  },
+  {
+   "title": "Matrix (mathematics)",
+   "lang": "en",
+   "url": "https://en.wikipedia.org/wiki/Matrix_(mathematics)",
+   "summary": "آرایه‌ی مستطیلی از اعداد.",
+   "thumbnail": "https://thumb.wikimedia.org/wikipedia/commons/thumb/d/d4/MatrixLabelled.svg/330px-MatrixLabelled.svg.png?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+   "role": "prereq",
+   "score": 70,
+   "why": "نمونه"
+  },
+  {
+   "title": "Real number",
+   "lang": "en",
+   "url": "https://en.wikipedia.org/wiki/Real_number",
+   "summary": "اعداد حقیقی.",
+   "thumbnail": "https://thumb.wikimedia.org/wikipedia/commons/thumb/d/d7/Real_number_line.svg/330px-Real_number_line.svg.png?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+   "role": "prereq",
+   "score": 50,
+   "why": "نمونه"
+  },
+  {
+   "title": "Eigenvalues and eigenvectors",
+   "lang": "en",
+   "url": "https://en.wikipedia.org/wiki/Eigenvalues_and_eigenvectors",
+   "summary": "مقادیر و بردارهای ویژه.",
+   "role": "next",
+   "score": 92,
+   "why": "نمونه"
+  },
+  {
+   "title": "Singular value decomposition",
+   "lang": "en",
+   "url": "https://en.wikipedia.org/wiki/Singular_value_decomposition",
+   "summary": "تجزیه‌ی مقادیر منفرد.",
+   "thumbnail": "https://thumb.wikimedia.org/wikipedia/commons/thumb/b/bb/Singular-Value-Decomposition.svg/330px-Singular-Value-Decomposition.svg.png?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+   "role": "next",
+   "score": 75,
+   "why": "نمونه"
+  },
+  {
+   "title": "Functional analysis",
+   "lang": "en",
+   "url": "https://en.wikipedia.org/wiki/Functional_analysis",
+   "summary": "تحلیل تابعی.",
+   "thumbnail": "https://upload.wikimedia.org/wikipedia/commons/e/e9/Drum_vibration_mode12.gif?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail_unscaled",
+   "role": "next",
+   "score": 55,
+   "why": "نمونه"
+  },
+  {
+   "title": "Calculus",
+   "lang": "en",
+   "url": "https://en.wikipedia.org/wiki/Calculus",
+   "summary": "حسابان.",
+   "role": "related",
+   "score": 60,
+   "why": "نمونه"
+  },
+  {
+   "title": "Geometry",
+   "lang": "en",
+   "url": "https://en.wikipedia.org/wiki/Geometry",
+   "summary": "هندسه.",
+   "role": "related",
+   "score": 50,
+   "why": "نمونه"
+  },
+  {
+   "title": "Machine learning",
+   "lang": "en",
+   "url": "https://en.wikipedia.org/wiki/Machine_learning",
+   "summary": "یادگیری ماشین.",
+   "role": "related",
+   "score": 40,
+   "why": "نمونه"
+  }
+ ],
+ "sources": [],
+ "generatedAt": "2026-10-01T17:57:31.237Z",
+ "note": "نمونه: موضوع‌ها و نمره‌ها دستی انتخاب شده‌اند و با مدل ساخته نشده‌اند؛ تصویرها و خلاصه‌ها از ویکی‌پدیا هستند."
+}

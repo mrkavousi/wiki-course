@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="از یک مقاله‌ی ویکی‌پدیا یک دوره‌ی یادگیری بساز: پیش‌نیاز، پس‌نیاز، فلش‌کارت و آزمون." />
+    <meta name="color-scheme" content="dark light" />
+    <title>Wiki Course</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><circle cx=%2250%22 cy=%2250%22 r=%2240%22 fill=%22%2314b8a6%22/></svg>" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <script>
+      // Apply the saved theme before the first paint, so the page never flashes the wrong colours. 'auto' follows the OS.
+      (function () {
+        var pref = 'auto';
+        try { pref = JSON.parse(localStorage.getItem('wc:theme')) || 'auto'; } catch (e) {}
+        var dark = pref === 'dark' || (pref === 'auto' && matchMedia('(prefers-color-scheme: dark)').matches);
+        document.documentElement.dataset.theme = dark ? 'dark' : 'light';
+      })();
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

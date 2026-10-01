@@ -1,0 +1,157 @@
+{
+ "key": "en-Machine_learning",
+ "root": {
+  "title": "Machine learning",
+  "lang": "en",
+  "url": "https://en.wikipedia.org/wiki/Machine_learning",
+  "summary": "Machine learning (ML) is a field of study in artificial intelligence concerned with the development and study of statistical algorithms that can learn from data and generalize to unseen data, and thus perform tasks without being explicitly programmed."
+ },
+ "topics": [
+  {
+   "title": "Computer science",
+   "lang": "en",
+   "url": "https://en.wikipedia.org/wiki/Computer_science",
+   "summary": "این رشته به مطالعه الگوریتم‌ها، ساختار داده‌ها و محاسبات می‌پردازد.",
+   "thumbnail": "https://thumb.wikimedia.org/wikipedia/commons/thumb/d/d9/Half_Adder.svg/330px-Half_Adder.svg.png?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+   "role": "prereq",
+   "score": 90,
+   "why": "یادگیری ماشین زیرمجموعه‌ای از علوم کامپیوتر است."
+  },
+  {
+   "title": "Algorithm",
+   "lang": "en",
+   "url": "https://en.wikipedia.org/wiki/Algorithm",
+   "summary": "یک الگوریتم مجموعه‌ای از دستورالعمل‌ها برای حل یک مسئله یا انجام یک کار است.",
+   "thumbnail": "https://thumb.wikimedia.org/wikipedia/commons/thumb/5/5e/GCD_through_successive_subtractions.svg/330px-GCD_through_successive_subtractions.svg.png?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+   "role": "prereq",
+   "score": 85,
+   "why": "یادگیری ماشین بر پایه الگوریتم‌های آماری استوار است."
+  },
+  {
+   "title": "Statistics",
+   "lang": "en",
+   "url": "https://en.wikipedia.org/wiki/Statistics",
+   "summary": "این علم به جمع‌آوری، تجزیه و تحلیل، تفسیر و ارائه داده‌ها می‌پردازد.",
+   "thumbnail": "https://thumb.wikimedia.org/wikipedia/commons/thumb/a/ad/Standard_Normal_Distribution-en.svg/330px-Standard_Normal_Distribution-en.svg.png?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+   "role": "prereq",
+   "score": 80,
+   "why": "یادگیری ماشین از مفاهیم آماری برای یادگیری از داده‌ها استفاده می‌کند."
+  },
+  {
+   "title": "Data",
+   "lang": "en",
+   "url": "https://en.wikipedia.org/wiki/Data",
+   "summary": "داده‌ها شامل حقایق، ارقام یا اطلاعاتی هستند که جمع‌آوری و ذخیره می‌شوند.",
+   "thumbnail": "https://thumb.wikimedia.org/wikipedia/commons/thumb/6/6d/Data_types_-_en.svg/330px-Data_types_-_en.svg.png?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+   "role": "prereq",
+   "score": 75,
+   "why": "یادگیری ماشین اساساً از داده‌ها یاد می‌گیرد."
+  },
+  {
+   "title": "Linear algebra",
+   "lang": "en",
+   "url": "https://en.wikipedia.org/wiki/Linear_algebra",
+   "summary": "این شاخه از ریاضیات به مطالعه بردارها، ماتریس‌ها و فضاهای برداری می‌پردازد.",
+   "thumbnail": "https://thumb.wikimedia.org/wikipedia/commons/thumb/2/2f/Linear_subspaces_with_shading.svg/330px-Linear_subspaces_with_shading.svg.png?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+   "role": "prereq",
+   "score": 70,
+   "why": "بسیاری از الگوریتم‌های یادگیری ماشین از مفاهیم جبر خطی استفاده می‌کنند."
+  },
+  {
+   "title": "Deep learning",
+   "lang": "en",
+   "url": "https://en.wikipedia.org/wiki/Deep_learning",
+   "summary": "این روش از شبکه‌های عصبی مصنوعی با لایه‌های متعدد برای یادگیری از داده‌ها استفاده می‌کند.",
+   "thumbnail": "https://thumb.wikimedia.org/wikipedia/commons/thumb/2/26/Deep_Learning.jpg/330px-Deep_Learning.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+   "role": "next",
+   "score": 95,
+   "why": "یادگیری عمیق یکی از زیرشاخه‌های بسیار مهم و پرکاربرد یادگیری ماشین است."
+  },
+  {
+   "title": "Neural network (machine learning)",
+   "lang": "en",
+   "url": "https://en.wikipedia.org/wiki/Neural_network_(machine_learning)",
+   "summary": "این شبکه‌ها از نورون‌های مصنوعی الهام گرفته از مغز انسان برای پردازش اطلاعات استفاده می‌کنند.",
+   "thumbnail": "https://thumb.wikimedia.org/wikipedia/commons/thumb/4/46/Colored_neural_network.svg/330px-Colored_neural_network.svg.png?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+   "role": "next",
+   "score": 90,
+   "why": "شبکه‌های عصبی مصنوعی اساس بسیاری از الگوریتم‌های یادگیری ماشین هستند."
+  },
+  {
+   "title": "Supervised learning",
+   "lang": "en",
+   "url": "https://en.wikipedia.org/wiki/Supervised_learning",
+   "summary": "در این روش، مدل با استفاده از داده‌های برچسب‌دار آموزش داده می‌شود.",
+   "thumbnail": "https://thumb.wikimedia.org/wikipedia/commons/thumb/4/4d/Supervised_and_unsupervised_learning.png/330px-Supervised_and_unsupervised_learning.png?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+   "role": "next",
+   "score": 85,
+   "why": "یادگیری با نظارت یک دسته اصلی از روش‌های یادگیری ماشین است."
+  },
+  {
+   "title": "Unsupervised learning",
+   "lang": "en",
+   "url": "https://en.wikipedia.org/wiki/Unsupervised_learning",
+   "summary": "در این روش، مدل بدون داده‌های برچسب‌دار، الگوها را در داده‌ها کشف می‌کند.",
+   "role": "next",
+   "score": 85,
+   "why": "یادگیری بدون نظارت دسته اصلی دیگر از روش‌های یادگیری ماشین است."
+  },
+  {
+   "title": "Reinforcement learning",
+   "lang": "en",
+   "url": "https://en.wikipedia.org/wiki/Reinforcement_learning",
+   "summary": "در این روش، عامل از طریق آزمون و خطا با دریافت پاداش یا جریمه یاد می‌گیرد.",
+   "thumbnail": "https://thumb.wikimedia.org/wikipedia/commons/thumb/1/1b/Reinforcement_learning_diagram.svg/330px-Reinforcement_learning_diagram.svg.png?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+   "role": "next",
+   "score": 85,
+   "why": "یادگیری تقویتی رویکردی کلیدی در یادگیری ماشین است."
+  },
+  {
+   "title": "Artificial intelligence",
+   "lang": "en",
+   "url": "https://en.wikipedia.org/wiki/Artificial_intelligence",
+   "summary": "این حوزه به ساخت سیستم‌هایی می‌پردازد که قادر به انجام وظایفی هستند که معمولاً به هوش انسانی نیاز دارند.",
+   "role": "related",
+   "score": 100,
+   "why": "یادگیری ماشین یک زیرمجموعه اصلی از هوش مصنوعی است."
+  },
+  {
+   "title": "Data mining",
+   "lang": "en",
+   "url": "https://en.wikipedia.org/wiki/Data_mining",
+   "summary": "این حوزه به کشف الگوها و دانش از مجموعه داده‌های بزرگ می‌پردازد.",
+   "role": "related",
+   "score": 80,
+   "why": "یادگیری ماشین ابزاری اساسی در داده‌کاوی است."
+  },
+  {
+   "title": "Computer vision",
+   "lang": "en",
+   "url": "https://en.wikipedia.org/wiki/Computer_vision",
+   "summary": "این حوزه به کامپیوترها امکان می‌دهد تصاویر و ویدیوها را تفسیر کنند.",
+   "role": "related",
+   "score": 75,
+   "why": "یادگیری ماشین کاربردهای گسترده‌ای در بینایی کامپیوتر دارد."
+  },
+  {
+   "title": "Natural language processing",
+   "lang": "en",
+   "url": "https://en.wikipedia.org/wiki/Natural_language_processing",
+   "summary": "این حوزه به کامپیوترها امکان می‌دهد زبان انسان را درک و پردازش کنند.",
+   "role": "related",
+   "score": 75,
+   "why": "یادگیری ماشین اساس بسیاری از پیشرفت‌ها در پردازش زبان طبیعی است."
+  },
+  {
+   "title": "Pattern recognition",
+   "lang": "en",
+   "url": "https://en.wikipedia.org/wiki/Pattern_recognition",
+   "summary": "این حوزه به شناسایی الگوهای تکراری یا معنادار در داده‌ها می‌پردازد.",
+   "role": "related",
+   "score": 70,
+   "why": "یادگیری ماشین اغلب برای تشخیص الگوها در داده‌ها استفاده می‌شود."
+  }
+ ],
+ "sources": [],
+ "generatedAt": "2026-10-01T18:31:01.660Z"
+}

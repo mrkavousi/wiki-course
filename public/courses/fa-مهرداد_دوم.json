@@ -1,0 +1,74 @@
+{
+ "key": "fa-مهرداد_دوم",
+ "root": {
+  "title": "مهرداد دوم",
+  "lang": "fa",
+  "url": "https://fa.wikipedia.org/wiki/%D9%85%D9%87%D8%B1%D8%AF%D8%A7%D8%AF_%D8%AF%D9%88%D9%85",
+  "summary": "مهرداد دوم که با نام مهرداد بزرگ نیز شناخته می‌شود، شاهنشاه اشکانی در میانه سال‌های ۱۲۴ تا ۹۱ پیش از میلاد بود. از او به‌عنوان یکی از مقتدرترین شاهان اشکانی یاد می‌شود.",
+  "thumbnail": "https://thumb.wikimedia.org/wikipedia/commons/thumb/0/0d/Coin_of_Mithridates_II_of_Parthia%2C_Ray_mint.jpg/330px-Coin_of_Mithridates_II_of_Parthia%2C_Ray_mint.jpg?utm_source=fa.wikipedia.org&utm_campaign=api&utm_content=thumbnail"
+ },
+ "topics": [
+  {
+   "title": "شاهنشاهی اشکانی",
+   "lang": "fa",
+   "url": "https://fa.wikipedia.org/wiki/%D8%B4%D8%A7%D9%87%D9%86%D8%B4%D8%A7%D9%87%DB%8C_%D8%A7%D8%B4%DA%A9%D8%A7%D9%86%DB%8C",
+   "summary": "شاهنشاهی باستانی ایرانی که پس از امپراتوری سلوکی در فلات ایران قدرت یافت.",
+   "thumbnail": "https://thumb.wikimedia.org/wikipedia/commons/thumb/5/5d/Map_of_the_Parthian_Empire_under_Mithridates_II.svg/langfa-330px-Map_of_the_Parthian_Empire_under_Mithridates_II.svg.png?utm_source=fa.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+   "role": "prereq",
+   "score": 100,
+   "why": "شناخت کلیت شاهنشاهی اشکانی پیش از مطالعه دوره اقتدار مهرداد دوم ضروری است."
+  },
+  {
+   "title": "فرهاد دوم",
+   "lang": "fa",
+   "url": "https://fa.wikipedia.org/wiki/%D9%81%D8%B1%D9%87%D8%A7%D8%AF_%D8%AF%D9%88%D9%85",
+   "summary": "از شاهان اشکانی که در جنگ با سکاها کشته شد.",
+   "thumbnail": "https://thumb.wikimedia.org/wikipedia/commons/thumb/3/36/Tetradrachm_of_Phraates_II%2C_minted_at_Seleucia_%282%29.jpg/330px-Tetradrachm_of_Phraates_II%2C_minted_at_Seleucia_%282%29.jpg?utm_source=fa.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+   "role": "prereq",
+   "score": 90,
+   "why": "فرهاد دوم شاه پیشین و عموی مهرداد دوم است که حوادث دوران او بستر روی کار آمدن مهرداد را فراهم کرد."
+  },
+  {
+   "title": "امپراتوری سلوکی",
+   "lang": "fa",
+   "url": "https://fa.wikipedia.org/wiki/%D8%A7%D9%85%D9%BE%D8%B1%D8%A7%D8%AA%D9%88%D8%B1%DB%8C_%D8%B3%D9%84%D9%88%DA%A9%DB%8C",
+   "summary": "دولت هلنیستی و یونانی‌مآب که پس از اسکندر مقدونی بر بخش بزرگی از خاورمیانه حکومت کرد.",
+   "thumbnail": "https://thumb.wikimedia.org/wikipedia/commons/thumb/c/c8/201209071746a_Berlin_Pergamonmuseum%2C_Tetradrachme_Seleukos%27_I%2C_Silber%2C_Pergamon%2C_281-280_v.u.Z.jpg/330px-201209071746a_Berlin_Pergamonmuseum%2C_Tetradrachme_Seleukos%27_I%2C_Silber%2C_Pergamon%2C_281-280_v.u.Z.jpg?utm_source=fa.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+   "role": "prereq",
+   "score": 85,
+   "why": "بخش عمده‌ای از فتوحات مهرداد دوم علیه قلمرو سلوکیان صورت گرفت."
+  },
+  {
+   "title": "پارت",
+   "lang": "fa",
+   "url": "https://fa.wikipedia.org/wiki/%D9%BE%D8%A7%D8%B1%D8%AA",
+   "summary": "سرزمین باستانی در شمال شرقی ایران و مهد ظهور شاهنشاهی اشکانی.",
+   "thumbnail": "https://thumb.wikimedia.org/wikipedia/commons/thumb/1/12/Parthia_circa_200_BCE.jpg/330px-Parthia_circa_200_BCE.jpg?utm_source=fa.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+   "role": "prereq",
+   "score": 80,
+   "why": "آگاهی از منطقه جغرافیایی و قبیله‌ای پارت برای درک ریشه دودمان اشکانی لازم است."
+  },
+  {
+   "title": "فهرست شاهان اشکانی",
+   "lang": "fa",
+   "url": "https://fa.wikipedia.org/wiki/%D9%81%D9%87%D8%B1%D8%B3%D8%AA_%D8%B4%D8%A7%D9%87%D8%A7%D9%86_%D8%A7%D8%B4%DA%A9%D8%A7%D9%86%DB%8C",
+   "summary": "فهرست ترتیبی تمامی پادشاهان دودمان اشکانی از آغاز تا انقراض.",
+   "thumbnail": "https://thumb.wikimedia.org/wikipedia/commons/thumb/d/d1/Coin_of_Artabanus_IV_%28cropped%29%2C_Hamadan_mint.jpg/330px-Coin_of_Artabanus_IV_%28cropped%29%2C_Hamadan_mint.jpg?utm_source=fa.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+   "role": "next",
+   "score": 95,
+   "why": "پس از بررسی یکی از مهم‌ترین شاهان، مطالعه فهرست کامل شاهان برای دید جامع‌تری از سلسله مفید است."
+  },
+  {
+   "title": "جاده ابریشم",
+   "lang": "fa",
+   "url": "https://fa.wikipedia.org/wiki/%D8%AC%D8%A7%D8%AF%D9%87_%D8%A7%D8%A8%D8%B1%DB%8C%D8%B4%D9%85",
+   "summary": "شبکه راه‌های به‌هم‌پیوسته‌ای با هدف بازرگانی در آسیا که شرق و غرب را به هم پیوند می‌داد.",
+   "thumbnail": "https://thumb.wikimedia.org/wikipedia/commons/thumb/e/ed/Transasia_trade_routes_1stC_CE_gr2.png/330px-Transasia_trade_routes_1stC_CE_gr2.png?utm_source=fa.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+   "role": "next",
+   "score": 90,
+   "why": "کنترل و گسترش مسیرهای تجاری و جاده ابریشم از دستاوردهای کلیدی دوران مهرداد دوم بود."
+  }
+ ],
+ "sources": [],
+ "generatedAt": "2026-10-01T18:29:02.482Z"
+}

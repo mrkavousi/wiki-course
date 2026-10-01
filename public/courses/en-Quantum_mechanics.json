@@ -1,0 +1,53 @@
+{
+ "key": "en-Quantum_mechanics",
+ "root": {
+  "title": "Quantum mechanics",
+  "lang": "en",
+  "url": "https://en.wikipedia.org/wiki/Quantum_mechanics",
+  "summary": "Quantum mechanics, also known as quantum physics, is the fundamental physical theory that describes the behavior of matter and of light; the behaviors it models typically occur at and below the scale of atoms, and have often been described as counterintuitive. Its concepts and methods have been applied across many disciplines, including quantum chemistry, quantum biology, quantum field theory, quantum technology, and quantum information science.",
+  "thumbnail": "https://thumb.wikimedia.org/wikipedia/commons/thumb/e/e7/Hydrogen_Density_Plots.png/330px-Hydrogen_Density_Plots.png?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail"
+ },
+ "topics": [
+  {
+   "title": "Classical mechanics",
+   "lang": "en",
+   "url": "https://en.wikipedia.org/wiki/Classical_mechanics",
+   "summary": "نظریه‌ای فیزیکی که حرکت اجسام و نیروهای وارد بر آن‌ها را در مقیاس ماکروسکوپی توصیف می‌کند.",
+   "thumbnail": "https://upload.wikimedia.org/wikipedia/commons/4/4e/Orbital_motion.gif?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail_unscaled",
+   "role": "prereq",
+   "score": 98,
+   "why": "در برنامه‌های درسی دانشگاهی، مکانیک کلاسیک پیش‌نیاز اصلی و سنتی برای درک فیزیک کوانتومی است."
+  },
+  {
+   "title": "Electromagnetism",
+   "lang": "en",
+   "url": "https://en.wikipedia.org/wiki/Electromagnetism",
+   "summary": "شاخه‌ای از فیزیک که برهم‌کنش‌های بین ذرات باردار و میدان‌های الکتریکی و مغناطیسی را بررسی می‌کند.",
+   "thumbnail": "https://thumb.wikimedia.org/wikipedia/commons/thumb/0/0d/VFPt_Solenoid_correct2.svg/330px-VFPt_Solenoid_correct2.svg.png?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+   "role": "prereq",
+   "score": 95,
+   "why": "آشنایی با امواج الکترومغناطیس و معادلات ماکسول برای ورود به مبحث تابش جسم سیاه و فیزیک کوانتومی ضروری است."
+  },
+  {
+   "title": "Linear algebra",
+   "lang": "en",
+   "url": "https://en.wikipedia.org/wiki/Linear_algebra",
+   "summary": "شاخه‌ای از ریاضیات که به بردارها، فضاهای برداری، نگاشت‌های خطی و دستگاه معادلات خطی می‌پردازد.",
+   "thumbnail": "https://thumb.wikimedia.org/wikipedia/commons/thumb/2/2f/Linear_subspaces_with_shading.svg/330px-Linear_subspaces_with_shading.svg.png?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+   "role": "prereq",
+   "score": 90,
+   "why": "ریاضیات پایه مانند فضاهای برداری و عملگرها ابزار اصلی فرمول‌بندی مکانیک کوانتومی هستند."
+  },
+  {
+   "title": "Calculus",
+   "lang": "en",
+   "url": "https://en.wikipedia.org/wiki/Calculus",
+   "summary": "شاخه‌ای از ریاضیات که به مطالعه تغییرات پیوسته و مشتق و انتگرال می‌پردازد.",
+   "role": "prereq",
+   "score": 88,
+   "why": "محاسبات دیفرانسیل و انتگرال در حل معادلات دیفرانسیل فیزیکی نظیر معادله شرودینگر کاربرد حیاتی دارد."
+  }
+ ],
+ "sources": [],
+ "generatedAt": "2026-10-01T18:27:10.679Z"
+}
