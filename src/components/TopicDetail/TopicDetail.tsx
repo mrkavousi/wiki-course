@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { ArrowLeft, BookOpen, Check, ClipboardCheck, ExternalLink, KeyRound, PenLine, Route, Sparkles, Star } from 'lucide-react';
+import { ArrowLeft, BookOpen, Check, ClipboardCheck, ExternalLink, KeyRound, Loader, PenLine, Route, Sparkles, Star } from 'lucide-react';
 import type { Course, Pack, Page, Role, Topic } from '../../types/course';
 import { readHref, type Store } from '../../data/store';
 import { topicKey } from '../../utils/course';
@@ -98,13 +98,7 @@ export function TopicDetail({ course, page, topic, store, pack, packJob, busy, o
           </ul>
         </section>
       ) : (
-        <div>
-          <button className="flex min-h-11 items-center gap-1.5 text-sm font-semibold text-accent hover:underline disabled:opacity-60" disabled={!!packJob?.status} onClick={onBuildPack}>
-            <Sparkles className={ic} />
-            {packJob?.status || 'ساخت نکات کلیدی، فلش‌کارت و آزمون'}
-          </button>
-          {packJob?.error && <p className="mt-1 text-sm text-danger">{packJob.error}</p>}
-        </div>
+        packJob?.error && <p className="text-sm text-danger" role="alert">{packJob.error}</p>
       )}
 
       {learned && known && (
@@ -213,7 +207,7 @@ export function TopicDetail({ course, page, topic, store, pack, packJob, busy, o
           );
         })}
       </div>
-      <div className="p-4">
+      <div className={`p-4 ${!pack ? "pb-24" : ""}`}>
         {tab === 'about' && about}
         {tab === 'cards' &&
           (pack?.cards.length ? (
@@ -237,6 +231,17 @@ export function TopicDetail({ course, page, topic, store, pack, packJob, busy, o
             packCta('آزمون')
           ))}
       </div>
+      {/* Floating call to action: the one next step for a topic without a study pack. Bottom-left in the viewport; above the phone tab bar. */}
+      {!pack && tab === 'about' && (
+        <button
+          onClick={onBuildPack}
+          disabled={!!packJob?.status}
+          className={`${primary} fixed bottom-20 left-4 z-30 min-h-12 rounded-full px-5 shadow-xl lg:bottom-6 ${packJob?.status ? 'max-w-[calc(100vw-2rem)]' : ''}`}
+        >
+          {packJob?.status ? <Loader className={`${ic} motion-safe:animate-spin`} /> : <Sparkles className={ic} />}
+          <span className="truncate">{packJob?.status || 'ساخت فلش‌کارت و آزمون'}</span>
+        </button>
+      )}
     </div>
   );
 }

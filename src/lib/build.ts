@@ -106,6 +106,13 @@ export async function fetchArticle(lang: string, title: string): Promise<Article
   return { lang, title: p.title, url: p.fullurl, thumbnail: p.thumbnail?.source, text: p.extract };
 }
 
+/** The same article in other Wikipedia languages (human-written pages linked by Wikipedia itself; nothing is machine-translated). */
+export type LangLink = { lang: string; title: string; name: string };
+export async function fetchLangLinks(lang: string, title: string): Promise<LangLink[]> {
+  const r = await wiki(lang, { action: 'query', prop: 'langlinks', lllimit: '500', llprop: 'autonym', redirects: '1', titles: title });
+  return (r.query?.pages?.[0]?.langlinks ?? []).map((l: any) => ({ lang: l.lang, title: l.title, name: l.autonym || l.lang }));
+}
+
 const inBatches = async <T, R>(xs: T[], f: (x: T) => Promise<R>, n = 3) => {
   const out: R[] = [];
   for (let i = 0; i < xs.length; i += n) out.push(...(await Promise.all(xs.slice(i, i + n).map(f))));

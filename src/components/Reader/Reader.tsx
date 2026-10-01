@@ -1,13 +1,13 @@
 import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
-import { ArrowLeft, ArrowRight, BookOpen, Check, ExternalLink, Highlighter, Info, List, Minus, Plus, RefreshCw, Sparkles, Star, Type } from 'lucide-react';
+import { ArrowLeft, ArrowRight, BookOpen, Check, ExternalLink, Highlighter, Info, Languages, List, Minus, Plus, RefreshCw, Sparkles, Star, Type } from 'lucide-react';
 import type { AI } from '../../types/course';
 import { READER_SIZES, courseHref, findCourse, loadTerms, readHref, saveTerms, useReaderPrefs, type ReaderMode, type Store } from '../../data/store';
-import { buildTerms, fetchArticle, type Article } from '../../lib/build';
+import { buildTerms, fetchArticle, fetchLangLinks, type Article, type LangLink } from '../../lib/build';
 import { courseKey, pathOf, topicKey, wikiUrl } from '../../utils/course';
 import type { Course } from '../../types/course';
 import { FORMULA, boldSegments, parseArticle, termRegex, type Seg } from '../../utils/reader';
 import { useToast } from '../Toast/Toast';
-import { card, fa, ghost, ic, outline, primary } from '../ui';
+import { card, field, fa, ghost, ic, outline, primary } from '../ui';
 
 type Props = { lang: string; title: string; course?: string; store: Store; ai: AI; needAI: () => boolean };
 type Job = { status: string; error: string } | null;
@@ -58,6 +58,60 @@ function scroller(from: HTMLElement | null): { top: () => number; max: () => num
   return { top: () => scrollY, max: () => d.scrollHeight - innerHeight, to: (y) => scrollTo({ top: y }), target: window };
 }
 
+/** Other-language versions of the article, from Wikipedia's own language links; picking one opens it in this reader. */
+function LangPicker({ lang, title, course, onClose }: { lang: string; title: string; course?: string; onClose: () => void }) {
+  const dlg = useRef<HTMLDialogElement>(null);
+  const [links, setLinks] = useState<LangLink[] | 'error'>();
+  const [q, setQ] = useState('');
+  useEffect(() => {
+    dlg.current!.showModal();
+    fetchLangLinks(lang, title).then(setLinks, () => setLinks('error'));
+  }, [lang, title]);
+  const needle = q.trim().toLowerCase();
+  const rank = (l: LangLink) => (l.lang === 'fa' ? 0 : l.lang === 'en' ? 1 : 2);
+  const shown = Array.isArray(links)
+    ? links.filter((l) => !needle || [l.name, l.title, l.lang].some((s) => s.toLowerCase().includes(needle))).sort((a, b) => rank(a) - rank(b) || a.name.localeCompare(b.name))
+    : [];
+  return (
+    <dialog ref={dlg} onClose={onClose} aria-label="زبان‌های دیگر" className="m-auto w-[min(30rem,calc(100%-2rem))] rounded-3xl border border-line bg-panel p-0 text-fg shadow-2xl backdrop:bg-black/40 backdrop:backdrop-blur-sm">
+      <div className="space-y-3 p-5">
+        <div className="flex items-center justify-between gap-2">
+          <h2 className="flex items-center gap-2 font-bold">
+            <Languages className={ic} />
+            این مقاله به زبان‌های دیگر
+          </h2>
+          <button onClick={() => dlg.current!.close()} className={ghost}>بستن</button>
+        </div>
+        <p className="text-sm leading-7 text-muted">نسخه‌هایی که ویکی‌پدیا خودش به این مقاله پیوند داده؛ متن هر زبان را نویسندگان همان ویکی‌پدیا نوشته‌اند و ترجمه‌ی ماشینی نیست.</p>
+        {links === undefined && <p className="text-sm text-muted" role="status">در حال گرفتن فهرست زبان‌ها…</p>}
+        {links === 'error' && <p className="text-sm text-danger" role="alert">فهرست زبان‌ها گرفته نشد؛ اتصال را بررسی کن.</p>}
+        {Array.isArray(links) &&
+          (links.length ? (
+            <>
+              {links.length > 8 && <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="جست‌وجوی زبان…" aria-label="جست‌وجوی زبان" className={field} />}
+              <ul className="max-h-[50vh] divide-y divide-line overflow-y-auto rounded-xl border border-line">
+                {shown.map((l) => (
+                  <li key={l.lang}>
+                    <a href={readHref(l.lang, l.title, course)} onClick={() => dlg.current!.close()} className="flex min-h-12 items-center justify-between gap-3 px-3 py-2 hover:bg-fg/5">
+                      <span className="min-w-0">
+                        <span dir="auto" className="block font-semibold">{l.name}</span>
+                        <span dir="auto" className="block truncate text-sm text-muted">{l.title}</span>
+                      </span>
+                      <span className="shrink-0 rounded-md border border-line px-1.5 py-0.5 font-mono text-xs uppercase text-muted">{l.lang}</span>
+                    </a>
+                  </li>
+                ))}
+                {!shown.length && <li className="p-3 text-sm text-muted">زبانی با این نام نیست.</li>}
+              </ul>
+            </>
+          ) : (
+            <p className="text-sm text-muted" role="status">این مقاله در زبان دیگری نسخه ندارد.</p>
+          ))}
+      </div>
+    </dialog>
+  );
+}
+
 const HEADING = ['', '', 'mt-10 text-[1.4em]', 'mt-8 text-[1.2em]', 'mt-6 text-[1.08em]'];
 
 /** Distraction-free article reader. Easy: clean text. Enhanced: the AI's key terms in bold, once per section. */
@@ -67,6 +121,7 @@ export function Reader({ lang, title, course: courseId, store, ai, needAI }: Pro
   const [error, setError] = useState('');
   const [terms, setTerms] = useState<string[]>(); // undefined = never computed for this article
   const [job, setJob] = useState<Job>(null);
+  const [langs, setLangs] = useState(false);
   const key = courseKey(lang, title);
   const topic = topicKey({ lang, title });
   const known = store.state.known.includes(topic);
@@ -184,6 +239,7 @@ export function Reader({ lang, title, course: courseId, store, ai, needAI }: Pro
 
   return (
     <div ref={root} className="mx-auto max-w-3xl px-4 pb-44 lg:pb-16">
+      {langs && <LangPicker lang={lang} title={article?.title ?? title} course={courseId} onClose={() => setLangs(false)} />}
       <div className="sticky top-0 z-20 -mx-4 flex flex-wrap items-center gap-x-3 gap-y-2 glass border-b border-line px-4 py-2.5">
         <button onClick={back} className="flex min-h-11 items-center gap-1 text-sm text-muted hover:text-fg">
           <ArrowRight className={ic} />
@@ -217,6 +273,10 @@ export function Reader({ lang, title, course: courseId, store, ai, needAI }: Pro
             <Plus className={ic} />
           </button>
         </div>
+        <button onClick={() => setLangs(true)} className={`${bar} h-11 gap-1.5 px-3 hover:bg-fg/5`} aria-label="زبان‌های دیگر" title="این مقاله به زبان‌های دیگر">
+          <Languages className={ic} />
+          <span className="max-sm:hidden">{lang.toUpperCase()}</span>
+        </button>
         <a href={article?.url ?? wikiUrl(lang, title)} target="_blank" rel="noopener noreferrer" className={`${bar} size-11 justify-center hover:bg-fg/5`} aria-label="باز کردن در ویکی‌پدیا" title="باز کردن در ویکی‌پدیا">
           <ExternalLink className={ic} />
         </a>

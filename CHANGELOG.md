@@ -7,6 +7,8 @@ Versions 0.1.0 to 0.3.0 were assigned afterwards from the commit history and tag
 ## [Unreleased]
 
 ### Added
+- Topics without a study pack get a floating "build flashcards and quiz" button at the bottom left (above the tab bar on phones); it shows the build status while running. The flashcard and quiz tabs are unchanged.
+- Reader: a language button lists the article's versions in other Wikipedia languages (`fetchLangLinks`, Wikipedia's own language links, searchable, fa and English first) and opens the chosen one in the reader. No machine translation, so the "text is exactly Wikipedia's" promise still holds.
 - Course builder: type words instead of a link and Wikipedia is searched (`searchArticles` in `src/lib/build.ts`); results show a thumbnail and description, a fa/English toggle follows the script typed, and picking one opens the usual preview. From the home input, words continue on `#/new?q=`.
 - Phones: a hamburger drawer (every destination, including Insights, About and Privacy) next to the bottom bar.
 - Build progress opens as a modal over a blurred page, with a progress bar and the four stages; Esc or "continue in background" closes it while the build goes on.

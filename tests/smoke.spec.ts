@@ -324,3 +324,18 @@ test('builder: typing words searches Wikipedia, and picking a result previews th
   await expect(page.getByRole('heading', { name: 'Calculus' })).toBeVisible();
   await expect(page.getByText('آنچه ساخته می‌شود')).toBeVisible();
 });
+
+test('reader: other-language versions come from Wikipedia language links and open in the reader', async ({ page }) => {
+  await seed(page);
+  await stubWikipedia(page);
+  await page.route('**/w/api.php**', (r) => {
+    const q = new URL(r.request().url()).searchParams;
+    if (q.get('prop') !== 'langlinks') return r.fallback();
+    return r.fulfill({ json: { query: { pages: [{ title: 'Calculus', langlinks: [{ lang: 'de', autonym: 'Deutsch', title: 'Analysis' }, { lang: 'fa', autonym: 'فارسی', title: 'حساب دیفرانسیل' }] }] } } });
+  });
+  await page.goto('#/read/en/Calculus');
+  await page.getByRole('button', { name: 'زبان‌های دیگر' }).click();
+  await expect(page.getByRole('link', { name: /Deutsch/ })).toBeVisible();
+  await page.getByRole('link', { name: /فارسی/ }).click();
+  await expect(page).toHaveURL(/#\/read\/fa\//);
+});
