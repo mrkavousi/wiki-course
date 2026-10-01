@@ -2,7 +2,7 @@
 
 All notable changes to Wiki Course. Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html), see "Versioning" in [HANDOVER.md](HANDOVER.md) section 12.
 
-Versions 0.1.0 to 0.3.0 were assigned afterwards from the commit history and are not tagged; tags start at v0.4.0.
+Versions 0.1.0 to 0.3.0 were assigned afterwards from the commit history and tagged on the last commit of each: `v0.1.0` = `575ecdc`, `v0.2.0` = `ad90344`, `v0.3.0` = `b50bdf3`. From `v0.4.0` on, tags are made at release time.
 
 ## [Unreleased]
 
@@ -42,6 +42,7 @@ Product redesign: app shell, dashboard, builder, library, insights.
 - Settings as a page; artwork for empty states.
 
 ### Changed
+- Layered depth and hover motion; an accessibility-text bug in thumbnails fixed at its root; softer empty state and clearer copy.
 - Reader offers the next topic; the review page no longer claims "all done" when a card's pack is missing.
 
 ## [0.2.0] - 2026-10-01
@@ -58,4 +59,7 @@ Product redesign: app shell, dashboard, builder, library, insights.
 - First release: Wikipedia link to learning roadmap (prerequisites, next steps, related), flashcards with Leitner review, quizzes, backup and restore, bundled sample courses, static site on Vercel.
 
 [Unreleased]: https://github.com/mrkavousi/wiki-course/compare/v0.4.0...HEAD
-[0.4.0]: https://github.com/mrkavousi/wiki-course/releases/tag/v0.4.0
+[0.4.0]: https://github.com/mrkavousi/wiki-course/compare/v0.3.0...v0.4.0
+[0.3.0]: https://github.com/mrkavousi/wiki-course/compare/v0.2.0...v0.3.0
+[0.2.0]: https://github.com/mrkavousi/wiki-course/compare/v0.1.0...v0.2.0
+[0.1.0]: https://github.com/mrkavousi/wiki-course/releases/tag/v0.1.0
