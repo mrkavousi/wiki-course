@@ -49,7 +49,7 @@ export function Discover({ store, onBuild }: Props) {
             {fresh.map((c) => <CourseCard key={c.key} course={c} state={state} day={day} onToggleSaved={() => store.toggleSaved(c.root)} />)}
           </div>
         ) : (
-          <EmptyState icon={Sparkles} title="همه‌ی دوره‌های آماده را شروع کرده‌ای" text="یک لینک ویکی‌پدیا بچسبان تا دوره‌ی خودت را بسازی.">
+          <EmptyState icon={Sparkles} art="biology" title="همه‌ی دوره‌های آماده را شروع کرده‌ای" text="یک لینک ویکی‌پدیا بچسبان تا دوره‌ی خودت را بسازی.">
             <a href="#/new" className={primary}>ساخت دوره</a>
           </EmptyState>
         )}

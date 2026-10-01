@@ -123,7 +123,7 @@ export function Home({ store, job, hasAI, onBuild, onRead, onSettings }: Props) 
               ))}
             </div>
           ) : (
-            <EmptyState icon={Route} title="هنوز دوره‌ای شروع نکرده‌ای" text="یک لینک بچسبان یا یکی از دوره‌های آماده را شروع کن. هر پیشرفتی که داشته باشی همین‌جا دیده می‌شود.">
+            <EmptyState icon={Route} art="history" title="هنوز دوره‌ای شروع نکرده‌ای" text="یک لینک بچسبان یا یکی از دوره‌های آماده را شروع کن. هر پیشرفتی که داشته باشی همین‌جا دیده می‌شود.">
               <a href="#/new" className={primary}>ساخت دوره</a>
               <a href="#/discover" className={ghost}>
                 <Compass className={ic} />
@@ -170,7 +170,7 @@ export function Home({ store, job, hasAI, onBuild, onRead, onSettings }: Props) 
         </section>
       )}
       {stats && stats.length > 0 && stats.every((x) => x.s.status === 'done') && (
-        <EmptyState icon={PartyPopper} title="همه‌ی دوره‌ها را تمام کرده‌ای" text="وقت یک موضوع تازه است." />
+        <EmptyState icon={PartyPopper} art="biology" title="همه‌ی دوره‌ها را تمام کرده‌ای" text="وقت یک موضوع تازه است." />
       )}
     </div>
   );

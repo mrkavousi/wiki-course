@@ -3,7 +3,7 @@ import { Compass, Flame, House, Layers, Library, Plus, Route, Search, Settings a
 import type { ThemePref } from '../../data/store';
 import { iconBtn, ic, fa, primary } from '../ui';
 
-export type NavId = 'home' | 'library' | 'review' | 'discover' | 'insights';
+export type NavId = 'home' | 'library' | 'review' | 'discover' | 'insights' | 'settings';
 type Props = {
   nav: NavId | null; // which item is current; null on pages that belong to none (the builder)
   due: number;
@@ -12,7 +12,6 @@ type Props = {
   onDismissJob: () => void;
   saveOk: boolean;
   theme: { icon: typeof Search; label: string; next: () => void };
-  onSettings: () => void;
   onSearch: () => void;
   children: React.ReactNode;
 };
@@ -39,7 +38,7 @@ function useOnline() {
 const link = (on: boolean) => `relative flex min-h-11 items-center gap-3 rounded-lg px-3 text-sm font-medium ${on ? 'bg-accent-soft text-accent' : 'text-muted hover:bg-fg/5 hover:text-fg'}`;
 
 /** Sidebar on desktop, bottom bar on phones, and one slim top bar for search, review status, streak and theme. */
-export function AppShell({ nav, due, streak, job, onDismissJob, saveOk, theme, onSettings, onSearch, children }: Props) {
+export function AppShell({ nav, due, streak, job, onDismissJob, saveOk, theme, onSearch, children }: Props) {
   const online = useOnline();
   const ThemeIcon = theme.icon;
   const dueBadge = due > 0 && (
@@ -72,10 +71,10 @@ export function AppShell({ nav, due, streak, job, onDismissJob, saveOk, theme, o
             </a>
           ))}
         </nav>
-        <button onClick={onSettings} className={`${link(false)} mt-auto`}>
+        <a href="#/settings" aria-current={nav === 'settings' ? 'page' : undefined} className={`${link(nav === 'settings')} mt-auto`}>
           <SettingsIcon className="size-5" />
           تنظیمات
-        </button>
+        </a>
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col">
@@ -147,10 +146,10 @@ export function AppShell({ nav, due, streak, job, onDismissJob, saveOk, theme, o
             </li>
           ))}
           <li>
-            <button onClick={onSettings} className="flex h-full w-full flex-col items-center justify-center gap-0.5 text-xs font-medium text-muted">
+            <a href="#/settings" aria-current={nav === 'settings' ? 'page' : undefined} className={`flex h-full w-full flex-col items-center justify-center gap-0.5 text-xs font-medium ${nav === 'settings' ? 'text-accent' : 'text-muted'}`}>
               <SettingsIcon className="size-6" />
               تنظیمات
-            </button>
+            </a>
           </li>
         </ul>
       </nav>

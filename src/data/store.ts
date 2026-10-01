@@ -260,7 +260,7 @@ const dec = (s: string) => {
   }
 };
 
-/** Hash routes keep static hosting simple: #/ home, #/new builder, #/library, #/review, #/discover, #/insights, #/c/<key> course, #/read/<lang>/<title> reader. */
+/** Hash routes keep static hosting simple: #/ home, #/new builder, #/library, #/review, #/discover, #/insights, #/settings, #/c/<key> course, #/read/<lang>/<title> reader. */
 export function useRoute() {
   const [hash, setHash] = useState(() => location.hash);
   useEffect(() => {
@@ -281,7 +281,7 @@ export function useRoute() {
     }
   }
   const page = hash.slice(2).split(/[?/]/)[0];
-  if (page === 'new' || page === 'library' || page === 'review' || page === 'discover' || page === 'insights') return { name: page as 'new' | 'library' | 'review' | 'discover' | 'insights' };
+  if (page === 'new' || page === 'library' || page === 'review' || page === 'discover' || page === 'insights' || page === 'settings') return { name: page as 'new' | 'library' | 'review' | 'discover' | 'insights' | 'settings' };
   return { name: 'home' as const };
 }
 /** `topic` (a topicKey) opens the course on that topic: a screen of its own on phones, so Back returns to the path. */

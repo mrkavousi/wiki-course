@@ -161,9 +161,8 @@ test('builder: preview, depth and purpose reach the prompt, build, then delete',
 
 test('backup: invalid, too-new and v1 files are handled; v1 merges', async ({ page }) => {
   await seed(page);
-  await page.goto('/');
-  await page.getByRole('button', { name: 'تنظیمات' }).first().click();
-  const pick = (name: string, data: unknown) => page.locator('dialog[open] input[type=file]').setInputFiles({ name, mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(data)) });
+  await page.goto('#/settings');
+  const pick = (name: string, data: unknown) => page.locator('input[type=file]').setInputFiles({ name, mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(data)) });
   await pick('bad.json', { app: 'other' });
   await expect(page.getByText('این فایل پشتیبان Wiki Course نیست')).toBeVisible();
   await pick('new.json', { app: 'wiki-course', version: 9 });
@@ -262,4 +261,19 @@ test('search: arrow keys move through results', async ({ page }) => {
   await page.keyboard.press('ArrowUp');
   await page.keyboard.press('ArrowUp');
   await expect(page.getByLabel('عبارت جست‌وجو یا لینک ویکی‌پدیا')).toBeFocused();
+});
+
+test('settings: theme and weekly goal persist; wiping data asks first', async ({ page }) => {
+  await seed(page);
+  await page.goto('#/settings');
+  await page.getByLabel('تیره').check();
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
+  await page.getByLabel('هدفم در هفته:').selectOption('3');
+  await page.reload();
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
+  expect((await state(page)).goal).toBe(3);
+  await page.getByRole('button', { name: 'حذف همه‌ی داده‌های من' }).click();
+  await expect(page.getByRole('heading', { name: 'همه‌ی داده‌ها حذف شود؟' })).toBeVisible();
+  await page.getByRole('button', { name: 'انصراف' }).click();
+  expect((await state(page)).goal).toBe(3); // cancelled: nothing was deleted
 });

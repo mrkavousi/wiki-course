@@ -24,13 +24,12 @@ const THEMES: Record<ThemePref, [typeof Sun, ThemePref, string]> = {
   light: [Sun, 'dark', 'تم: روشن'],
   dark: [Moon, 'auto', 'تم: تیره'],
 };
-const NAV: Record<string, NavId | null> = { home: 'home', library: 'library', course: 'library', read: 'library', review: 'review', discover: 'discover', insights: 'insights', new: null };
+const NAV: Record<string, NavId | null> = { home: 'home', library: 'library', course: 'library', read: 'library', review: 'review', discover: 'discover', insights: 'insights', settings: 'settings', new: null };
 
 export default function App() {
   const store = useStore();
   const route = useRoute();
   const [ai, setAi] = useState<AI>(loadAI);
-  const [settingsOpen, setSettingsOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [job, setJob] = useState<Job>(null);
   const [rev, setRev] = useState(0); // remounts the course view after a rebuild of the same course
@@ -70,9 +69,10 @@ export default function App() {
     return () => removeEventListener('keydown', f);
   }, []);
 
+  const openSettings = () => void (location.hash = '#/settings');
   const needAI = () => {
     if (hasAI) return false;
-    setSettingsOpen(true);
+    location.hash = '#/settings'; // the AI settings live there
     return true;
   };
 
@@ -111,7 +111,7 @@ export default function App() {
   const busy = !!job?.status;
   // A new key remounts the page, so every screen opens scrolled to the top.
   const page = route.name === 'read' ? `read:${route.lang}:${route.title}` : route.name;
-  const builder = <CourseBuilder job={job} hasAI={hasAI} recent={store.state.recent} onBuild={build} onRead={read} onSettings={() => setSettingsOpen(true)} />;
+  const builder = <CourseBuilder job={job} hasAI={hasAI} recent={store.state.recent} onBuild={build} onRead={read} onSettings={openSettings} />;
 
   return (
     <ToastProvider>
@@ -124,7 +124,6 @@ export default function App() {
         onDismissJob={() => setJob(null)}
         saveOk={store.saveOk}
         theme={{ icon: ThemeIcon, label: themeLabel, next: () => setTheme(nextTheme) }}
-        onSettings={() => setSettingsOpen(true)}
         onSearch={() => setSearchOpen(true)}
       >
         {route.name === 'course' ? (
@@ -135,6 +134,17 @@ export default function App() {
               <Reader lang={route.lang} title={route.title} course={route.course} store={store} ai={ai} needAI={needAI} />
             ) : route.name === 'review' ? (
               <Review store={store} />
+            ) : route.name === 'settings' ? (
+              <Settings
+                ai={ai}
+                store={store}
+                theme={theme}
+                onTheme={setTheme}
+                onSave={(next) => {
+                  saveAI(next);
+                  setAi(next);
+                }}
+              />
             ) : route.name === 'discover' ? (
               <Discover store={store} onBuild={build} />
             ) : route.name === 'insights' ? (
@@ -150,23 +160,13 @@ export default function App() {
                 {builder}
               </div>
             ) : (
-              <Home store={store} job={job} hasAI={hasAI} onBuild={build} onRead={read} onSettings={() => setSettingsOpen(true)} />
+              <Home store={store} job={job} hasAI={hasAI} onBuild={build} onRead={read} onSettings={openSettings} />
             )}
           </div>
         )}
       </AppShell>
 
       <SearchCommand open={searchOpen} store={store} onClose={() => setSearchOpen(false)} onBuild={build} onRead={read} />
-      <Settings
-        open={settingsOpen}
-        ai={ai}
-        store={store}
-        onSave={(next) => {
-          saveAI(next);
-          setAi(next);
-        }}
-        onClose={() => setSettingsOpen(false)}
-      />
     </ToastProvider>
   );
 }

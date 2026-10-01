@@ -67,11 +67,11 @@ function Motif({ subject, n }: { subject: Subject; n: number }) {
   }
 }
 
-type Props = { title: string; summary?: string; thumbnail?: string; className?: string };
+type Props = { title: string; summary?: string; thumbnail?: string; className?: string; subject?: Subject /* force a motif, e.g. for empty states */ };
 
 /** Subject artwork for a course. Decorative (the title is always shown next to it), so it is hidden from assistive tech. */
-export function Cover({ title, summary, thumbnail, className = '' }: Props) {
-  const subject = subjectOf({ title, summary });
+export function Cover({ title, summary, thumbnail, className = '', subject: forced }: Props) {
+  const subject = forced ?? subjectOf({ title, summary });
   return (
     <div className={`relative overflow-hidden ${TINT[subject]} ${className}`} aria-hidden="true" data-subject={subject}>
       <svg viewBox="0 0 200 120" preserveAspectRatio="xMidYMid slice" className="absolute inset-0 size-full">

@@ -28,9 +28,10 @@ It is a personal, local-first tool: all learner data lives in the browser.
 | `#/read/<lang>/<title>` (`?c=<courseKey>`) | `Reader` | article reader (needs no AI in easy mode); remembers the scroll position. With `?c=` it offers the course's next topic |
 | `#/review` | `Review` | today's due flashcards across all topics, three ratings |
 | `#/discover` | `Discover` | unstarted sample courses and next topics from your own courses |
+| `#/settings` | `Settings` | theme, weekly goal, AI endpoint, backup and restore, delete all data |
 | `#/insights` | `Insights` | weekly goal, activity, weak topics, quiz results, course completion |
 
-`AppShell` wraps every route: sidebar on desktop, bottom bar on phones, a top bar with search (Ctrl/Cmd+K), due count, streak and theme. Settings is a `<dialog>` opened from the shell, not a route.
+`AppShell` wraps every route: sidebar on desktop, bottom bar on phones, a top bar with search (Ctrl/Cmd+K), due count, streak and theme. Settings is the `#/settings` page (theme, weekly goal, AI endpoint, backup/restore, delete all data).
 
 ## 2. Quick start
 
@@ -44,7 +45,7 @@ npm run preview    # serve dist/ (a production-like check)
 
 Node 20 or newer (developed on 24).
 
-**AI settings.** Click the gear icon and enter the gateway URL (up to `/v1`), the API key and the model (default `Gemini-2.5-Flash-lite`). They are stored only in this browser's localStorage. Without them you can still open the sample courses, read articles in easy mode, and use everything that needs no AI. Building courses, study packs and key terms needs them.
+**AI settings.** Open Settings (`#/settings`) and enter the gateway URL (up to `/v1`), the API key and the model (default `Gemini-2.5-Flash-lite`). They are stored only in this browser's localStorage. Without them you can still open the sample courses, read articles in easy mode, and use everything that needs no AI. Building courses, study packs and key terms needs them.
 
 **Node CLI (optional).** `.env` (gitignored; see `.env.example`) holds `AI_BASE_URL`, `AI_API_KEY`, `AI_MODEL`. Then `npm run build:course -- <wikipedia url>` builds a course in Node, writes `public/courses/<courseKey>.json` and registers it in `src/data/samples.json`. The browser app never reads `.env`.
 
@@ -160,7 +161,8 @@ Vercel imports the GitHub repo. Framework preset Vite, build `npm run build` (`t
 11. **Level** (`levelOf` in `utils/progress.ts`) is a heuristic from the number of prerequisites, labelled "approximate"; it is not an assessment. The builder's "minutes a day" only estimates the number of days and is not stored. Covers come from the keyword classifier in `utils/subject.ts` (`other` is a neutral dot pattern).
 12. **Review and missing packs.** A due card whose pack is gone from Cache Storage cannot be shown. The review page says so (progress is kept) instead of claiming everything is done; the header badge still counts it.
 13. **Swipe grading** (right = good, left = hard, after flipping; touch and pen only) is a shortcut; the three buttons remain the accessible path. There is no "easy" swipe.
-14. **Phase 4 not done:** accounts and sync, analytics, SEO, error monitoring. Data boundaries are clean (`State` in, backup JSON out) so sync can be added later.
+14. **Not built, by decision:** interface language (the UI is Persian only; English is a large translation job), notification settings and a content-language preference (no feature behind them yet). Vazirmatn stays the only font (no Estedad: one fewer font to load). Empty states get subject artwork from the same generated motifs as covers; there is no hand-drawn illustration set.
+15. **Phase 4 not done:** accounts and sync, analytics, SEO, error monitoring. Data boundaries are clean (`State` in, backup JSON out) so sync can be added later.
 
 ## 10. Suggested next steps
 
