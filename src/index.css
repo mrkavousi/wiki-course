@@ -226,3 +226,14 @@ body {
 @keyframes flow { to { stroke-dashoffset: -24; } }
 .edge { stroke-dasharray: 6 6; animation: flow 1.2s linear infinite; }
 [data-node]:hover { filter: drop-shadow(0 0 10px var(--color-accent)); }
+
+/* Mobile drawer slides in from the start edge (right in RTL). */
+@keyframes drawer-in { from { transform: translateX(var(--from, 100%)); } }
+.drawer { --from: 100%; animation: drawer-in 0.2s ease-out; }
+[dir="ltr"] .drawer { --from: -100%; }
+/* Phones: a row of cards becomes a swipeable rail instead of a long stack. */
+@media (max-width: 639px) {
+  .rail { display: flex; gap: 0.75rem; overflow-x: auto; scroll-snap-type: x mandatory; margin-inline: -1rem; padding: 0 1rem 0.5rem; scrollbar-width: none; }
+  .rail::-webkit-scrollbar { display: none; }
+  .rail > * { flex: 0 0 80%; scroll-snap-align: center; }
+}

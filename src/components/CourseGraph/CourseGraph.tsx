@@ -1,7 +1,8 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { Course, Role } from '../../types/course';
 import { topicKey } from '../../utils/course';
-import { fa } from '../ui';
+import { Maximize } from 'lucide-react';
+import { fa, ic } from '../ui';
 
 type Props = { course: Course; known: Set<string>; selectedKey: string | null; onSelect: (key: string) => void };
 
@@ -9,7 +10,7 @@ type Props = { course: Course; known: Set<string>; selectedKey: string | null; o
 const ROLE_COLOR: Record<Role, string> = { prereq: 'var(--color-prereq)', next: 'var(--color-next)', related: 'var(--color-related)' };
 const DOT: Record<Role, string> = { prereq: 'bg-prereq', next: 'bg-next', related: 'bg-related' };
 const LEGEND: [Role, string][] = [['prereq', 'پیش‌نیاز (راست)'], ['related', 'مرتبط (پایین)'], ['next', 'پس‌نیاز (چپ)']];
-const clampK = (k: number) => Math.min(3, Math.max(0.4, k));
+const clampK = (k: number) => Math.min(3, Math.max(0.2, k));
 const id = (s: string) => `clip-${s.replace(/[^\p{L}\p{N}]/gu, '_')}`;
 
 type BubbleProps = { x: number; y: number; r: number; title: string; thumbnail?: string; color: string; known: boolean; selected: boolean; onClick: () => void };
@@ -64,20 +65,58 @@ export function CourseGraph({ course, known, selectedKey, onSelect }: Props) {
     return () => { ro.disconnect(); el.removeEventListener('wheel', wheel); };
   }, []);
 
-  // One evenly spaced ring grouped by role, clockwise: prerequisites centred on the right (Persian reads right to left,
-  // before -> after), then related (bottom), then next steps (left / top).
+  // Start from one ring grouped by role, clockwise: prerequisites centred on the right (Persian reads right to left,
+  // before -> after), then related (bottom), then next steps (left / top). Then push overlapping bubbles apart
+  // (labels are wide, so the "too close" test is an ellipse) and keep a pull toward the starting spot so roles stay grouped.
   const placed = useMemo(() => {
-    const R = Math.max(170, Math.min(size.w, size.h) / 2 - 50);
-    const order = (['prereq', 'related', 'next'] as Role[]).flatMap((role) => course.topics.filter((t) => t.role === role).sort((a, b) => b.score - a.score));
-    const step = (2 * Math.PI) / Math.max(order.length, 1);
-    const start = -((order.filter((t) => t.role === 'prereq').length - 1) / 2) * step;
-    return order.map((t, i) => {
-      let r = R * (1.05 - 0.3 * (t.score / 100)); // higher score = closer
-      if (order.length > 10 && i % 2) r *= 0.8; // stagger a crowded ring so neighbouring labels don't collide
-      const a = start + i * step;
-      return { t, x: r * Math.cos(a), y: r * Math.sin(a) };
+    const GAP = 125; // arc length one bubble + label needs
+    const roles = (['prereq', 'related', 'next'] as Role[]).map((role) => course.topics.filter((t) => t.role === role).sort((a, b) => b.score - a.score));
+    const n = Math.max(course.topics.length, 1);
+    // each role owns a wedge sized by its count; inside it, higher scores sit on inner rings, and a ring holds as many bubbles as its arc fits
+    let a0 = -(roles[0].length / n) * Math.PI;
+    const pts = roles.flatMap((list) => {
+      const w = (list.length / n) * 2 * Math.PI;
+      const out: { t: (typeof list)[number]; hx: number; hy: number; x: number; y: number }[] = [];
+      for (let k = 0, i = 0; i < list.length; k++) {
+        const r = 150 + k * 115;
+        const cap = Math.max(1, Math.min(list.length - i, Math.floor((w * r) / GAP)));
+        for (let j = 0; j < cap; j++, i++) {
+          const a = a0 + (w * (j + 0.5)) / cap;
+          out.push({ t: list[i], hx: r * Math.cos(a), hy: r * Math.sin(a), x: r * Math.cos(a), y: r * Math.sin(a) });
+        }
+      }
+      a0 += w;
+      return out;
     });
+    const GX = 105, GY = 80; // half-extent of the space one bubble + label needs
+    for (let it = 0; it < 80; it++) {
+      for (let i = 0; i < pts.length; i++) {
+        const p = pts[i];
+        for (let j = i + 1; j < pts.length; j++) {
+          const q = pts[j];
+          const dx = q.x - p.x || 0.01, dy = q.y - p.y || 0.01;
+          const d = Math.hypot(dx / GX, dy / GY);
+          if (d >= 1) continue;
+          const push = (1 - d) * 0.5;
+          p.x -= dx * push * 0.5; p.y -= dy * push * 0.5;
+          q.x += dx * push * 0.5; q.y += dy * push * 0.5;
+        }
+        const d0 = Math.hypot(p.x / GX, p.y / GY);
+        if (d0 < 1.3) { p.x += (p.x || 1) * (1.3 - d0) * 0.3; p.y += p.y * (1.3 - d0) * 0.3; } // keep clear of the centre bubble
+        p.x += (p.hx - p.x) * 0.02; p.y += (p.hy - p.y) * 0.02;
+      }
+    }
+    return pts;
   }, [course, size]);
+
+  // Zoom to fit all bubbles whenever the layout changes; the user can then pan and zoom freely.
+  const fit = useCallback(() => {
+    const xs = placed.map((p) => p.x), ys = placed.map((p) => p.y);
+    const [x0, x1, y0, y1] = [Math.min(0, ...xs) - 90, Math.max(0, ...xs) + 90, Math.min(0, ...ys) - 70, Math.max(0, ...ys) + 90];
+    const k = clampK(Math.min(1, size.w / (x1 - x0), (size.h - 50) / (y1 - y0)));
+    setView({ x: -((x0 + x1) / 2) * k, y: -((y0 + y1) / 2) * k, k });
+  }, [placed, size]);
+  useEffect(fit, [fit]);
 
   return (
     <div className="dots relative h-full w-full overflow-hidden">
@@ -103,7 +142,7 @@ export function CourseGraph({ course, known, selectedKey, onSelect }: Props) {
           {placed.map(({ t, x, y }) => (
             <g key={topicKey(t)} className="pointer-events-none">
               <line className="edge" x2={x} y2={y} strokeOpacity={0.25 + 0.5 * (t.score / 100)} strokeWidth={1 + 3 * (t.score / 100)} strokeLinecap="round" style={{ stroke: ROLE_COLOR[t.role] }} />
-              <g transform={`translate(${x / 2} ${y / 2})`}>
+              <g transform={`translate(${x / 2} ${y / 2})`} display={placed.length > 16 ? 'none' : undefined}>
                 <rect x={-26} y={-12.5} width={52} height={25} rx={12.5} className="fill-bg" style={{ stroke: ROLE_COLOR[t.role] }} />
                 <text textAnchor="middle" dy={4.5} fontSize={13} fontWeight={700} className="fill-fg">{fa(t.score)}٪</text>
               </g>
@@ -136,6 +175,10 @@ export function CourseGraph({ course, known, selectedKey, onSelect }: Props) {
           />
         </g>
       </svg>
+      <button onClick={fit} className="absolute start-3 top-3 flex min-h-11 items-center gap-1.5 rounded-lg border border-line bg-panel/90 px-3 text-sm font-medium hover:border-accent/60">
+        <Maximize className={ic} />
+        نمایش همه
+      </button>
       <ul className="pointer-events-none absolute inset-x-3 bottom-3 flex flex-wrap items-center gap-x-4 gap-y-1 rounded-lg bg-panel/90 px-3 py-2 text-xs text-muted">
         {LEGEND.map(([role, label]) => (
           <li key={role} className="flex items-center gap-1.5">

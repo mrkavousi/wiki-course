@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { Compass, Flame, House, Layers, Library, Plus, Route, Search, Settings as SettingsIcon, TriangleAlert, WifiOff, X, ChartColumn } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { Compass, Flame, Info, Menu, ShieldCheck, House, Layers, Library, Plus, Route, Search, Settings as SettingsIcon, TriangleAlert, WifiOff, X, ChartColumn } from 'lucide-react';
 import type { ThemePref } from '../../data/store';
 import { iconBtn, ic, fa, primary } from '../ui';
 
@@ -40,6 +40,17 @@ const link = (on: boolean) => `relative flex min-h-11 items-center gap-3 rounded
 /** Sidebar on desktop, bottom bar on phones, and one slim top bar for search, review status, streak and theme. */
 export function AppShell({ nav, due, streak, job, onDismissJob, saveOk, theme, onSearch, children }: Props) {
   const online = useOnline();
+  const [menu, setMenu] = useState(false);
+  const closeBtn = useRef<HTMLButtonElement>(null);
+  useEffect(() => {
+    if (!menu) return;
+    closeBtn.current?.focus();
+    const close = () => setMenu(false);
+    const esc = (e: KeyboardEvent) => e.key === 'Escape' && close();
+    addEventListener('hashchange', close);
+    addEventListener('keydown', esc);
+    return () => (removeEventListener('hashchange', close), removeEventListener('keydown', esc));
+  }, [menu]);
   const ThemeIcon = theme.icon;
   const dueBadge = due > 0 && (
     <span className="ms-auto min-w-6 rounded-full bg-accent px-1.5 text-center text-xs font-bold text-on-accent" aria-label={`${fa(due)} کارت برای مرور`}>
@@ -79,9 +90,9 @@ export function AppShell({ nav, due, streak, job, onDismissJob, saveOk, theme, o
 
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="flex items-center gap-2 glass sticky top-0 z-30 border-b border-line px-3 py-2">
-          <a href="#/" className="flex size-11 shrink-0 items-center justify-center lg:hidden" aria-label="Wiki Course، صفحه‌ی اصلی">
-            <Route className="size-6 text-accent" />
-          </a>
+          <button className={`${iconBtn} lg:hidden`} onClick={() => setMenu(true)} aria-label="باز کردن منو" aria-expanded={menu} aria-controls="drawer">
+            <Menu className="size-6" />
+          </button>
           <button onClick={onSearch} className="flex min-h-11 min-w-0 flex-1 items-center gap-2 rounded-lg border border-line bg-bg px-3 text-start text-sm text-muted hover:border-accent/60 lg:max-w-md lg:flex-none lg:basis-96">
             <Search className={ic} />
             <span className="truncate">جست‌وجو در دوره‌ها و موضوع‌ها</span>
@@ -129,6 +140,44 @@ export function AppShell({ nav, due, streak, job, onDismissJob, saveOk, theme, o
           {children}
         </main>
       </div>
+
+      {menu && (
+        <div className="fixed inset-0 z-50 lg:hidden" onClick={() => setMenu(false)}>
+          <div className="absolute inset-0 bg-black/50" aria-hidden="true" />
+          <aside id="drawer" role="dialog" aria-modal="true" aria-label="منو" onClick={(e) => e.stopPropagation()} className="drawer pb-safe absolute inset-y-0 start-0 flex w-72 max-w-[85%] flex-col gap-1 overflow-y-auto border-e border-line bg-panel p-3">
+            <div className="mb-3 flex items-center justify-between">
+              <a href="#/" className="flex items-center gap-2 px-2 text-lg font-extrabold">
+                <span className="flex size-8 items-center justify-center rounded-xl bg-linear-to-br from-accent to-sub-physics text-on-accent"><Route className="size-5" /></span>
+                <span>Wiki <span className="text-grad">Course</span></span>
+              </a>
+              <button ref={closeBtn} className={iconBtn} onClick={() => setMenu(false)} aria-label="بستن منو">
+                <X className="size-6" />
+              </button>
+            </div>
+            <a href="#/new" className={`${primary} mb-3`}>
+              <Plus className={ic} />
+              ساخت دوره
+            </a>
+            <nav aria-label="منوی اصلی" className="flex flex-col gap-1">
+              {ITEMS.map(({ id, href, label, icon: Icon }) => (
+                <a key={id} href={href} aria-current={nav === id ? 'page' : undefined} className={link(nav === id)}>
+                  <Icon className="size-5" />
+                  {label}
+                  {id === 'review' && dueBadge}
+                </a>
+              ))}
+              <a href="#/settings" aria-current={nav === 'settings' ? 'page' : undefined} className={link(nav === 'settings')}>
+                <SettingsIcon className="size-5" />
+                تنظیمات
+              </a>
+            </nav>
+            <nav aria-label="درباره" className="mt-auto flex flex-col gap-1 border-t border-line pt-3">
+              <a href="#/about" className={link(false)}><Info className="size-5" />درباره</a>
+              <a href="#/privacy" className={link(false)}><ShieldCheck className="size-5" />حریم خصوصی</a>
+            </nav>
+          </aside>
+        </div>
+      )}
 
       <nav aria-label="اصلی" className="pb-safe fixed inset-x-0 bottom-0 z-40 glass border-t border-line lg:hidden">
         <ul className="grid h-16 grid-cols-5">

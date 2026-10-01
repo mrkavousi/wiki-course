@@ -31,6 +31,7 @@ export function TopicNode({ page, score, state, selected, size = 84, badge, due,
       {badge && <span className="mb-1.5 rounded-full bg-accent px-2.5 py-0.5 text-xs font-bold text-on-accent">{badge}</span>}
       <span className="relative">
         <span
+          data-orb
           style={{ width: size, height: size }}
           className={`flex items-center justify-center overflow-hidden rounded-full bg-panel text-2xl font-bold ring-4 transition-transform group-hover:scale-105 ${RING[state]} ${selected ? 'outline-2 outline-offset-4 outline-fg' : ''}`}
         >

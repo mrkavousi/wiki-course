@@ -39,15 +39,15 @@ export function Home({ store, job, hasAI, onBuild, onRead, onSettings }: Props) 
   const back = nextDue(state.boxes, day);
 
   return (
-    <div className="page-in mx-auto w-full max-w-6xl space-y-10 px-4 py-6">
-      <header className="hero-bg space-y-3 rounded-3xl border border-line/60 px-4 pb-8 pt-10 text-center sm:pt-14">
-        <h1 className="text-3xl font-extrabold tracking-tight sm:text-5xl">
+    <div className="page-in mx-auto w-full max-w-6xl space-y-6 px-4 py-4 sm:space-y-10 sm:py-6">
+      <header className="hero-bg space-y-3 rounded-3xl border border-line/60 px-4 pb-5 pt-7 text-center sm:pb-8 sm:pt-14">
+        <h1 className="text-2xl font-extrabold tracking-tight sm:text-5xl">
           از هر مقاله، یک <span className="text-grad">مسیر</span> یادگیری
         </h1>
-        <p className="mx-auto max-w-xl text-muted">لینک یک مقاله‌ی ویکی‌پدیا را بچسبان؛ پیش‌نیازها را پیدا کن، یاد بگیر، مرور کن و واقعاً به خاطر بسپار.</p>
+        <p className="mx-auto max-w-xl text-sm leading-7 text-muted sm:text-base">لینک یک مقاله‌ی ویکی‌پدیا را بچسبان؛ پیش‌نیازها را پیدا کن، یاد بگیر، مرور کن و واقعاً به خاطر بسپار.</p>
       </header>
 
-      <section className={`${card} mx-auto max-w-3xl p-4 elev-hi`} aria-label="ساخت دوره">
+      <section className={`${card} mx-auto max-w-3xl p-3 elev-hi sm:p-4`} aria-label="ساخت دوره">
         <CourseBuilder compact job={job} hasAI={hasAI} recent={state.recent} onBuild={onBuild} onRead={onRead} onSettings={onSettings} />
       </section>
 
@@ -56,9 +56,9 @@ export function Home({ store, job, hasAI, onBuild, onRead, onSettings }: Props) 
           <button onClick={store.dismissOnboarding} aria-label="بستن راهنما" className="absolute end-1 top-1 flex size-11 items-center justify-center rounded-lg hover:bg-fg/10">
             <X className={ic} />
           </button>
-          <ul className="grid gap-4 pe-10 sm:grid-cols-3">
+          <ul className="rail pe-10 sm:grid sm:grid-cols-3 sm:gap-4">
             {ONBOARDING.map(([Icon, title, text]) => (
-              <li key={title} className="flex gap-3">
+              <li key={title} className="flex gap-3 max-sm:rounded-xl max-sm:bg-panel/70 max-sm:p-3">
                 <Icon className="mt-1 size-5 shrink-0 text-accent" aria-hidden="true" />
                 <span>
                   <span className="block font-bold">{title}</span>
@@ -93,7 +93,7 @@ export function Home({ store, job, hasAI, onBuild, onRead, onSettings }: Props) 
         </section>
 
         {showReview && (
-          <section className={`${card} p-5`} aria-label="مرور امروز">
+          <section className={`${card} p-5 max-sm:hidden`} aria-label="مرور امروز">
             <p className="mb-1 flex items-center gap-2 text-sm font-semibold text-muted">
               <Layers className={ic} />
               مرور امروز
@@ -119,7 +119,7 @@ export function Home({ store, job, hasAI, onBuild, onRead, onSettings }: Props) 
               <CourseCardSkeleton />
             </div>
           ) : active.length ? (
-            <div className="stagger grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+            <div className="stagger rail sm:grid sm:grid-cols-2 sm:gap-4 xl:grid-cols-3">
               {active.map(({ c }) => (
                 <CourseCard key={c.key} course={c} state={state} day={day} onToggleSaved={() => store.toggleSaved(c.root)} />
               ))}
@@ -135,11 +135,11 @@ export function Home({ store, job, hasAI, onBuild, onRead, onSettings }: Props) 
           )}
         </section>
 
-        <section className={`${card} space-y-4 p-5`} aria-label="پیشرفت هفته">
+        <section className={`${card} space-y-3 p-4 sm:space-y-4 sm:p-5`} aria-label="پیشرفت هفته">
           <h2 className="font-bold">پیشرفت این هفته</h2>
           <StreakWidget streak={streakOf(state.days, day)} active={week.active} goal={state.goal} />
           <ProgressBar value={week.active} max={state.goal} label="روزهای فعال این هفته نسبت به هدف" />
-          <ActivityChart state={state} day={day} />
+          <div className="max-sm:hidden"><ActivityChart state={state} day={day} /></div>
           <dl className="grid grid-cols-3 gap-2 text-center">
             {[
               [week.known, 'موضوع یادگرفته‌شده'],
@@ -164,7 +164,7 @@ export function Home({ store, job, hasAI, onBuild, onRead, onSettings }: Props) 
             <Sparkles className={`${ic} text-accent`} />
             برای شروع پیشنهاد می‌کنیم
           </h2>
-          <div className="stagger grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="stagger rail sm:grid sm:grid-cols-2 sm:gap-4 lg:grid-cols-3">
             {fresh.map(({ c }) => (
               <CourseCard key={c.key} course={c} state={state} day={day} onToggleSaved={() => store.toggleSaved(c.root)} />
             ))}
