@@ -1,12 +1,13 @@
 import { useEffect, useState } from 'react';
-import { CircleCheck, Compass, Flame, GraduationCap, Layers, PenLine, Repeat, Star, Target } from 'lucide-react';
+import { CircleCheck, Compass, Flame, GraduationCap, Layers, PartyPopper, PenLine, Repeat, ShieldCheck, Sparkles, Star, Target } from 'lucide-react';
 import type { Course, CourseRef, Page } from '../../types/course';
 import { courseHref, findCourse, SAMPLES, type Store } from '../../data/store';
 import { courseKey, pathOf, topicKey, wikiUrl } from '../../utils/course';
 import { dueIds, PASS, streak, today } from '../../utils/learn';
-import { card, fa, ic } from '../ui';
+import { card, fa, ic, primary } from '../ui';
+import { UrlBar } from '../UrlBar/UrlBar';
 
-type Props = { store: Store; busy: boolean; onBuild: (url: string) => void };
+type Props = { store: Store; busy: boolean; onBuild: (url: string) => void; onRead: (url: string) => void };
 
 const TIPS = [
   [Compass, 'از پیش‌نیازها شروع کن', 'مسیر به ترتیب اهمیت چیده شده. هر چه بلدی را علامت بزن تا «گام بعدی» معلوم شود.'],
@@ -19,15 +20,17 @@ const starBtn = 'flex size-9 items-center justify-center rounded-full text-accen
 
 const refPage = (c: CourseRef): Page => ({ title: c.title, lang: c.lang, url: wikiUrl(c.lang, c.title), summary: '', thumbnail: c.thumbnail });
 
-function Thumb({ src, title, className }: { src?: string; title: string; className: string }) {
+function Thumb({ src, title, className, ariaHidden }: { src?: string; title: string; className: string; ariaHidden?: boolean }) {
   return src ? (
     <img src={src} alt="" loading="lazy" decoding="async" className={`shrink-0 bg-fg/10 object-cover ${className}`} />
   ) : (
-    <span className={`flex shrink-0 items-center justify-center bg-fg/10 font-bold text-muted ${className}`}>{title[0]}</span>
+    <span className={`flex shrink-0 items-center justify-center bg-fg/10 font-bold text-muted ${className}`} aria-hidden={ariaHidden}>
+      {title[0]}
+    </span>
   );
 }
 
-export function Library({ store, busy, onBuild }: Props) {
+export function Library({ store, busy, onBuild, onRead }: Props) {
   const { state } = store;
   const day = today();
   const due = dueIds(state.boxes, day).length;
@@ -50,42 +53,57 @@ export function Library({ store, busy, onBuild }: Props) {
 
   return (
     <div className="mx-auto max-w-5xl space-y-10 px-4 py-8">
-      {!state.saved.length && !state.recent.length && (
-        <section className={`${card} space-y-2 p-6`}>
-          <h2 className="flex items-center gap-2 text-2xl font-extrabold">
-            <GraduationCap className="size-7 text-accent" />
-            از هر مقاله، یک دوره
-          </h2>
+      {/* Hero section */}
+      <section className="space-y-6 text-center">
+        <div>
+          <h1 className="mb-2 flex items-center justify-center gap-2 text-3xl font-extrabold">
+            <GraduationCap className="size-8 text-accent" />
+            از هر مقاله، یک مسیر یادگیری هوشمند بساز
+          </h1>
           <p className="leading-8 text-muted">
-            لینک یک مقاله‌ی ویکی‌پدیا (فارسی یا انگلیسی) را بالا بچسبان. پیش‌نیازها، قدم‌های بعدی و مطالب مرتبطش را با تصویر و خلاصه می‌گیری، تیک «بلدم» می‌زنی، فلش‌کارت مرور می‌کنی و آزمون
-            می‌دهی. یا یکی از دوره‌های نمونه‌ی پایین را باز کن.
+            با چسباندن لینک هر مقاله‌ی ویکی‌پدیا (فارسی یا انگلیسی)، نقشه راه، خلاصه‌ها، فلش‌کارت‌ها و آزمون‌های اختصاصی آن را در چند ثانیه تحویل بگیر.
           </p>
-        </section>
-      )}
+        </div>
+        <div className="flex flex-col items-center gap-4 sm:max-w-2xl sm:mx-auto">
+          <UrlBar busy={busy} onBuild={onBuild} onRead={onRead} hero />
+          <div className="flex flex-wrap justify-center gap-2">
+            {['جبر خطی', 'یادگیری ماشین', 'شاهنشاهی اشکانی'].map((title) => (
+              <button
+                key={title}
+                disabled={busy}
+                onClick={() => onBuild(wikiUrl('fa', title))}
+                className="rounded-full border border-accent bg-accent/10 px-3 py-1 text-sm font-medium text-accent hover:bg-accent/20 disabled:opacity-50"
+              >
+                {title}
+              </button>
+            ))}
+          </div>
+        </div>
+      </section>
 
       <section className="grid grid-cols-1 gap-3 sm:grid-cols-3">
         <a href="#/review" className={`${card} p-4 transition hover:border-accent`}>
+          <div className="mb-3 flex size-10 items-center justify-center rounded-xl bg-accent/10">
+            <Layers className="size-5 text-accent" />
+          </div>
           <p className="text-sm text-muted">مرور امروز</p>
-          <p className="flex items-center gap-2 text-2xl font-bold">
-            <Layers className="size-6 text-accent" />
-            {fa(due)} کارت
-          </p>
-          <p className="text-sm text-muted">{due ? 'بزن تا شروع کنیم' : 'فعلاً چیزی برای مرور نیست'}</p>
+          <p className="text-2xl font-bold">{fa(due)} کارت</p>
+          <p className="text-sm text-muted">{due ? 'بزن تا شروع کنیم' : 'امروز کارت جدیدی نداری؛ برای حفظ زنجیره سراغ یک دوره‌ی جدید برو'}</p>
         </a>
         <div className={`${card} p-4`}>
-          <p className="text-sm text-muted">روزهای پشت‌سرهم</p>
-          <p className="flex items-center gap-2 text-2xl font-bold">
-            <Flame className="size-6 text-prereq" />
-            {fa(streak(state.days, day))}
-          </p>
-          <p className="text-sm text-muted">هر روز یک کار کوچک: بلدم، مرور یا آزمون</p>
+          <div className="mb-3 flex size-10 items-center justify-center rounded-xl bg-prereq/10">
+            <Flame className="size-5 text-prereq" />
+          </div>
+          <p className="text-sm text-muted">زنجیره یادگیری</p>
+          <p className="text-2xl font-bold">{fa(streak(state.days, day))}</p>
+          <p className="text-sm text-muted">با هر مرور روزانه، زنجیره‌ات را حفظ کن</p>
         </div>
         <div className={`${card} p-4`}>
-          <p className="text-sm text-muted">موضوع‌هایی که بلدی</p>
-          <p className="flex items-center gap-2 text-2xl font-bold">
-            <CircleCheck className="size-6 text-accent" />
-            {fa(state.known.length)}
-          </p>
+          <div className="mb-3 flex size-10 items-center justify-center rounded-xl bg-accent/10">
+            <CircleCheck className="size-5 text-accent" />
+          </div>
+          <p className="text-sm text-muted">جعبه‌ی دانشی که مسلط شدی</p>
+          <p className="text-2xl font-bold">{fa(state.known.length)}</p>
           <p className="text-sm text-muted">در همه‌ی دوره‌ها مشترک است</p>
         </div>
       </section>
@@ -93,7 +111,7 @@ export function Library({ store, busy, onBuild }: Props) {
       <section>
         <h2 className="mb-3 text-xl font-bold">کتابخانه‌ی من</h2>
         {!state.saved.length ? (
-          <p className="text-muted">هنوز چیزی ذخیره نکرده‌ای. در هر دوره یا موضوع روی «ذخیره» بزن تا این‌جا بماند.</p>
+          <p className="text-muted">هنوز دوره‌ای به کتابخانه اضافه نکرده‌ای. دوره‌های زیر را امتحان کن.</p>
         ) : (
           <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {state.saved.map((p) => {
@@ -147,11 +165,11 @@ export function Library({ store, busy, onBuild }: Props) {
             const saved = savedKeys.has(topicKey(c));
             return (
               <li key={c.key} className={`${card} flex items-center gap-3 p-2`}>
-                <Thumb src={c.thumbnail} title={c.title} className="h-11 w-11 rounded-lg" />
+                <Thumb src={c.thumbnail} title={c.title} className="h-11 w-11 rounded-lg" ariaHidden={!c.thumbnail} />
                 <a href={courseHref(c.key)} dir="auto" className="min-w-0 flex-1 truncate font-medium hover:text-accent">
                   {c.title}
                 </a>
-                <span className="text-xs uppercase text-muted">{c.lang}</span>
+                <span className="rounded-md border border-line px-1.5 py-0.5 text-[13px] uppercase text-muted">{c.lang}</span>
                 <button
                   onClick={() => store.toggleSaved(refPage(c))}
                   aria-pressed={saved}
@@ -168,17 +186,27 @@ export function Library({ store, busy, onBuild }: Props) {
 
       <section>
         <h2 className="mb-3 text-xl font-bold">چطور بهتر یاد بگیریم؟</h2>
-        <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
           {TIPS.map(([Icon, title, text]) => (
             <li key={title} className={`${card} p-4`}>
-              <p className="flex items-center gap-2 font-bold">
-                <Icon className={`${ic} text-accent`} />
-                {title}
-              </p>
+              <div className="mb-3 flex size-10 items-center justify-center rounded-xl bg-accent/10">
+                <Icon className="size-5 text-accent" />
+              </div>
+              <p className="mb-2 font-bold">{title}</p>
               <p className="text-sm leading-7 text-muted">{text}</p>
             </li>
           ))}
         </ul>
+      </section>
+
+      {/* Privacy notice */}
+      <section className="border-t border-line pt-8">
+        <p className="flex items-start gap-3 text-sm text-muted">
+          <ShieldCheck className="mt-0.5 size-5 flex-none text-accent" />
+          <span>
+            اطلاعات شما بدون نیاز به ثبت‌نام روی همین دستگاه ذخیره می‌شود. برای انتقال به دستگاه دیگر از تنظیمات نسخه‌ی پشتیبان بگیر.
+          </span>
+        </p>
       </section>
     </div>
   );

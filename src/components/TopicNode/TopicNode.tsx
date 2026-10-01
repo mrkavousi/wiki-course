@@ -29,7 +29,7 @@ export function TopicNode({ page, score, state, selected, size = 84, badge, onCl
           style={{ width: size, height: size }}
           className={`flex items-center justify-center overflow-hidden rounded-full bg-panel text-2xl font-bold ring-4 transition-transform group-hover:scale-105 ${RING[state]} ${selected ? 'outline-2 outline-offset-4 outline-fg' : ''}`}
         >
-          {page.thumbnail ? <img src={page.thumbnail} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover" /> : page.title[0]}
+          {page.thumbnail ? <img src={page.thumbnail} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover" /> : <span aria-hidden>{page.title[0]}</span>}
         </span>
         {state === 'known' && (
           <span className="absolute -bottom-1 -end-1 flex size-7 items-center justify-center rounded-full bg-accent text-on-accent">

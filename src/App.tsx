@@ -94,7 +94,7 @@ export default function App() {
           </a>
           {/* phones: logo and icons share the first row, the link box gets its own row below */}
           <div className="order-2 ms-auto flex items-center gap-1 sm:order-3 sm:ms-0">
-            <span className="me-1 flex items-center gap-1 text-sm font-semibold" title="روزهای پشت‌سرهم یادگیری">
+            <span className="me-1 flex items-center gap-1 text-sm font-semibold" title="زنجیره یادگیری">
               <Flame className={`${ic} text-prereq`} />
               {fa(streak(store.state.days, today()))}
             </span>
@@ -105,9 +105,11 @@ export default function App() {
               <SettingsIcon className="size-5" />
             </button>
           </div>
-          <div className="order-3 min-w-0 basis-full sm:order-2 sm:flex-1 sm:basis-80">
-            <UrlBar busy={busy} onBuild={(url) => build(url)} onRead={read} />
-          </div>
+          {route.name !== 'library' && (
+            <div className="order-3 min-w-0 basis-full sm:order-2 sm:flex-1 sm:basis-80">
+              <UrlBar busy={busy} onBuild={(url) => build(url)} onRead={read} />
+            </div>
+          )}
         </div>
         {job && (
           <div role="status" className={`flex items-center gap-3 px-4 py-2 text-sm ${job.error ? 'bg-danger/10 text-danger' : 'bg-accent/10'}`}>
@@ -137,7 +139,7 @@ export default function App() {
           ) : route.name === 'review' ? (
             <Review store={store} />
           ) : (
-            <Library store={store} busy={busy} onBuild={build} />
+            <Library store={store} busy={busy} onBuild={build} onRead={read} />
           )}
         </div>
       )}
