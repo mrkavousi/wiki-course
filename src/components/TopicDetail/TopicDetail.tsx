@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ArrowLeft, BookOpen, Check, ClipboardCheck, ExternalLink, KeyRound, Loader, PenLine, Route, Sparkles, Star } from 'lucide-react';
 import type { Course, Pack, Page, Role, Topic } from '../../types/course';
 import { readHref, type Store } from '../../data/store';
@@ -39,6 +39,23 @@ export function TopicDetail({ course, page, topic, store, pack, packJob, busy, o
   const known = state.known.includes(key);
   const saved = state.saved.some((p) => topicKey(p) === key);
   useEffect(() => setLearned(false), [key]);
+  // After a successful build: jump to the flashcards and nudge the quiz tab for a few seconds so it gets noticed.
+  const [nudge, setNudge] = useState(false);
+  const building = useRef(false);
+  useEffect(() => {
+    building.current = false;
+    setNudge(false);
+  }, [key]);
+  useEffect(() => {
+    if (packJob?.status) building.current = true;
+    if (pack && building.current) {
+      building.current = false;
+      setTab('cards');
+      setNudge(true);
+      const t = setTimeout(() => setNudge(false), 6000);
+      return () => clearTimeout(t);
+    }
+  }, [pack, packJob?.status]);
   const [roleLabel, roleChip] = ROLE[topic?.role ?? 'root'];
 
   const packCta = (what: string) => (
@@ -198,11 +215,12 @@ export function TopicDetail({ course, page, topic, store, pack, packJob, busy, o
               key={id}
               role="tab"
               aria-selected={tab === id}
-              onClick={() => setTab(id)}
-              className={`flex-1 border-b-2 py-3 text-sm font-semibold transition ${tab === id ? 'border-accent text-fg' : 'border-transparent text-muted hover:text-fg'}`}
+              onClick={() => (setTab(id), id === 'quiz' && setNudge(false))}
+              className={`relative flex-1 border-b-2 py-3 text-sm font-semibold transition ${tab === id ? 'border-accent text-fg' : 'border-transparent text-muted hover:text-fg'} ${id === 'quiz' && nudge && tab !== 'quiz' ? 'tab-nudge text-accent' : ''}`}
             >
               {text}
               {n ? ` (${fa(n)})` : ''}
+              {id === 'quiz' && nudge && tab !== 'quiz' && <span className="absolute end-3 top-2 size-2 rounded-full bg-coral" aria-hidden="true" />}
             </button>
           );
         })}

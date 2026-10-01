@@ -339,3 +339,24 @@ test('reader: other-language versions come from Wikipedia language links and ope
   await page.getByRole('link', { name: /فارسی/ }).click();
   await expect(page).toHaveURL(/#\/read\/fa\//);
 });
+
+test('study pack: after it is built the flashcards tab opens and the quiz tab is nudged', async ({ page }) => {
+  await page.route('https://stub.test/**', (r) => {
+    const body = {
+      keyPoints: ['نکته'],
+      cards: [1, 2, 3, 4, 5, 6].map((i) => ({ q: `سؤال ${i}`, a: `جواب ${i}` })),
+      quiz: [0, 1, 2, 3].map((i) => ({ q: `پرسش ${i}`, options: ['الف', 'ب', 'ج', 'د'], answer: 1, explain: 'توضیح' })),
+    };
+    return r.fulfill({ status: 200, headers: { 'access-control-allow-origin': '*' }, json: { choices: [{ message: { content: JSON.stringify(body) } }] } });
+  });
+  await seed(page);
+  await stubWikipedia(page);
+  await page.addInitScript(() => localStorage.setItem('wc:ai', JSON.stringify({ baseUrl: 'https://stub.test/v1', key: 'k', model: 'm' })));
+  await page.goto(COURSE);
+  await page.locator('button[aria-pressed]', { hasText: 'ریاضیات' }).first().click();
+  await page.getByRole('button', { name: 'ساخت فلش‌کارت و آزمون' }).click();
+  await expect(page.getByRole('tab', { name: /فلش‌کارت/ })).toHaveAttribute('aria-selected', 'true');
+  await expect(page.getByRole('tab', { name: /آزمون/ })).toHaveClass(/tab-nudge/);
+  await page.getByRole('tab', { name: /آزمون/ }).click();
+  await expect(page.getByRole('tab', { name: /آزمون/ })).not.toHaveClass(/tab-nudge/);
+});

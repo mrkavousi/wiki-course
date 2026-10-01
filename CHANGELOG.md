@@ -17,6 +17,7 @@ Versions 0.1.0 to 0.3.0 were assigned afterwards from the commit history and tag
 - `ExportMenu` (`src/components/CourseView/`): export, share, AI prompts and course upkeep (archive, rebuild) in grouped sections.
 
 ### Changed
+- After a study pack is built the panel switches to the flashcards tab and the quiz tab glows, wiggles and shows a dot for a few seconds (until it is opened).
 - Home on phones: compact hero, swipeable card rails (`.rail`) for courses, suggestions and the quick-start guide; the weekly chart and the "review done" card are hidden.
 - Graph layout: nodes sit on concentric rings inside one wedge per role (higher score nearer the centre), then overlaps are relaxed away and the view zooms to fit; edge percentage labels are hidden above 16 topics.
 - Export and prompts menu is a popover that stays inside the viewport (and scrolls) on desktop and a bottom sheet on phones; it no longer pushes the page down.
