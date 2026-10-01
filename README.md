@@ -32,5 +32,8 @@ npm run build      # همان چیزی که Vercel می‌سازد (dist/)
 - **ذخیره:** پیشرفت، کتابخانه و یادداشت‌ها در localStorage هستند و دوره‌ها و فلش‌کارت‌ها در Cache Storage. برای انتقال به گوشی یا احتیاط: تنظیمات ← پشتیبان‌گیری / بازیابی.
 - دوره‌های نمونه با خود سایت منتشر می‌شوند: متن هر دوره در `public/courses/` و فهرستشان در `src/data/samples.json`. نمونه‌ی تازه بساز با: `npm run build:course -- <wikipedia url>` (از `.env`: `AI_BASE_URL`، `AI_API_KEY`، اختیاری `AI_MODEL`). `en-Linear_algebra.json` دستی ساخته شده است.
 
+## نسخه‌بندی و تغییرات
+نسخه‌ها از [Semantic Versioning](https://semver.org/lang/fa/) پیروی می‌کنند (`major.minor.patch`؛ تا قبل از ۱٫۰٫۰ هر ویژگی یا بازطراحی قابل‌مشاهده یک نسخه‌ی minor است). نسخه‌ی فعلی ۰٫۴٫۰ است و تاریخچه‌ی تغییرات در [CHANGELOG.md](CHANGELOG.md) است. اپ را می‌شود نصب کرد (PWA) و بدون اینترنت هم باز می‌شود؛ ساخت دوره و خواندن مقاله هنوز به اینترنت نیاز دارند.
+
 ## انتشار روی Vercel
 مخزن را در GitHub push کن و در Vercel: **Add New → Project → Import** → Deploy. Vite خودکار تشخیص داده می‌شود و env لازم نیست. بعد از انتشار، روی هر دستگاه یک بار تنظیمات (چرخ‌دنده) را پر کن.

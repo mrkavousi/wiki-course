@@ -25,4 +25,5 @@ Before you say "done": `npm run check`, `npm run build`, and look at the UI (`np
 4. **Never trust model output.** Go through `askJson` and the cleaners; render AI and Wikipedia text as React text, never as HTML.
 5. **Dependencies:** runtime `react`, `react-dom`, `lucide-react` only; dev-only `@playwright/test` for the e2e suite. Ask before adding one.
 6. **Git:** do not commit or push unless asked. Keep diffs minimal and in the existing style (single quotes, 2 spaces, comments say *why*).
-7. **Verify from a clean clone** (`npm ci && npm run build`) when you touch dependencies or `tsconfig.json`; a stray global `@types/node` once hid a missing dependency.
+7. **Versioning:** SemVer, source of truth `package.json`. Add user-visible changes to `CHANGELOG.md` under `[Unreleased]`; only bump the version and tag when releasing (HANDOVER section 12).
+8. **Verify from a clean clone** (`npm ci && npm run build`) when you touch dependencies or `tsconfig.json`; a stray global `@types/node` once hid a missing dependency.

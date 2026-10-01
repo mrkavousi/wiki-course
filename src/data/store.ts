@@ -310,7 +310,9 @@ export function useRoute() {
   }
   const page = hash.slice(2).split(/[?/]/)[0];
   if (page === 'new' || page === 'library' || page === 'review' || page === 'discover' || page === 'insights' || page === 'settings') return { name: page as 'new' | 'library' | 'review' | 'discover' | 'insights' | 'settings' };
+  if (page === 'about' || page === 'privacy') return { name: page as 'about' | 'privacy' };
   if (page === 'import') return { name: 'import' as const, data: new URLSearchParams(hash.split('?')[1]).get('d') ?? '' };
+  if (hash.startsWith('#/') && hash.length > 2 && page) return { name: 'notfound' as const }; // a bare '#main' (skip link) or '#/' stays on home
   return { name: 'home' as const };
 }
 /** `topic` (a topicKey) opens the course on that topic: a screen of its own on phones, so Back returns to the path. */

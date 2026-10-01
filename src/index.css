@@ -1,21 +1,40 @@
 @import "tailwindcss";
 
+/* Self-hosted Vazirmatn (public/fonts), split by script so a page only downloads what it shows. */
+@font-face { font-family: Vazirmatn; font-style: normal; font-display: swap; font-weight: 400; src: url(/fonts/vazirmatn-arabic-400-normal.woff2) format('woff2'); unicode-range: U+0600-06FF,U+200C-200E,U+2010-2011,U+204F,U+2E41,U+FB50-FDFF,U+FE80-FEFC; }
+@font-face { font-family: Vazirmatn; font-style: normal; font-display: swap; font-weight: 500; src: url(/fonts/vazirmatn-arabic-500-normal.woff2) format('woff2'); unicode-range: U+0600-06FF,U+200C-200E,U+2010-2011,U+204F,U+2E41,U+FB50-FDFF,U+FE80-FEFC; }
+@font-face { font-family: Vazirmatn; font-style: normal; font-display: swap; font-weight: 600; src: url(/fonts/vazirmatn-arabic-600-normal.woff2) format('woff2'); unicode-range: U+0600-06FF,U+200C-200E,U+2010-2011,U+204F,U+2E41,U+FB50-FDFF,U+FE80-FEFC; }
+@font-face { font-family: Vazirmatn; font-style: normal; font-display: swap; font-weight: 700; src: url(/fonts/vazirmatn-arabic-700-normal.woff2) format('woff2'); unicode-range: U+0600-06FF,U+200C-200E,U+2010-2011,U+204F,U+2E41,U+FB50-FDFF,U+FE80-FEFC; }
+@font-face { font-family: Vazirmatn; font-style: normal; font-display: swap; font-weight: 800; src: url(/fonts/vazirmatn-arabic-800-normal.woff2) format('woff2'); unicode-range: U+0600-06FF,U+200C-200E,U+2010-2011,U+204F,U+2E41,U+FB50-FDFF,U+FE80-FEFC; }
+@font-face { font-family: Vazirmatn; font-style: normal; font-display: swap; font-weight: 400; src: url(/fonts/vazirmatn-latin-400-normal.woff2) format('woff2'); unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2000-200B,U+200F-206F,U+2074,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD; }
+@font-face { font-family: Vazirmatn; font-style: normal; font-display: swap; font-weight: 500; src: url(/fonts/vazirmatn-latin-500-normal.woff2) format('woff2'); unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2000-200B,U+200F-206F,U+2074,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD; }
+@font-face { font-family: Vazirmatn; font-style: normal; font-display: swap; font-weight: 600; src: url(/fonts/vazirmatn-latin-600-normal.woff2) format('woff2'); unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2000-200B,U+200F-206F,U+2074,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD; }
+@font-face { font-family: Vazirmatn; font-style: normal; font-display: swap; font-weight: 700; src: url(/fonts/vazirmatn-latin-700-normal.woff2) format('woff2'); unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2000-200B,U+200F-206F,U+2074,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD; }
+@font-face { font-family: Vazirmatn; font-style: normal; font-display: swap; font-weight: 800; src: url(/fonts/vazirmatn-latin-800-normal.woff2) format('woff2'); unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2000-200B,U+200F-206F,U+2074,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD; }
+
 /* Semantic colour tokens. Dark values here; light overrides below (index.html sets data-theme before first paint). */
 @theme {
   --font-sans: Vazirmatn, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
   /* Dark theme: the light palette's greens, deepened. Names are semantic so the light theme only re-assigns values. */
-  --color-bg: #0f1512;
-  --color-panel: #17201a;
+  --color-bg: #0b1210;
+  --color-panel: #121c18;
   --color-fg: #e8eee9;
   --color-muted: #a3b0a7;
-  --color-line: #2b382f;
-  --color-accent: #7bc09b;
-  --color-on-accent: #0f1512;
-  --color-accent-soft: #1e3328;
+  --color-line: #263630;
+  --color-accent: #2dd4bf;
+  --color-on-accent: #04201c;
+  --color-accent-soft: #0f2f2b;
+  --color-surface-2: #182520;
+  --color-coral: #fb923c;
+  --color-sub-math: #a78bfa;
+  --color-sub-physics: #60a5fa;
+  --color-sub-code: #2dd4bf;
+  --color-sub-history: #fbbf24;
+  --color-sub-biology: #4ade80;
   --color-gold: #e9b949;
   --color-info: #8fb3cc;
   --color-prereq: #e9b949;
-  --color-next: #7bc09b;
+  --color-next: #2dd4bf;
   --color-related: #8fb3cc;
   --color-danger: #e58582;
 
@@ -37,12 +56,16 @@
   --text-2xl--line-height: 1.4;
   --text-3xl: 1.875rem;
   --text-3xl--line-height: 1.3;
+  --text-4xl: 2.5rem;
+  --text-4xl--line-height: 1.25;
+  --text-5xl: 3.25rem;
+  --text-5xl--line-height: 1.2;
 }
 
 :root {
   color-scheme: dark;
   /* Quiet elevation: a hairline plus a short soft shadow. Light overrides below. */
-  --wc-elev: 0 1px 2px rgba(0, 0, 0, 0.35);
+  --wc-elev: 0 1px 2px rgba(0, 0, 0, 0.35), 0 4px 14px -8px color-mix(in oklab, var(--color-accent) 18%, transparent);
   --wc-elev-hi: 0 1px 2px rgba(0, 0, 0, 0.4), 0 8px 20px -10px rgba(0, 0, 0, 0.6);
   --wc-glow: 0 0 0 1px color-mix(in oklab, var(--color-accent) 22%, transparent);
 }
@@ -50,21 +73,28 @@
 /* Editorial light palette. Text colours keep >= 4.5:1 on both bg and panel (checked in HANDOVER section 7). */
 :root[data-theme="light"] {
   color-scheme: light;
-  --color-bg: #f7f8f5;
+  --color-bg: #f6f8f7;
   --color-panel: #ffffff;
   --color-fg: #17211b;
   --color-muted: #566159;
   --color-line: #dde3dc;
-  --color-accent: #326b52;
+  --color-accent: #0f766e;
   --color-on-accent: #ffffff;
-  --color-accent-soft: #dcebdd;
+  --color-accent-soft: #d5f0ec;
+  --color-surface-2: #eef3f1;
+  --color-coral: #b23a08;
+  --color-sub-math: #6d28d9;
+  --color-sub-physics: #1d4ed8;
+  --color-sub-code: #0f766e;
+  --color-sub-history: #92400e;
+  --color-sub-biology: #166534;
   --color-gold: #e9b949;
-  --color-info: #4d718a;
-  --color-prereq: #8a6410; /* the brand yellow is too light for text; this amber is its AA-safe twin */
-  --color-next: #326b52;
-  --color-related: #4d718a;
+  --color-info: #456a82;
+  --color-prereq: #7f5c0e; /* the brand yellow is too light for text; this amber is its AA-safe twin */
+  --color-next: #0f766e;
+  --color-related: #456a82;
   --color-danger: #ae4341; /* the brief's #b94a48 darkened: error text on its own 10% tint must reach 4.5:1 */
-  --wc-elev: 0 1px 2px rgba(23, 33, 27, 0.05);
+  --wc-elev: 0 1px 2px rgba(23, 33, 27, 0.05), 0 4px 14px -8px color-mix(in oklab, var(--color-accent) 22%, transparent);
   --wc-elev-hi: 0 1px 2px rgba(23, 33, 27, 0.06), 0 8px 20px -10px rgba(23, 33, 27, 0.18);
   --wc-glow: 0 0 0 1px color-mix(in oklab, var(--color-accent) 18%, transparent);
 }
@@ -75,6 +105,7 @@ body {
   font-size: 16px;
   line-height: 1.75;
   -webkit-font-smoothing: antialiased;
+  font-variant-numeric: tabular-nums;
 }
 
 :focus-visible {
@@ -139,3 +170,59 @@ body {
 .pb-safe {
   padding-bottom: env(safe-area-inset-bottom);
 }
+
+/* Brand surfaces: a soft glow behind heroes, a gradient word and a shimmering skeleton. */
+.hero-bg {
+  background:
+    radial-gradient(60% 80% at 80% 0%, color-mix(in oklab, var(--color-accent) 18%, transparent), transparent 70%),
+    radial-gradient(50% 70% at 10% 100%, color-mix(in oklab, var(--color-sub-math) 14%, transparent), transparent 70%);
+}
+.text-grad {
+  background: linear-gradient(90deg, var(--color-accent), var(--color-sub-physics));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.glass {
+  background: color-mix(in oklab, var(--color-panel) 72%, transparent);
+  backdrop-filter: blur(16px);
+}
+@keyframes shimmer {
+  to {
+    background-position: -200% 0;
+  }
+}
+.shimmer {
+  background: linear-gradient(90deg, color-mix(in oklab, var(--color-fg) 6%, transparent) 25%, color-mix(in oklab, var(--color-fg) 14%, transparent) 50%, color-mix(in oklab, var(--color-fg) 6%, transparent) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s linear infinite;
+}
+/* Cards enter one after another. */
+.stagger > * {
+  animation: page-in 0.3s ease-out backwards;
+}
+.stagger > :nth-child(2) { animation-delay: 40ms; }
+.stagger > :nth-child(3) { animation-delay: 80ms; }
+.stagger > :nth-child(4) { animation-delay: 120ms; }
+.stagger > :nth-child(n + 5) { animation-delay: 160ms; }
+/* Flashcard flip. */
+.flip { perspective: 1000px; }
+.flip-inner { transition: transform 0.35s; transform-style: preserve-3d; }
+.flip-inner[data-flipped="true"] { transform: rotateY(180deg); }
+.flip-face { backface-visibility: hidden; }
+.flip-back { transform: rotateY(180deg); }
+@keyframes pop {
+  0% { transform: scale(0.6); opacity: 0; }
+  60% { transform: scale(1.1); }
+  100% { transform: scale(1); opacity: 1; }
+}
+.pop { animation: pop 0.4s ease-out; }
+@keyframes flip-in {
+  from { transform: perspective(600px) rotateY(90deg); opacity: 0; }
+  to { transform: perspective(600px) rotateY(0); opacity: 1; }
+}
+.flip-in { animation: flip-in 0.32s ease-out; }
+/* Graph: edges flow from prerequisite to goal; a hovered topic glows. */
+@keyframes flow { to { stroke-dashoffset: -24; } }
+.edge { stroke-dasharray: 6 6; animation: flow 1.2s linear infinite; }
+[data-node]:hover { filter: drop-shadow(0 0 10px var(--color-accent)); }

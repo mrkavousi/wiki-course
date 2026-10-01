@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { BookOpen, Check, Layers, PartyPopper, SkipForward } from 'lucide-react';
+import { BookOpen, Check, X, Layers, PartyPopper, SkipForward } from 'lucide-react';
 import type { Question } from '../../types/course';
 import { PASS } from '../../utils/learn';
 import { ProgressBar } from '../Progress/Progress';
@@ -37,7 +37,14 @@ export function Quiz({ questions, best, onDone, onReviewCards, readHref, onConti
     return (
       <div className="space-y-4 rounded-lg border border-line p-5" role="status">
         <div className="space-y-2 text-center">
-          {pass ? <PartyPopper className="mx-auto size-10 text-accent" /> : <BookOpen className="mx-auto size-10 text-muted" />}
+          <div className="relative mx-auto size-28">
+            <svg viewBox="0 0 36 36" className="size-full -rotate-90" aria-hidden="true">
+              <circle cx="18" cy="18" r="15.5" fill="none" stroke="var(--color-line)" strokeWidth="3" />
+              <circle cx="18" cy="18" r="15.5" fill="none" stroke={pass ? 'var(--color-accent)' : 'var(--color-coral)'} strokeWidth="3" strokeLinecap="round" strokeDasharray={`${pct * 0.974} 100`} className="transition-all duration-700" />
+            </svg>
+            <span className="absolute inset-0 flex items-center justify-center text-2xl font-extrabold">{fa(pct)}٪</span>
+            {pass && <PartyPopper className="pop absolute -end-3 -top-2 size-8 text-accent" aria-hidden="true" />}
+          </div>
           <p className="text-lg font-bold">
             {fa(right)} از {fa(questions.length)} درست ({fa(pct)}٪)
           </p>
@@ -118,11 +125,11 @@ export function Quiz({ questions, best, onDone, onReviewCards, readHref, onConti
             : 'border-line opacity-60';
           return (
             <li key={k}>
-              <button disabled={picked !== null} onClick={() => pick(k)} className={`flex min-h-11 w-full items-center gap-3 rounded-lg border-2 p-3 text-start transition disabled:cursor-default ${look}`}>
+              <button disabled={picked !== null} onClick={() => pick(k)} className={`flex min-h-11 w-full items-center gap-3 rounded-xl border-2 p-3 text-start transition disabled:cursor-default ${look}`}>
                 <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-fg/10 text-xs font-bold">{LETTERS[k] ?? k + 1}</span>
                 <span dir="auto" className="flex-1 leading-7">{o}</span>
                 {picked !== null && k === q.answer && <Check className={`${ic} text-accent`} aria-label="جواب درست" />}
-                {picked !== null && k === picked && k !== q.answer && <span className="text-xs font-bold text-danger">غلط</span>}
+                {picked !== null && k === picked && k !== q.answer && <span className="flex items-center gap-1 text-xs font-bold text-danger"><X className={ic} aria-hidden="true" />غلط</span>}
               </button>
             </li>
           );

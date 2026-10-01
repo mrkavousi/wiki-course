@@ -7,7 +7,7 @@ import { SUBJECT_LABEL, subjectOf } from '../../utils/subject';
 import { Cover } from '../Cover/Cover';
 import { ProgressBar } from '../Progress/Progress';
 import { Skeleton } from '../States/States';
-import { ago, badge, card, fa, ic, lift } from '../ui';
+import { ago, card, chip, fa, ic, lift } from '../ui';
 
 // Status is always icon + text, never colour alone.
 const STATUS_ICON: Record<Status, typeof CircleDashed> = { new: CircleDashed, active: CirclePlay, done: CircleCheck, archived: Archive };
@@ -35,7 +35,7 @@ export function CourseCard({ course, state, day, variant = 'grid', level = 3, on
 
   return (
     <article className={`${card} ${lift} group relative flex overflow-hidden ${s.status === 'archived' ? 'opacity-75' : ''} ${list ? 'flex-row items-stretch' : 'flex-col'}`}>
-      <Cover title={course.root.title} summary={course.root.summary} thumbnail={course.root.thumbnail} className={list ? 'hidden w-36 shrink-0 sm:block' : 'h-28 w-full'} />
+      <Cover title={course.root.title} summary={course.root.summary} thumbnail={course.root.thumbnail} className={list ? 'hidden w-36 shrink-0 sm:block' : 'h-32 w-full transition-transform duration-300 group-hover:scale-[1.03]'} />
       <div className="flex min-w-0 flex-1 flex-col gap-2 p-3">
         <div className="flex items-start gap-2 pe-20">
           <H dir="auto" className="min-w-0 flex-1 text-base font-bold leading-snug">
@@ -45,13 +45,12 @@ export function CourseCard({ course, state, day, variant = 'grid', level = 3, on
           </H>
         </div>
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted">
-          <span className={badge}>{course.root.lang}</span>
-          <span className="flex items-center gap-1 font-medium text-fg">
+                    <span className="flex items-center gap-1 font-medium text-fg">
             <Icon className={ic} aria-hidden="true" />
             {STATUS_LABEL[s.status]}
           </span>
-          <span>{SUBJECT_LABEL[subjectOf({ title: course.root.title, summary: course.root.summary })]}</span>
-          <span>{LEVEL_LABEL[levelOf(course)]}</span>
+          <span className={chip}>{SUBJECT_LABEL[subjectOf({ title: course.root.title, summary: course.root.summary })]}</span>
+          <span className={chip}>{LEVEL_LABEL[levelOf(course)]}</span>
         </div>
         <ProgressBar value={s.done} max={s.total} label={`پیشرفت «${course.root.title}»`} className="h-1.5" />
         <p className="text-sm text-muted">

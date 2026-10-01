@@ -2,7 +2,7 @@
 
 For developers and AI agents picking this project up. Read this first, then `AGENTS.md` (the short rule list) and `graphify-out/GRAPH_REPORT.md` (the code map).
 
-- **Status (2026-10-02):** v0.3 (product redesign: app shell, dashboard, builder, library, insights), live at https://wiki-course.vercel.app. Source: github.com/mrkavousi/wiki-course. Every push to `main` auto-deploys on Vercel (about 20 s).
+- **Status (2026-10-02):** v0.4.0 (see `CHANGELOG.md`): the v0.3 product (app shell, dashboard, builder, library, insights) with a visual redesign, an installable offline PWA, and About, Privacy and 404 pages. Live at https://wiki-course.vercel.app. Source: github.com/mrkavousi/wiki-course. Every push to `main` auto-deploys on Vercel (about 20 s).
 - **Stack:** React 19, TypeScript 7, Vite 8, Tailwind 4 (`@tailwindcss/vite`), `lucide-react`. About 4,500 lines of TypeScript in `src/` and `scripts/`. No backend, no database, no server-side environment variables.
 - **Language:** the UI, README and AI-generated content are Persian (RTL). Code, comments, commits and this document are English.
 
@@ -78,9 +78,11 @@ The browser calls both services directly, so requests come from the user's own n
 | `src/utils/reader.ts` | pure: `parseArticle`, `termRegex`, `cleanTerms`, `boldSegments`, `outline` |
 | `src/utils/course.check.ts` | the only test file: asserts for every pure function above |
 | `src/types/course.ts` | all shared types (`Course`, `Topic`, `Pack`, `Terms`, `State`, `AI`, ...) |
-| `src/components/*` | one folder per component; `ui.ts` has shared class strings (`btn`, `primary`, `ghost`, `outline`, `card`, `iconBtn`, `field`, `ic`), `fa()` (Persian digits), `ago()`, `inDays()`, `fmtMinutes()`. Shared pieces: `Cover`, `CourseCard`, `Progress` (`ProgressBar`, `ActivityChart`, `Heatmap`, `StreakWidget`), `States` (`EmptyState`, `ErrorState`, `Skeleton`), `Toast` (`useToast`), `ConfirmModal`, `SearchCommand` |
-| `src/index.css` | Tailwind `@theme`: color tokens (dark values in `@theme`, the editorial light palette in `[data-theme=light]`), type scale, reduced-motion guard, `.page-in`, `.dots`, `.term-flash` |
-| `index.html` | RTL shell, Vazirmatn font, inline pre-paint theme script (**must stay in sync with `applyTheme`**) |
+| `src/components/*` | one folder per component; `ui.ts` has shared class strings (`btn`, `primary`, `ghost`, `outline`, `card`, `iconBtn`, `field`, `ic`, `chip`), `fa()` (Persian digits), `ago()`, `inDays()`, `fmtMinutes()`. Shared pieces: `Cover`, `CourseCard`, `Progress` (`ProgressBar`, `ActivityChart`, `Heatmap`, `StreakWidget`), `States` (`EmptyState`, `ErrorState`, `Skeleton`), `Toast` (`useToast`), `ConfirmModal`, `SearchCommand` |
+| `src/components/Pages/Pages.tsx` | `About`, `Privacy`, `NotFound` and the `Footer` shown under static pages (routes `about`, `privacy`, `notfound` in `useRoute`; an unknown `#/x` is `notfound`, a bare `#main` stays home) |
+| `src/index.css` | `@font-face` for the self-hosted font, Tailwind `@theme`: color tokens (dark values in `@theme`, light palette in `[data-theme=light]`), type scale, reduced-motion guard, and utilities `.page-in`, `.dots`, `.term-flash`, `.hero-bg`, `.text-grad`, `.glass`, `.shimmer`, `.stagger`, `.pop`, `.flip-in`, `.edge` |
+| `public/sw.js`, `public/manifest.webmanifest` | PWA: the service worker (registered in `src/main.tsx`, production only) caches same-origin GETs; icons, `og.png` and `fonts/` live beside them |
+| `index.html` | RTL shell, font preload, manifest and `og:*` tags, inline pre-paint theme script (**must stay in sync with `applyTheme`**) |
 | `scripts/build-course.ts` | Node CLI around `buildCourse` |
 
 Rule of thumb: logic that needs no browser and no network goes in `utils/` (and gets an assert in `course.check.ts`); network and AI in `lib/build.ts`; anything that persists or routes in `data/store.ts`; React in `components/`.
@@ -128,9 +130,9 @@ Rule of thumb: logic that needs no browser and no network goes in `utils/` (and 
 
 - **Language and layout:** UI strings are Persian; digits go through `fa()`. Use logical Tailwind classes (`ms-`, `me-`, `ps-`, `pe-`, `start-`, `end-`, `text-start`). Put `dir="auto"` on any Wikipedia or AI text (English articles must lay out left to right) and `dir="ltr"` on URLs and keys. In RTL the "back" arrow is `ArrowRight`.
 - **Icons:** `lucide-react` only, sized with the `ic` class (`size-[1.15em]`). **No emoji or pictographic symbols anywhere**, including exports.
-- **Colors:** semantic tokens only (new in v0.3: `accent-soft`, `gold` for fills, `info`) (`bg-bg`, `bg-panel`, `text-fg`, `text-muted`, `border-line`, `text-accent`, `text-on-accent`, `prereq`/`next`/`related`, `danger`). Never hard-code hex. In SVG use `fill-*`/`stroke-*` classes or `var(--color-*)` in `style`.
+- **Colors:** semantic tokens only (`accent-soft`, `surface-2`, `gold` for fills, `info`, `coral`, and `sub-math`/`sub-physics`/`sub-code`/`sub-history`/`sub-biology` for subject colours) (`bg-bg`, `bg-panel`, `text-fg`, `text-muted`, `border-line`, `text-accent`, `text-on-accent`, `prereq`/`next`/`related`, `danger`). Never hard-code hex. In SVG use `fill-*`/`stroke-*` classes or `var(--color-*)` in `style`.
 - **Text size:** the scale lives in `index.css` (`text-xs` = 13 px, `text-sm` = 15 px, body 16 px, relaxed line-heights for Persian). Nothing may render smaller than 13 px, including SVG labels at zoom 1. Inputs must be 16 px or larger (iOS Safari zooms smaller ones).
-- **Touch and shape:** interactive controls are at least 44 px (`btn` has `min-h-11`, `iconBtn` is `size-11`); cards use 8 px radii (`rounded-lg`); status is always an icon plus a word, never colour alone.
+- **Touch and shape:** interactive controls are at least 44 px (`btn` has `min-h-11`, `iconBtn` is `size-11`); cards use `rounded-2xl` and controls `rounded-xl`; status is always an icon plus a word, never colour alone.
 - **Other:** animations use `motion-safe:` (and `index.css` has a global reduced-motion guard); icon-only buttons need `aria-label`; toggles use `aria-pressed`.
 - Comments explain *why*. A `ponytail:` prefix marks a deliberate shortcut and its ceiling (`grep -rn "ponytail:" src scripts`).
 
@@ -139,12 +141,12 @@ Rule of thumb: logic that needs no browser and no network goes in `utils/` (and 
 1. `npm run check`, then `npm run build`.
 2. **From a clean clone:** `git clone <repo> /tmp/x && cd /tmp/x && npm ci && npm run build`. A stray `~/node_modules/@types/node` once hid a missing dependency locally and broke the first Vercel deploy.
 3. `npm run preview` and look at it: light and dark, a 390 px wide viewport (no horizontal scroll), a Persian article and an English one, no console errors.
-4. **Contrast** (checked 2026-10-02, WCAG ratios): light text pairs 4.8 to 16.5, dark 5.9 to 15.7. The light `danger` is `#ae4341`, slightly darker than the brief's `#b94a48`, because error text on its own 10% tint needs 4.5:1; `prereq` text is the amber `#8a6410` because the brand yellow `#e9b949` is only for fills.
-5. **There is no automated browser test in the repo.** The flows below were checked by hand with ad-hoc Playwright-style scripts that were not committed. A smoke suite would be a welcome contribution: sample course opens; build a course (needs an AI key); mark known, reload, progress persists; build a pack, flip a card, take the quiz; reader easy and enhanced; backup then restore in a fresh profile; no emoji; no text under 13 px.
+4. **Contrast** (checked 2026-10-02, WCAG ratios): every text token reaches 4.5:1 on `bg`, `panel` and `accent-soft` in both themes (re-checked 2026-10-02 for v0.4.0 after the teal palette). The light `prereq` is now `#7f5c0e` and `info` `#456a82`. The light `danger` is `#ae4341`, slightly darker than the brief's `#b94a48`, because error text on its own 10% tint needs 4.5:1; `prereq` text is an amber because the brand yellow `#e9b949` is only for fills.
+5. **Browser tests:** `PW_CHANNEL=chrome npm run test:e2e` (23 tests, Wikipedia and the AI stubbed). Playwright's own Chromium download is unsupported on macOS 13, so use the installed Chrome there. Cover when extending the suite: sample course opens; build a course (needs an AI key); mark known, reload, progress persists; build a pack, flip a card, take the quiz; reader easy and enhanced; backup then restore in a fresh profile; no emoji; no text under 13 px.
 
 ## 8. Deployment
 
-Vercel imports the GitHub repo. Framework preset Vite, build `npm run build` (`tsc && vite build`), output `dist`, **no environment variables**. Routing is hash-based, so no rewrites are needed. A failing deploy is almost always a `tsc` error, because type-checking is part of `build`. Each device enters its own AI settings once.
+Vercel imports the GitHub repo. Framework preset Vite, build `npm run build` (`tsc && vite build`), output `dist`, **no environment variables**. Routing is hash-based, so no rewrites are needed. A failing deploy is almost always a `tsc` error, because type-checking is part of `build`. Each device enters its own AI settings once. The service worker (`public/sw.js`) is cache-first, so `/courses/*.json` can be stale until its `CACHE` name is bumped; bump it when you change a bundled course.
 
 ## 9. Known issues and tech debt
 
@@ -162,8 +164,9 @@ Vercel imports the GitHub repo. Framework preset Vite, build `npm run build` (`t
 11. **Level** (`levelOf` in `utils/progress.ts`) is a heuristic from the number of prerequisites, labelled "approximate"; it is not an assessment. The builder's "minutes a day" only estimates the number of days and is not stored. Covers come from the keyword classifier in `utils/subject.ts` (`other` is a neutral dot pattern).
 12. **Review and missing packs.** A due card whose pack is gone from Cache Storage cannot be shown. The review page says so (progress is kept) instead of claiming everything is done; the header badge still counts it.
 13. **Swipe grading** (right = good, left = hard, after flipping; touch and pen only) is a shortcut; the three buttons remain the accessible path. There is no "easy" swipe.
-14. **Not built, by decision:** interface language (the UI is Persian only; English is a large translation job), notification settings and a content-language preference (no feature behind them yet). Vazirmatn stays the only font (no Estedad: one fewer font to load). Empty states get subject artwork from the same generated motifs as covers; there is no hand-drawn illustration set.
-15. **Phase 4 partly done:** device transfer works without a server (see 6). Still not done: accounts and live sync, analytics, SEO, error monitoring.
+14. **Not built, by decision:** interface language (the UI is Persian only; English is a large translation job), notification settings and a content-language preference (no feature behind them yet). Vazirmatn stays the only font, self-hosted in `public/fonts` (copied from the `@fontsource/vazirmatn` package, which is deliberately not a dependency). Empty states get subject artwork from the same generated motifs as covers; there is no hand-drawn illustration set.
+15. **Still not done:** accounts and live sync, analytics, error monitoring, notifications. Done in v0.4.0: PWA install and offline shell, social preview, About, Privacy and 404 pages.
+16. **Flashcards flip** is a single-face `flip-in` animation, not a two-face 3D flip: rendering both faces would make the hidden answer count as visible to tests and screen readers.
 
 ## 10. Suggested next steps
 
@@ -204,6 +207,7 @@ graphify update .                          # refresh the code part of the graph 
   - [ ] new persisted fields are additive and included in backup/restore
   - [ ] no secrets; the gateway URL contains a token and must not appear in code, logs or screenshots
   - [ ] graph refreshed (`graphify update .`) if the structure changed
+- **Versioning:** [Semantic Versioning](https://semver.org/spec/v2.0.0.html), `MAJOR.MINOR.PATCH`, with the single source of truth in `package.json` (`version`, mirrored in `package-lock.json`). While below 1.0.0, a **minor** bump is a user-visible feature or redesign (it may change behaviour) and a **patch** is a fix or internal change with no new feature. **1.0.0** is the first release that promises backup/share-link compatibility under compatibility rule 4 without caveats; after it, a breaking change to stored data or the backup format is a **major** bump. Every release: move `[Unreleased]` entries in `CHANGELOG.md` under a dated version heading, bump `package.json` and the lock file (`npm version <level> --no-git-tag-version`), commit as `Release vX.Y.Z`, and tag `vX.Y.Z` (annotated). Do not bump the version in feature commits.
 - **Dependencies:** the only runtime dependencies are `react`, `react-dom` and `lucide-react`. Ask before adding one.
 - **Agents:** do not commit or push unless asked; do not touch `main` without authorisation; keep diffs minimal and in the existing style; never print or commit `.env`.
 

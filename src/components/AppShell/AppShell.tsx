@@ -35,7 +35,7 @@ function useOnline() {
   return on;
 }
 
-const link = (on: boolean) => `relative flex min-h-11 items-center gap-3 rounded-lg px-3 text-sm font-medium ${on ? 'bg-accent-soft text-accent' : 'text-muted hover:bg-fg/5 hover:text-fg'}`;
+const link = (on: boolean) => `relative flex min-h-11 items-center gap-3 rounded-xl px-3 text-sm font-medium ${on ? 'bg-accent-soft text-accent shadow-[inset_-3px_0_0_var(--color-accent)]' : 'text-muted hover:bg-fg/5 hover:text-fg'}`;
 
 /** Sidebar on desktop, bottom bar on phones, and one slim top bar for search, review status, streak and theme. */
 export function AppShell({ nav, due, streak, job, onDismissJob, saveOk, theme, onSearch, children }: Props) {
@@ -55,8 +55,8 @@ export function AppShell({ nav, due, streak, job, onDismissJob, saveOk, theme, o
 
       <aside aria-label="نوار کناری" className="hidden w-60 shrink-0 flex-col gap-1 border-e border-line bg-panel p-3 lg:flex">
         <a href="#/" className="mb-3 flex items-center gap-2 px-2 py-2 text-lg font-extrabold">
-          <Route className="size-6 text-accent" />
-          Wiki Course
+          <span className="flex size-8 items-center justify-center rounded-xl bg-linear-to-br from-accent to-sub-physics text-on-accent"><Route className="size-5" /></span>
+          <span>Wiki <span className="text-grad">Course</span></span>
         </a>
         <a href="#/new" className={`${primary} mb-3`}>
           <Plus className={ic} />
@@ -78,7 +78,7 @@ export function AppShell({ nav, due, streak, job, onDismissJob, saveOk, theme, o
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="flex items-center gap-2 border-b border-line bg-panel px-3 py-2">
+        <header className="flex items-center gap-2 glass sticky top-0 z-30 border-b border-line px-3 py-2">
           <a href="#/" className="flex size-11 shrink-0 items-center justify-center lg:hidden" aria-label="Wiki Course، صفحه‌ی اصلی">
             <Route className="size-6 text-accent" />
           </a>
@@ -130,7 +130,7 @@ export function AppShell({ nav, due, streak, job, onDismissJob, saveOk, theme, o
         </main>
       </div>
 
-      <nav aria-label="اصلی" className="pb-safe fixed inset-x-0 bottom-0 z-40 border-t border-line bg-panel lg:hidden">
+      <nav aria-label="اصلی" className="pb-safe fixed inset-x-0 bottom-0 z-40 glass border-t border-line lg:hidden">
         <ul className="grid h-16 grid-cols-5">
           {ITEMS.filter((i) => i.mobile).map(({ id, href, label, icon: Icon }) => (
             <li key={id}>

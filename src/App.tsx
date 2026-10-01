@@ -11,6 +11,7 @@ import { CourseView } from './components/CourseView/CourseView';
 import { Discover } from './components/Discover/Discover';
 import { Home } from './components/Home/Home';
 import { Import } from './components/Import/Import';
+import { About, Footer, NotFound, Privacy } from './components/Pages/Pages';
 import { Insights } from './components/Insights/Insights';
 import { Library } from './components/Library/Library';
 import { Reader } from './components/Reader/Reader';
@@ -25,7 +26,7 @@ const THEMES: Record<ThemePref, [typeof Sun, ThemePref, string]> = {
   light: [Sun, 'dark', 'تم: روشن'],
   dark: [Moon, 'auto', 'تم: تیره'],
 };
-const NAV: Record<string, NavId | null> = { home: 'home', library: 'library', course: 'library', read: 'library', review: 'review', discover: 'discover', insights: 'insights', settings: 'settings', import: null, new: null };
+const NAV: Record<string, NavId | null> = { home: 'home', library: 'library', course: 'library', read: 'library', review: 'review', discover: 'discover', insights: 'insights', settings: 'settings', about: null, privacy: null, notfound: null, import: null, new: null };
 
 export default function App() {
   const store = useStore();
@@ -133,6 +134,12 @@ export default function App() {
           <div key={page} className="page-in min-h-0 flex-1 lg:overflow-y-auto">
             {route.name === 'read' ? (
               <Reader lang={route.lang} title={route.title} course={route.course} store={store} ai={ai} needAI={needAI} />
+            ) : route.name === 'about' ? (
+              <About />
+            ) : route.name === 'privacy' ? (
+              <Privacy />
+            ) : route.name === 'notfound' ? (
+              <NotFound />
             ) : route.name === 'review' ? (
               <Review store={store} />
             ) : route.name === 'import' ? (
@@ -165,6 +172,7 @@ export default function App() {
             ) : (
               <Home store={store} job={job} hasAI={hasAI} onBuild={build} onRead={read} onSettings={openSettings} />
             )}
+            {route.name !== 'read' && <Footer />}
           </div>
         )}
       </AppShell>

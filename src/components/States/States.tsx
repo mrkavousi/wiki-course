@@ -43,5 +43,5 @@ export function ErrorState({ title, text, lost = 'چیزی از دست نرفت�
 
 /** Grey placeholder while data loads; never animates for people who prefer reduced motion. */
 export function Skeleton({ className = '' }: { className?: string }) {
-  return <div aria-hidden="true" className={`rounded-md bg-fg/10 motion-safe:animate-pulse ${className}`} />;
+  return <div aria-hidden="true" className={`rounded-md shimmer ${className}`} />;
 }

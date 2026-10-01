@@ -184,7 +184,7 @@ export function Reader({ lang, title, course: courseId, store, ai, needAI }: Pro
 
   return (
     <div ref={root} className="mx-auto max-w-3xl px-4 pb-44 lg:pb-16">
-      <div className="sticky top-0 z-20 -mx-4 flex flex-wrap items-center gap-x-3 gap-y-2 border-b border-line bg-bg/95 px-4 py-2.5 backdrop-blur">
+      <div className="sticky top-0 z-20 -mx-4 flex flex-wrap items-center gap-x-3 gap-y-2 glass border-b border-line px-4 py-2.5">
         <button onClick={back} className="flex min-h-11 items-center gap-1 text-sm text-muted hover:text-fg">
           <ArrowRight className={ic} />
           بازگشت
