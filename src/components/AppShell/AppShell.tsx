@@ -48,7 +48,7 @@ export function AppShell({ nav, due, streak, job, onDismissJob, saveOk, theme, o
   );
 
   return (
-    <div className="flex min-h-dvh lg:h-dvh">
+    <div className="relative flex min-h-dvh lg:h-dvh lg:overflow-hidden">
       <a href="#main" className="sr-only focus:not-sr-only focus:fixed focus:start-2 focus:top-2 focus:z-50 focus:rounded-lg focus:bg-panel focus:px-3 focus:py-2">
         رفتن به محتوا
       </a>

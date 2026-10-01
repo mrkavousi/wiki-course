@@ -70,7 +70,7 @@ export function Home({ store, job, hasAI, onBuild, onRead, onSettings }: Props) 
         </section>
       )}
 
-      <div className="grid gap-6 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3 [&>*]:min-w-0">
         <section className={`${card} border-accent/40 bg-accent-soft/40 p-5 ${showReview ? 'lg:col-span-2' : 'lg:col-span-3'}`} aria-label="قدم بعدی">
           <p className="mb-1 text-sm font-semibold text-accent">قدم بعدی</p>
           {action ? (

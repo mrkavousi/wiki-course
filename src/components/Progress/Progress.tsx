@@ -28,7 +28,7 @@ export function ActivityChart({ state, day }: { state: State; day: string }) {
       {rows.map((r) => {
         const n = actions(r);
         return (
-          <li key={r.day} className="flex h-full flex-1 flex-col items-center justify-end gap-1" title={`${fa(n)} فعالیت`}>
+          <li key={r.day} className="flex h-full min-w-0 flex-1 flex-col items-center justify-end gap-1" title={`${fa(n)} فعالیت`}>
             <span className="text-xs text-muted">{n ? fa(n) : ''}</span>
             <span className={`w-full rounded-sm ${r.active ? 'bg-accent' : 'bg-fg/10'}`} style={{ height: `${Math.max(6, (n / max) * 64)}px` }} />
             <span className={`text-xs ${r.day === day ? 'font-bold text-fg' : 'text-muted'}`}>{dayName.format(new Date(`${r.day}T12:00`))}</span>

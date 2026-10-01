@@ -40,7 +40,7 @@ export function Insights({ store }: { store: Store }) {
         </EmptyState>
       )}
 
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 [&>*]:min-w-0">
         <Panel title="هدف هفته">
           <StreakWidget streak={streak(state.days, day)} active={week.active} goal={state.goal} />
           <ProgressBar value={week.active} max={state.goal} label="روزهای فعال این هفته نسبت به هدف" />

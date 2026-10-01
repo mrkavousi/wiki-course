@@ -131,7 +131,7 @@ export default function App() {
         {route.name === 'course' ? (
           <CourseView key={`${route.key}:${rev}`} courseKey={route.key} topicParam={route.topic} store={store} ai={ai} busy={busy} needAI={needAI} onBuild={build} />
         ) : (
-          <div key={page} className="page-in min-h-0 flex-1 lg:overflow-y-auto">
+          <div key={page} className="page-in relative min-h-0 flex-1 lg:overflow-y-auto">
             {route.name === 'read' ? (
               <Reader lang={route.lang} title={route.title} course={route.course} store={store} ai={ai} needAI={needAI} />
             ) : route.name === 'about' ? (
