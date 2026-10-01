@@ -1,7 +1,8 @@
 import { useState } from 'react';
+import { BookOpen, Check, PartyPopper } from 'lucide-react';
 import type { Question } from '../../types/course';
 import { PASS } from '../../utils/learn';
-import { fa, ghost, primary } from '../ui';
+import { fa, ghost, ic, primary } from '../ui';
 
 type Props = { questions: Question[]; best?: number; onDone: (pct: number) => void };
 
@@ -18,7 +19,7 @@ export function Quiz({ questions, best, onDone }: Props) {
   if (!q) {
     return (
       <div className="space-y-3 rounded-2xl border border-line p-6 text-center">
-        <p className="text-3xl">{pct >= PASS ? '🎉' : '📚'}</p>
+        {pct >= PASS ? <PartyPopper className="mx-auto size-10 text-accent" /> : <BookOpen className="mx-auto size-10 text-muted" />}
         <p className="text-lg font-bold">
           {fa(right)} از {fa(questions.length)} درست ({fa(pct)}٪)
         </p>
@@ -64,7 +65,7 @@ export function Quiz({ questions, best, onDone }: Props) {
               <button disabled={picked !== null} onClick={() => pick(k)} className={`flex w-full items-center gap-3 rounded-xl border-2 p-3 text-start transition disabled:cursor-default ${look}`}>
                 <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-fg/10 text-xs font-bold">{LETTERS[k] ?? k + 1}</span>
                 <span dir="auto" className="flex-1 leading-7">{o}</span>
-                {picked !== null && k === q.answer && <span aria-label="جواب درست">✓</span>}
+                {picked !== null && k === q.answer && <Check className={`${ic} text-accent`} aria-label="جواب درست" />}
               </button>
             </li>
           );

@@ -1,7 +1,7 @@
 // Everything is stored in this browser: small state in localStorage, courses and study packs in Cache Storage
 // (they can outgrow localStorage's ~5MB). Backup files move it all to another device.
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import type { AI, Course, CourseRef, Pack, Page, State } from '../types/course';
+import type { AI, Course, CourseRef, Pack, Page, State, Terms } from '../types/course';
 import { topicKey } from '../utils/course';
 import { EMPTY_STATE, PASS, mergeBackup, rate, today } from '../utils/learn';
 import samplesJson from './samples.json';
@@ -61,12 +61,14 @@ export async function findCourse(key: string): Promise<Course | null> {
 export const saveCourse = (c: Course) => kv.set(`course/${c.key}`, c);
 export const loadPack = (key: string) => kv.get<Pack>(`pack/${key}`);
 export const savePack = (p: Pack) => kv.set(`pack/${p.key}`, p);
+export const loadTerms = (key: string) => kv.get<Terms>(`terms/${key}`);
+export const saveTerms = (t: Terms) => kv.set(`terms/${t.key}`, t);
 export const courseRef = (c: Course): CourseRef => ({ key: c.key, title: c.root.title, lang: c.root.lang, thumbnail: c.root.thumbnail });
 
 // ---------- backup ----------
 export async function backupJson(state: State) {
-  const [courses, packs] = await Promise.all([kv.all<Course>('course/'), kv.all<Pack>('pack/')]);
-  return JSON.stringify({ app: 'wiki-course', version: 1, exportedAt: new Date().toISOString(), state, courses, packs });
+  const [courses, packs, terms] = await Promise.all([kv.all<Course>('course/'), kv.all<Pack>('pack/'), kv.all<Terms>('terms/')]);
+  return JSON.stringify({ app: 'wiki-course', version: 1, exportedAt: new Date().toISOString(), state, courses, packs, terms });
 }
 /** Stores the backup's courses and packs; returns its state for the caller to merge. The AI key is never in a backup. */
 export async function restoreJson(text: string): Promise<Partial<State>> {
@@ -75,6 +77,7 @@ export async function restoreJson(text: string): Promise<Partial<State>> {
   await Promise.all([
     ...(b.courses ?? []).map((c: Course) => saveCourse(c)),
     ...(b.packs ?? []).map((p: Pack) => savePack(p)),
+    ...(b.terms ?? []).map((t: Terms) => saveTerms(t)),
   ]);
   return b.state ?? {};
 }
@@ -150,7 +153,36 @@ export function useStore() {
 }
 export type Store = ReturnType<typeof useStore>;
 
-/** Hash routes keep static hosting simple: #/ library, #/c/<key> course, #/review flashcard review. */
+// ---------- reader preferences ----------
+export type ReaderMode = 'easy' | 'enhanced';
+export const READER_SIZES = [1, 1.125, 1.25, 1.4, 1.6]; // rem; index 1 (18px) is the default
+export type ReaderPrefs = { mode: ReaderMode; size: number };
+
+export function useReaderPrefs() {
+  const [prefs, setPrefs] = useState<ReaderPrefs>(() => {
+    const p = local.get<Partial<ReaderPrefs>>('wc:reader', {});
+    return { mode: p.mode === 'enhanced' ? 'enhanced' : 'easy', size: Number.isInteger(p.size) && p.size! >= 0 && p.size! < READER_SIZES.length ? p.size! : 1 };
+  });
+  const set = useCallback((next: Partial<ReaderPrefs>) => {
+    setPrefs((prev) => {
+      const n = { ...prev, ...next };
+      local.set('wc:reader', n);
+      return n;
+    });
+  }, []);
+  return [prefs, set] as const;
+}
+
+// ---------- routes ----------
+const dec = (s: string) => {
+  try {
+    return decodeURIComponent(s);
+  } catch {
+    return s; // a hand-edited, malformed hash must not crash the app
+  }
+};
+
+/** Hash routes keep static hosting simple: #/ library, #/c/<key> course, #/read/<lang>/<title> reader, #/review flashcards. */
 export function useRoute() {
   const [hash, setHash] = useState(() => location.hash);
   useEffect(() => {
@@ -158,8 +190,14 @@ export function useRoute() {
     addEventListener('hashchange', f);
     return () => removeEventListener('hashchange', f);
   }, []);
-  if (hash.startsWith('#/c/')) return { name: 'course' as const, key: decodeURIComponent(hash.slice(4)) };
+  if (hash.startsWith('#/c/')) return { name: 'course' as const, key: dec(hash.slice(4)) };
+  if (hash.startsWith('#/read/')) {
+    const rest = hash.slice(7);
+    const at = rest.indexOf('/');
+    if (at > 0 && at < rest.length - 1) return { name: 'read' as const, lang: rest.slice(0, at), title: dec(rest.slice(at + 1)) };
+  }
   if (hash === '#/review') return { name: 'review' as const };
   return { name: 'library' as const };
 }
 export const courseHref = (key: string) => `#/c/${encodeURIComponent(key)}`;
+export const readHref = (lang: string, title: string) => `#/read/${lang}/${encodeURIComponent(title)}`;

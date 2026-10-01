@@ -1,0 +1,285 @@
+import { Fragment, useEffect, useMemo, useState } from 'react';
+import { ArrowRight, BookOpen, Check, ExternalLink, Highlighter, Info, List, Minus, Plus, RefreshCw, Sparkles, Type } from 'lucide-react';
+import type { AI } from '../../types/course';
+import { READER_SIZES, loadTerms, saveTerms, useReaderPrefs, type ReaderMode, type Store } from '../../data/store';
+import { buildTerms, fetchArticle, type Article } from '../../lib/build';
+import { courseKey, topicKey, wikiUrl } from '../../utils/course';
+import { FORMULA, boldSegments, parseArticle, termRegex, type Seg } from '../../utils/reader';
+import { card, fa, ghost, ic, outline, primary } from '../ui';
+
+type Props = { lang: string; title: string; store: Store; ai: AI; needAI: () => boolean };
+type Job = { status: string; error: string } | null;
+
+const MODES: [ReaderMode, string, typeof BookOpen][] = [
+  ['easy', 'ساده', BookOpen],
+  ['enhanced', 'پیشرفته', Highlighter],
+];
+
+/** Text with each dropped formula shown as a small "formula" chip. */
+function Plain({ text }: { text: string }) {
+  return (
+    <>
+      {text.split(FORMULA).map((t, i) => (
+        <Fragment key={i}>
+          {i > 0 && <span className="mx-1 rounded bg-fg/10 px-1.5 text-[0.75em] text-muted">فرمول</span>}
+          {t}
+        </Fragment>
+      ))}
+    </>
+  );
+}
+
+function Para({ segs }: { segs: Seg[] }) {
+  return (
+    <p dir="auto" className="mb-[0.9em] leading-[2]">
+      {segs.map((g, i) =>
+        g.term === undefined ? (
+          <Plain key={i} text={g.text} />
+        ) : (
+          <strong key={i} data-term={g.term} className="rounded box-decoration-clone bg-accent/15 px-0.5 font-bold">
+            {g.text}
+          </strong>
+        ),
+      )}
+    </p>
+  );
+}
+
+const HEADING = ['', '', 'mt-10 text-[1.4em]', 'mt-8 text-[1.2em]', 'mt-6 text-[1.08em]'];
+
+/** Distraction-free article reader. Easy: clean text. Enhanced: the AI's key terms in bold, once per section. */
+export function Reader({ lang, title, store, ai, needAI }: Props) {
+  const [prefs, setPrefs] = useReaderPrefs();
+  const [article, setArticle] = useState<Article>();
+  const [error, setError] = useState('');
+  const [terms, setTerms] = useState<string[]>(); // undefined = never computed for this article
+  const [job, setJob] = useState<Job>(null);
+  const key = courseKey(lang, title);
+  const topic = topicKey({ lang, title });
+  const known = store.state.known.includes(topic);
+  const enhanced = prefs.mode === 'enhanced';
+
+  useEffect(() => {
+    let live = true;
+    fetchArticle(lang, title)
+      .then((a) => live && setArticle(a))
+      .catch((e) => live && setError(String(e.message ?? e)));
+    loadTerms(key).then((t) => live && setTerms(t?.terms));
+    return () => {
+      live = false;
+    };
+  }, [lang, title, key]);
+
+  const sections = useMemo(() => (article ? parseArticle(article.text, article.title) : []), [article]);
+  const hasFormula = sections.some((s) => s.paras.some((p) => p.includes(FORMULA)));
+  const res = useMemo(() => (enhanced && terms ? terms.map(termRegex) : null), [enhanced, terms]);
+
+  // Bold pass: each section starts with a fresh `seen`, so a term is bolded at its first mention per section.
+  const { blocks, used } = useMemo(() => {
+    const used = new Set<number>();
+    const blocks = sections.map((s) => {
+      const seen = new Set<number>();
+      const paras = s.paras.map((p) => (res ? boldSegments(p, res, seen) : [{ text: p }]));
+      seen.forEach((i) => used.add(i));
+      return { ...s, paras };
+    });
+    return { blocks, used };
+  }, [sections, res]);
+
+  const makeTerms = async () => {
+    if (!article || needAI()) return false;
+    setJob({ status: 'در حال بررسی مقاله…', error: '' });
+    try {
+      const list = await buildTerms(article, ai, (status) => setJob({ status, error: '' }));
+      await saveTerms({ key, lang, title, terms: list, generatedAt: new Date().toISOString() });
+      setTerms(list);
+      setJob(null);
+    } catch (e: any) {
+      setJob({ status: '', error: String(e.message ?? e) });
+    }
+    return true;
+  };
+
+  // Switching to enhanced for the first time asks the AI once; without AI settings it stays in easy mode.
+  const setMode = async (mode: ReaderMode) => {
+    if (mode === 'enhanced' && terms === undefined && !job) {
+      if (needAI()) return;
+      setPrefs({ mode });
+      await makeTerms();
+    } else setPrefs({ mode });
+  };
+
+  const jump = (id: string, block: ScrollLogicalPosition) => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block });
+  const flashTerm = (i: number) => {
+    const el = document.querySelector<HTMLElement>(`[data-term="${i}"]`);
+    if (!el) return;
+    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    el.classList.remove('term-flash');
+    void el.offsetWidth; // restart the animation
+    el.classList.add('term-flash');
+  };
+  const back = () => (history.length > 1 ? history.back() : (location.hash = '#/'));
+
+  const size = prefs.size;
+  const bar = 'flex items-center overflow-hidden rounded-lg border border-line text-sm';
+  const sizeBtn = 'flex h-9 w-9 items-center justify-center hover:bg-fg/5 disabled:opacity-40';
+
+  return (
+    <div className="mx-auto max-w-3xl px-4 pb-16">
+      <div className="sticky top-0 z-20 -mx-4 flex flex-wrap items-center gap-x-3 gap-y-2 border-b border-line bg-bg/95 px-4 py-2.5 backdrop-blur">
+        <button onClick={back} className="flex items-center gap-1 text-sm text-muted hover:text-fg">
+          <ArrowRight className={ic} />
+          بازگشت
+        </button>
+        <span dir="auto" className="min-w-0 flex-1 basis-40 truncate font-bold">
+          {article?.title ?? title}
+        </span>
+        <div className={bar} role="group" aria-label="حالت خوانش">
+          {MODES.map(([m, label, Icon]) => (
+            <button
+              key={m}
+              aria-pressed={prefs.mode === m}
+              onClick={() => setMode(m)}
+              className={`flex h-9 items-center gap-1.5 px-3 ${prefs.mode === m ? 'bg-accent text-on-accent' : 'hover:bg-fg/5'}`}
+            >
+              <Icon className={ic} />
+              {label}
+            </button>
+          ))}
+        </div>
+        <div className={bar} role="group" aria-label="اندازه‌ی متن">
+          <button className={sizeBtn} aria-label="متن کوچک‌تر" title="متن کوچک‌تر" disabled={size === 0} onClick={() => setPrefs({ size: size - 1 })}>
+            <Minus className={ic} />
+          </button>
+          <span className="flex items-center gap-1 px-1 text-muted" title="اندازه‌ی متن">
+            <Type className={ic} />
+            <span className="w-4 text-center text-xs tabular-nums">{fa(size + 1)}</span>
+          </span>
+          <button className={sizeBtn} aria-label="متن بزرگ‌تر" title="متن بزرگ‌تر" disabled={size === READER_SIZES.length - 1} onClick={() => setPrefs({ size: size + 1 })}>
+            <Plus className={ic} />
+          </button>
+        </div>
+        <a href={article?.url ?? wikiUrl(lang, title)} target="_blank" rel="noopener noreferrer" className={`${bar} h-9 w-9 justify-center hover:bg-fg/5`} aria-label="باز کردن در ویکی‌پدیا" title="باز کردن در ویکی‌پدیا">
+          <ExternalLink className={ic} />
+        </a>
+      </div>
+
+      {error ? (
+        <div className={`${card} mt-8 space-y-3 p-6`}>
+          <p className="text-danger">{error}</p>
+          <a href={wikiUrl(lang, title)} target="_blank" rel="noopener noreferrer" className={ghost}>
+            <ExternalLink className={ic} />
+            باز کردن در ویکی‌پدیا
+          </a>
+        </div>
+      ) : !article ? (
+        <p className="mt-10 flex items-center justify-center gap-3 text-muted">
+          <span className="size-4 rounded-full border-2 border-accent border-t-transparent motion-safe:animate-spin" />
+          در حال خواندن مقاله…
+        </p>
+      ) : (
+        <article style={{ fontSize: `${READER_SIZES[size]}rem` }} className="mx-auto mt-6 max-w-[38em]">
+          {article.thumbnail && <img src={article.thumbnail} alt="" decoding="async" className="mb-6 max-h-72 w-full rounded-2xl bg-fg/5 object-cover" />}
+          <h1 dir="auto" className="mb-3 text-[1.9em] font-extrabold leading-tight">
+            {article.title}
+          </h1>
+
+          {hasFormula && (
+            <p className="mb-5 flex items-start gap-2 rounded-xl bg-fg/5 p-3 text-[0.85em] leading-7 text-muted">
+              <Info className={`${ic} mt-1.5`} />
+              فرمول‌ها در این نمای ساده نشان داده نمی‌شوند. برای دیدنشان مقاله را در ویکی‌پدیا باز کن.
+            </p>
+          )}
+
+          {enhanced && terms === undefined && (
+            <div className={`${card} mb-6 space-y-3 p-4 text-[0.85em] leading-7`}>
+              <p>برای پررنگ‌کردن اصطلاحات مهم، هوش مصنوعی یک بار مقاله را بررسی می‌کند و نتیجه روی همین دستگاه می‌ماند.</p>
+              <button className={primary} disabled={!!job?.status} onClick={makeTerms}>
+                <Sparkles className={ic} />
+                {job?.status || 'تشخیص اصطلاحات مهم'}
+              </button>
+              {job?.error && <p className="text-danger">{job.error}</p>}
+            </div>
+          )}
+
+          {enhanced && terms !== undefined && (
+            <div className={`${card} mb-6 space-y-2 p-4 text-[0.85em]`}>
+              <div className="flex items-center justify-between gap-2">
+                <b>اصطلاحات مهم</b>
+                <button className="flex items-center gap-1 text-muted hover:text-fg disabled:opacity-50" disabled={!!job?.status} onClick={makeTerms} title="بررسی دوباره با هوش مصنوعی">
+                  <RefreshCw className={`${ic} ${job?.status ? 'motion-safe:animate-spin' : ''}`} />
+                  {job?.status || 'بررسی دوباره'}
+                </button>
+              </div>
+              {used.size ? (
+                <ul className="flex flex-wrap gap-1.5">
+                  {[...used].sort((a, b) => a - b).map((i) => (
+                    <li key={i}>
+                      <button dir="auto" onClick={() => flashTerm(i)} className="rounded-full bg-accent/15 px-3 py-0.5 font-semibold hover:bg-accent/25">
+                        {terms[i]}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="text-muted">اصطلاحی در متن پیدا نشد.</p>
+              )}
+              {job?.error && <p className="text-danger">{job.error}</p>}
+            </div>
+          )}
+
+          {blocks.length > 2 && (
+            <details className="mb-6 rounded-xl border border-line bg-panel px-4 py-2 text-[0.85em]">
+              <summary className="flex cursor-pointer list-none items-center gap-2 font-semibold">
+                <List className={ic} />
+                فهرست مطالب
+              </summary>
+              <ul className="mt-2 space-y-1">
+                {blocks.slice(1).map((s, i) => (
+                  <li key={i} style={{ paddingInlineStart: `${(s.level - 2) * 1}rem` }}>
+                    <button dir="auto" onClick={() => jump(`sec-${i + 1}`, 'start')} className="text-start hover:text-accent">
+                      {s.title}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </details>
+          )}
+
+          {blocks.map((s, i) => {
+            const H = s.level <= 2 ? 'h2' : s.level === 3 ? 'h3' : 'h4';
+            return (
+              <section key={i}>
+                {i > 0 && (
+                  <H id={`sec-${i}`} dir="auto" className={`mb-3 scroll-mt-20 font-bold leading-snug ${HEADING[Math.min(s.level, 4)]}`}>
+                    {s.title}
+                  </H>
+                )}
+                {s.paras.map((segs, j) => (
+                  <Para key={j} segs={segs} />
+                ))}
+              </section>
+            );
+          })}
+
+          <footer className="mt-12 space-y-4 border-t border-line pt-6 text-base">
+            <button className={known ? outline : primary} aria-pressed={known} onClick={() => store.toggleKnown(topic)}>
+              <Check className={ic} />
+              {known ? 'بلدم (برای برداشتن بزن)' : 'خواندم و بلدم'}
+            </button>
+            <p className="text-sm leading-7 text-muted">
+              متن از ویکی‌پدیا گرفته شده و با مجوز{' '}
+              <a href="https://creativecommons.org/licenses/by-sa/4.0/" target="_blank" rel="noopener noreferrer" className="underline hover:text-fg">
+                CC BY-SA 4.0
+              </a>{' '}
+              منتشر می‌شود.{' '}
+              <a href={article.url} target="_blank" rel="noopener noreferrer" className="underline hover:text-fg">
+                صفحه‌ی اصلی و فهرست نویسندگان
+              </a>
+            </p>
+          </footer>
+        </article>
+      )}
+    </div>
+  );
+}

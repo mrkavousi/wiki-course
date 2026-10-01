@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { ArrowLeft, ArrowRight, Check, ChevronDown, ClipboardCopy, Download, Network, PartyPopper, RefreshCw, Route, Star } from 'lucide-react';
 import type { AI, Course, Pack, Page } from '../../types/course';
 import { findCourse, loadPack, savePack, type Store } from '../../data/store';
 import { buildPack } from '../../lib/build';
@@ -7,7 +8,7 @@ import { PROMPTS, courseMarkdown, download, nextStep, type ExportCtx } from '../
 import { CourseGraph } from '../CourseGraph/CourseGraph';
 import { Roadmap } from '../Roadmap/Roadmap';
 import { TopicDetail } from '../TopicDetail/TopicDetail';
-import { fa, ghost, primary } from '../ui';
+import { fa, ghost, ic, primary } from '../ui';
 
 type Props = {
   courseKey: string;
@@ -23,7 +24,7 @@ function MenuItem({ onClick, disabled, children }: { onClick: () => void; disabl
   return (
     <button
       disabled={disabled}
-      className="block w-full rounded-lg px-3 py-2 text-start text-sm hover:bg-fg/5 disabled:opacity-50"
+      className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-start text-sm hover:bg-fg/5 disabled:opacity-50"
       onClick={(e) => {
         e.currentTarget.closest('details')!.open = false;
         onClick();
@@ -87,7 +88,7 @@ export function CourseView({ courseKey: key, store, ai, busy, needAI, onBuild }:
   const copy = async (text: string) => {
     try {
       await navigator.clipboard.writeText(text);
-      flash('✓ کپی شد؛ در ChatGPT، Gemini یا Claude بچسبان');
+      flash('کپی شد؛ در ChatGPT، Gemini یا Claude بچسبان');
     } catch {
       window.prompt('این متن را کپی کن:', text); // clipboard blocked (e.g. insecure context)
     }
@@ -109,10 +110,14 @@ export function CourseView({ courseKey: key, store, ai, busy, needAI, onBuild }:
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       <div className="flex flex-wrap items-center gap-x-3 gap-y-2 border-b border-line bg-panel px-4 py-2.5">
-        <a href="#/" className="text-sm text-muted hover:text-fg">→ کتابخانه</a>
+        <a href="#/" className="flex items-center gap-1 text-sm text-muted hover:text-fg">
+          <ArrowRight className={ic} />
+          کتابخانه
+        </a>
         <h2 dir="auto" className="text-lg font-bold">{course.root.title}</h2>
         <button className={ghost} aria-pressed={saved} onClick={() => store.toggleSaved(course.root)}>
-          {saved ? '★ در کتابخانه' : '☆ ذخیره'}
+          <Star className={`${ic} ${saved ? 'fill-current' : ''}`} />
+          {saved ? 'در کتابخانه' : 'ذخیره'}
         </button>
         <div className="flex min-w-48 flex-1 items-center gap-2 text-sm">
           <div className="h-2 flex-1 overflow-hidden rounded-full bg-fg/10" role="progressbar" aria-label="پیشرفت مسیر" aria-valuenow={done} aria-valuemax={steps.length}>
@@ -123,29 +128,53 @@ export function CourseView({ courseKey: key, store, ai, busy, needAI, onBuild }:
           </span>
         </div>
         <button className={primary} onClick={() => select(topicKey(nextStep(ctx)))}>
-          {done === steps.length ? 'همه را بلدی 🎉' : 'ادامه ←'}
+          {done === steps.length ? (
+            <>
+              همه را بلدی
+              <PartyPopper className={ic} />
+            </>
+          ) : (
+            <>
+              ادامه
+              <ArrowLeft className={ic} />
+            </>
+          )}
         </button>
         <div className="flex overflow-hidden rounded-lg border border-line text-sm" role="group" aria-label="نما">
-          {(['roadmap', 'graph'] as const).map((v) => (
-            <button key={v} aria-pressed={view === v} onClick={() => setView(v)} className={`px-3 py-1.5 ${view === v ? 'bg-accent text-on-accent' : 'hover:bg-fg/5'}`}>
-              {v === 'roadmap' ? 'مسیر' : 'گراف'}
+          {(
+            [
+              ['roadmap', 'مسیر', Route],
+              ['graph', 'گراف', Network],
+            ] as const
+          ).map(([v, label, Icon]) => (
+            <button key={v} aria-pressed={view === v} onClick={() => setView(v)} className={`flex items-center gap-1.5 px-3 py-1.5 ${view === v ? 'bg-accent text-on-accent' : 'hover:bg-fg/5'}`}>
+              <Icon className={ic} />
+              {label}
             </button>
           ))}
         </div>
         <details className="relative">
-          <summary className={`${ghost} cursor-pointer list-none`}>خروجی و پرامپت ▾</summary>
+          <summary className={`${ghost} cursor-pointer list-none`}>
+            خروجی و پرامپت
+            <ChevronDown className={ic} />
+          </summary>
           {/* in the flow on phones (a dropdown would run off-screen), a dropdown from lg up */}
           <div className="z-30 mt-2 w-72 max-w-full space-y-0.5 rounded-xl border border-line bg-panel p-2 shadow-2xl lg:absolute lg:end-0">
-            <MenuItem onClick={() => download(`${course.root.title}.md`, courseMarkdown(ctx))}>⬇ دانلود رودمپ (Markdown)</MenuItem>
+            <MenuItem onClick={() => download(`${course.root.title}.md`, courseMarkdown(ctx))}>
+              <Download className={ic} />
+              دانلود رودمپ (Markdown)
+            </MenuItem>
             <p className="px-3 pt-2 text-xs text-muted">کپی پرامپت آماده برای هوش مصنوعی:</p>
             {PROMPTS.map((p) => (
               <MenuItem key={p.id} onClick={() => copy(p.build(ctx))}>
-                📋 {p.label}
+                <ClipboardCopy className={ic} />
+                {p.label}
               </MenuItem>
             ))}
             <hr className="my-1 border-line" />
             <MenuItem disabled={busy} onClick={() => onBuild(course.root.url, true)}>
-              ↻ ساخت دوباره‌ی این دوره
+              <RefreshCw className={ic} />
+              ساخت دوباره‌ی این دوره
             </MenuItem>
           </div>
         </details>
@@ -175,7 +204,8 @@ export function CourseView({ courseKey: key, store, ai, busy, needAI, onBuild }:
       </main>
 
       {toast && (
-        <div role="status" className="fixed bottom-5 left-1/2 z-50 -translate-x-1/2 rounded-full bg-fg px-4 py-2 text-sm text-bg shadow-xl">
+        <div role="status" className="fixed bottom-5 left-1/2 z-50 flex -translate-x-1/2 items-center gap-2 rounded-full bg-fg px-4 py-2 text-sm text-bg shadow-xl">
+          <Check className={ic} />
           {toast}
         </div>
       )}

@@ -1,18 +1,21 @@
 import { useEffect, useState } from 'react';
+import { CircleCheck, Compass, Flame, GraduationCap, Layers, PenLine, Repeat, Star, Target } from 'lucide-react';
 import type { Course, CourseRef, Page } from '../../types/course';
 import { courseHref, findCourse, SAMPLES, type Store } from '../../data/store';
 import { courseKey, pathOf, topicKey, wikiUrl } from '../../utils/course';
 import { dueIds, PASS, streak, today } from '../../utils/learn';
-import { card, fa } from '../ui';
+import { card, fa, ic } from '../ui';
 
 type Props = { store: Store; busy: boolean; onBuild: (url: string) => void };
 
 const TIPS = [
-  ['🧭', 'از پیش‌نیازها شروع کن', 'مسیر به ترتیب اهمیت چیده شده. هر چه بلدی را علامت بزن تا «گام بعدی» معلوم شود.'],
-  ['✍️', 'با زبان خودت بنویس', 'بعد از خواندن هر مقاله، در چند جمله توضیحش بده (تکنیک فاینمن).'],
-  ['🎯', 'خودت را بیازما', `آزمون هر موضوع را بده؛ با ${fa(PASS)}٪ «بلدم» می‌خورد.`],
-  ['🔁', 'هر روز کمی مرور', 'فلش‌کارت‌ها با فاصله‌ی بیشتر و بیشتر برمی‌گردند تا در حافظه‌ی بلندمدت بمانند.'],
+  [Compass, 'از پیش‌نیازها شروع کن', 'مسیر به ترتیب اهمیت چیده شده. هر چه بلدی را علامت بزن تا «گام بعدی» معلوم شود.'],
+  [PenLine, 'با زبان خودت بنویس', 'بعد از خواندن هر مقاله، در چند جمله توضیحش بده (تکنیک فاینمن).'],
+  [Target, 'خودت را بیازما', `آزمون هر موضوع را بده؛ با ${fa(PASS)}٪ «بلدم» می‌خورد.`],
+  [Repeat, 'هر روز کمی مرور', 'فلش‌کارت‌ها با فاصله‌ی بیشتر و بیشتر برمی‌گردند تا در حافظه‌ی بلندمدت بمانند.'],
 ] as const;
+
+const starBtn = 'flex size-9 items-center justify-center rounded-full text-accent hover:bg-fg/10';
 
 const refPage = (c: CourseRef): Page => ({ title: c.title, lang: c.lang, url: wikiUrl(c.lang, c.title), summary: '', thumbnail: c.thumbnail });
 
@@ -49,7 +52,10 @@ export function Library({ store, busy, onBuild }: Props) {
     <div className="mx-auto max-w-5xl space-y-10 px-4 py-8">
       {!state.saved.length && !state.recent.length && (
         <section className={`${card} space-y-2 p-6`}>
-          <h2 className="text-2xl font-extrabold">از هر مقاله، یک دوره 🎓</h2>
+          <h2 className="flex items-center gap-2 text-2xl font-extrabold">
+            <GraduationCap className="size-7 text-accent" />
+            از هر مقاله، یک دوره
+          </h2>
           <p className="leading-8 text-muted">
             لینک یک مقاله‌ی ویکی‌پدیا (فارسی یا انگلیسی) را بالا بچسبان. پیش‌نیازها، قدم‌های بعدی و مطالب مرتبطش را با تصویر و خلاصه می‌گیری، تیک «بلدم» می‌زنی، فلش‌کارت مرور می‌کنی و آزمون
             می‌دهی. یا یکی از دوره‌های نمونه‌ی پایین را باز کن.
@@ -60,25 +66,34 @@ export function Library({ store, busy, onBuild }: Props) {
       <section className="grid grid-cols-1 gap-3 sm:grid-cols-3">
         <a href="#/review" className={`${card} p-4 transition hover:border-accent`}>
           <p className="text-sm text-muted">مرور امروز</p>
-          <p className="text-2xl font-bold">🃏 {fa(due)} کارت</p>
-          <p className="text-xs text-muted">{due ? 'بزن تا شروع کنیم' : 'فعلاً چیزی برای مرور نیست'}</p>
+          <p className="flex items-center gap-2 text-2xl font-bold">
+            <Layers className="size-6 text-accent" />
+            {fa(due)} کارت
+          </p>
+          <p className="text-sm text-muted">{due ? 'بزن تا شروع کنیم' : 'فعلاً چیزی برای مرور نیست'}</p>
         </a>
         <div className={`${card} p-4`}>
           <p className="text-sm text-muted">روزهای پشت‌سرهم</p>
-          <p className="text-2xl font-bold">🔥 {fa(streak(state.days, day))}</p>
-          <p className="text-xs text-muted">هر روز یک کار کوچک: بلدم، مرور یا آزمون</p>
+          <p className="flex items-center gap-2 text-2xl font-bold">
+            <Flame className="size-6 text-prereq" />
+            {fa(streak(state.days, day))}
+          </p>
+          <p className="text-sm text-muted">هر روز یک کار کوچک: بلدم، مرور یا آزمون</p>
         </div>
         <div className={`${card} p-4`}>
           <p className="text-sm text-muted">موضوع‌هایی که بلدی</p>
-          <p className="text-2xl font-bold">✓ {fa(state.known.length)}</p>
-          <p className="text-xs text-muted">در همه‌ی دوره‌ها مشترک است</p>
+          <p className="flex items-center gap-2 text-2xl font-bold">
+            <CircleCheck className="size-6 text-accent" />
+            {fa(state.known.length)}
+          </p>
+          <p className="text-sm text-muted">در همه‌ی دوره‌ها مشترک است</p>
         </div>
       </section>
 
       <section>
         <h2 className="mb-3 text-xl font-bold">کتابخانه‌ی من</h2>
         {!state.saved.length ? (
-          <p className="text-muted">هنوز چیزی ذخیره نکرده‌ای. در هر دوره یا موضوع روی «☆ ذخیره» بزن تا این‌جا بماند.</p>
+          <p className="text-muted">هنوز چیزی ذخیره نکرده‌ای. در هر دوره یا موضوع روی «ذخیره» بزن تا این‌جا بماند.</p>
         ) : (
           <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {state.saved.map((p) => {
@@ -114,9 +129,9 @@ export function Library({ store, busy, onBuild }: Props) {
                     onClick={() => store.toggleSaved(p)}
                     aria-label={`حذف «${p.title}» از کتابخانه`}
                     title="حذف از کتابخانه"
-                    className="absolute end-2 top-2 rounded-full px-2 text-lg text-accent hover:bg-fg/10"
+                    className={`${starBtn} absolute end-2 top-2`}
                   >
-                    ★
+                    <Star className="size-5 fill-current" />
                   </button>
                 </li>
               );
@@ -141,9 +156,9 @@ export function Library({ store, busy, onBuild }: Props) {
                   onClick={() => store.toggleSaved(refPage(c))}
                   aria-pressed={saved}
                   aria-label={saved ? `حذف «${c.title}» از کتابخانه` : `ذخیره‌ی «${c.title}» در کتابخانه`}
-                  className="rounded-full px-2 text-lg text-accent hover:bg-fg/10"
+                  className={starBtn}
                 >
-                  {saved ? '★' : '☆'}
+                  <Star className={`size-5 ${saved ? 'fill-current' : ''}`} />
                 </button>
               </li>
             );
@@ -154,10 +169,11 @@ export function Library({ store, busy, onBuild }: Props) {
       <section>
         <h2 className="mb-3 text-xl font-bold">چطور بهتر یاد بگیریم؟</h2>
         <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          {TIPS.map(([icon, title, text]) => (
+          {TIPS.map(([Icon, title, text]) => (
             <li key={title} className={`${card} p-4`}>
-              <p className="font-bold">
-                {icon} {title}
+              <p className="flex items-center gap-2 font-bold">
+                <Icon className={`${ic} text-accent`} />
+                {title}
               </p>
               <p className="text-sm leading-7 text-muted">{text}</p>
             </li>

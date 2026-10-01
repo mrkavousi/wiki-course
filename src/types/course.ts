@@ -17,6 +17,9 @@ export type Card = { q: string; a: string };
 export type Question = { q: string; options: string[]; answer: number; explain: string };
 export type Pack = { key: string; lang: string; title: string; keyPoints: string[]; cards: Card[]; quiz: Question[]; generatedAt: string };
 
+/** Important terms of one article (AI-picked, verified to occur in its text): bolded by the enhanced reader. */
+export type Terms = { key: string; lang: string; title: string; terms: string[]; generatedAt: string };
+
 export type Box = { box: number; due: string }; // Leitner box 1-5, next review day (YYYY-MM-DD)
 /** Everything the learner owns; lives in this browser (and in backup files). Keys are topicKey()s. */
 export type State = {

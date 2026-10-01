@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { fa, ghost, primary } from '../ui';
+import { Check, PartyPopper, X } from 'lucide-react';
+import { fa, ghost, ic, primary } from '../ui';
 
 export type CardItem = { id: string; q: string; a: string; topic?: string };
 type Props = { items: CardItem[]; onRate: (id: string, ok: boolean) => void };
@@ -38,7 +39,7 @@ export function Flashcards({ items, onRate }: Props) {
   if (!card) {
     return (
       <div className="space-y-3 rounded-2xl border border-line p-6 text-center">
-        <p className="text-3xl">🎉</p>
+        <PartyPopper className="mx-auto size-10 text-accent" />
         <p className="font-bold">
           تمام شد: {fa(right)} از {fa(items.length)} کارت را یادت بود.
         </p>
@@ -73,10 +74,12 @@ export function Flashcards({ items, onRate }: Props) {
       {flipped && (
         <div className="grid grid-cols-2 gap-2">
           <button className={`${ghost} text-danger`} onClick={() => grade(false)}>
-            ✗ یادم نبود <kbd className="text-xs opacity-60">۱</kbd>
+            <X className={ic} />
+            یادم نبود <kbd className="text-xs opacity-60">۱</kbd>
           </button>
           <button className={primary} onClick={() => grade(true)}>
-            ✓ یادم بود <kbd className="text-xs opacity-70">۲</kbd>
+            <Check className={ic} />
+            یادم بود <kbd className="text-xs opacity-70">۲</kbd>
           </button>
         </div>
       )}

@@ -1,9 +1,10 @@
-// Builds a course (and a topic's study pack) from Wikipedia + an OpenAI-compatible chat endpoint.
+// Builds a course (and a topic's study pack, and its key terms) from Wikipedia + an OpenAI-compatible chat endpoint.
 //   Wikipedia -> article summary/thumbnail, lead-section links, plain text
-//   AI (ArvanCloud gateway -> Gemini 2.5 Flash-lite) -> prerequisites / next steps / related scored 0-100, flashcards, quiz
+//   AI (ArvanCloud gateway -> Gemini 2.5 Flash-lite) -> prerequisites / next steps / related scored 0-100, flashcards, quiz, key terms
 // Only needs fetch: runs in the browser (the app; both APIs allow CORS) and in Node (scripts/build-course.ts).
 import type { AI, Course, Pack, Page, Topic } from '../types/course';
 import { ROLES, cleanItems, cleanPack, courseKey, extractLists, parseWikiUrl, topicKey } from '../utils/course';
+import { cleanTerms, outline, parseArticle } from '../utils/reader';
 
 export type Status = (message: string) => void;
 
@@ -61,6 +62,19 @@ async function leadLinks(lang: string, title: string): Promise<string[]> {
 async function articleText(lang: string, title: string) {
   const r = await wiki(lang, { action: 'query', prop: 'extracts', explaintext: '1', redirects: '1', titles: title });
   return String(r.query?.pages?.[0]?.extract ?? '').slice(0, 8000);
+}
+
+/** A whole article as plain text (parse it with parseArticle), with its lead image and canonical title and URL. */
+export type Article = { lang: string; title: string; url: string; thumbnail?: string; text: string };
+
+export async function fetchArticle(lang: string, title: string): Promise<Article> {
+  const r = await wiki(lang, {
+    action: 'query', prop: 'extracts|pageimages|info', explaintext: '1', exsectionformat: 'wiki',
+    piprop: 'thumbnail', pithumbsize: '900', inprop: 'url', redirects: '1', titles: title,
+  });
+  const p = r.query?.pages?.[0];
+  if (!p || p.missing || !p.extract) throw new Error(`مقاله‌ای با عنوان «${title}» در ${lang}.wikipedia.org پیدا نشد`);
+  return { lang, title: p.title, url: p.fullurl, thumbnail: p.thumbnail?.source, text: p.extract };
 }
 
 const inBatches = async <T, R>(xs: T[], f: (x: T) => Promise<R>, n = 3) => {
@@ -133,7 +147,25 @@ Test understanding, not trivia. Vary the position of the correct option.
 Article text:
 ${text}`;
 
+const termsPrompt = (a: Pick<Article, 'lang' | 'title'>, outline: string) => `You help a learner skim the Wikipedia article "${a.title}" (${a.lang}.wikipedia.org).
+Below is its outline: each section heading followed by the start of that section.
+Pick the 20-30 terms most worth bolding: key concepts and defined terms, named people, places and works, and important numbers, dates or quantities.
+Rules: copy each term EXACTLY as it is written in the text (same language, spelling and letters, no re-inflecting), 1-5 words each; no generic words; no duplicates.
+Answer with ONE raw JSON object and nothing else: {"terms":["...","..."]}
+
+${outline}`;
+
 // ---------- Builders ----------
+/** Key terms for the enhanced reader. The AI only sees an outline, and anything it returns that isn't in the article is dropped. */
+export async function buildTerms(a: Pick<Article, 'lang' | 'title' | 'text'>, ai: AI, status: Status = () => {}): Promise<string[]> {
+  const prompt = termsPrompt(a, outline(parseArticle(a.text, a.title)));
+  return askJson(ai, prompt, ['terms'] as const, status, {
+    clean: (d) => cleanTerms(d.terms, a.text),
+    enough: (t) => t.length >= 8,
+    size: (t) => t.length,
+  });
+}
+
 export async function buildCourse(url: string, ai: AI, status: Status = () => {}): Promise<Course> {
   const { lang, title } = parseWikiUrl(url);
   status('در حال خواندن ویکی‌پدیا…');

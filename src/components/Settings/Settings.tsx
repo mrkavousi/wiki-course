@@ -1,26 +1,28 @@
 import { useEffect, useRef, useState } from 'react';
+import { Check, Download, Upload, X } from 'lucide-react';
 import type { AI } from '../../types/course';
 import { backupJson, restoreJson, type Store } from '../../data/store';
 import { testAI } from '../../lib/build';
 import { download } from '../../utils/export';
 import { today } from '../../utils/learn';
-import { ghost, primary } from '../ui';
+import { ghost, ic, primary } from '../ui';
 
 type Props = { open: boolean; ai: AI; store: Store; onSave: (ai: AI) => void; onClose: () => void };
 
-const input = 'w-full rounded-lg border border-line bg-bg px-3 py-2 text-sm placeholder:text-muted focus:border-accent focus:outline-none';
+// text-base (16px): smaller inputs make iOS Safari zoom the page on focus.
+const input = 'w-full rounded-lg border border-line bg-bg px-3 py-2 text-base placeholder:text-muted focus:border-accent focus:outline-none';
 
 /** Native <dialog>: AI endpoint settings plus backup/restore of everything stored in this browser. */
 export function Settings({ open, ai, store, onSave, onClose }: Props) {
   const ref = useRef<HTMLDialogElement>(null);
   const [form, setForm] = useState(ai);
-  const [msg, setMsg] = useState('');
+  const [msg, setMsg] = useState<{ kind: 'info' | 'ok' | 'err'; text: string } | null>(null);
 
   useEffect(() => {
     const d = ref.current!;
     if (open && !d.open) {
       setForm(ai);
-      setMsg('');
+      setMsg(null);
       d.showModal();
     } else if (!open && d.open) d.close();
   }, [open, ai]);
@@ -28,11 +30,11 @@ export function Settings({ open, ai, store, onSave, onClose }: Props) {
   const set = (k: keyof AI) => (e: React.ChangeEvent<HTMLInputElement>) => setForm({ ...form, [k]: e.target.value.trim() });
 
   const test = async () => {
-    setMsg('در حال تست اتصال…');
+    setMsg({ kind: 'info', text: 'در حال تست اتصال…' });
     try {
-      setMsg((await testAI(form)) ? '✓ اتصال برقرار است' : '✗ پاسخ خالی برگشت؛ یک بار دیگر امتحان کن');
+      setMsg((await testAI(form)) ? { kind: 'ok', text: 'اتصال برقرار است' } : { kind: 'err', text: 'پاسخ خالی برگشت؛ یک بار دیگر امتحان کن' });
     } catch (e: any) {
-      setMsg(`✗ ${e.message}`);
+      setMsg({ kind: 'err', text: e.message });
     }
   };
   const backup = async () => download(`wiki-course-backup-${today()}.json`, await backupJson(store.state), 'application/json');
@@ -42,9 +44,9 @@ export function Settings({ open, ai, store, onSave, onClose }: Props) {
     if (!file) return;
     try {
       store.restore(await restoreJson(await file.text()));
-      setMsg('✓ پشتیبان بازیابی شد');
+      setMsg({ kind: 'ok', text: 'پشتیبان بازیابی شد' });
     } catch (err: any) {
-      setMsg(`✗ ${err instanceof SyntaxError ? 'فایل JSON معتبر نیست' : err.message}`);
+      setMsg({ kind: 'err', text: err instanceof SyntaxError ? 'فایل JSON معتبر نیست' : err.message });
     }
   };
 
@@ -85,17 +87,21 @@ export function Settings({ open, ai, store, onSave, onClose }: Props) {
         </p>
         <div className="flex flex-wrap gap-2">
           <button type="button" className={ghost} onClick={backup}>
-            ⬇ دانلود فایل پشتیبان
+            <Download className={ic} />
+            دانلود فایل پشتیبان
           </button>
           <label className={`${ghost} cursor-pointer`}>
-            ⬆ بازیابی از فایل
+            <Upload className={ic} />
+            بازیابی از فایل
             <input type="file" accept="application/json,.json" className="sr-only" onChange={restore} />
           </label>
         </div>
       </section>
       {msg && (
-        <p role="status" className="px-5 pb-5 text-sm">
-          {msg}
+        <p role="status" className={`flex items-start gap-2 px-5 pb-5 text-sm ${msg.kind === 'err' ? 'text-danger' : ''}`}>
+          {msg.kind === 'ok' && <Check className={`${ic} mt-1 text-accent`} />}
+          {msg.kind === 'err' && <X className={`${ic} mt-1`} />}
+          <span className="min-w-0 break-words">{msg.text}</span>
         </p>
       )}
     </dialog>

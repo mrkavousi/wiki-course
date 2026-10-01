@@ -18,8 +18,8 @@ export function courseMarkdown(c: ExportCtx) {
     out.push(`${i + 1}. [${isKnown(c, p) ? 'x' : ' '}] **${p.title}** — ${s.topic ? `${ROLE_LABEL[s.topic.role]} · ${s.topic.score}%` : 'موضوع اصلی'}`);
     if (s.topic?.why) out.push(`   - چرا: ${oneLine(s.topic.why)}`);
     if (p.summary) out.push(`   - خلاصه: ${oneLine(p.summary)}`);
-    for (const kp of c.packs[k]?.keyPoints ?? []) out.push(`   - 🔑 ${kp}`);
-    if (c.notes[k]?.trim()) out.push(`   - ✍️ یادداشت من: ${oneLine(c.notes[k])}`);
+    for (const kp of c.packs[k]?.keyPoints ?? []) out.push(`   - نکته‌ی کلیدی: ${kp}`);
+    if (c.notes[k]?.trim()) out.push(`   - یادداشت من: ${oneLine(c.notes[k])}`);
     out.push(`   - ${p.url}`);
   });
   const related = c.course.topics.filter((t) => t.role === 'related');

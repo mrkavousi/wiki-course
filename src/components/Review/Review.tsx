@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Layers, Sparkles } from 'lucide-react';
 import { loadPack, type Store } from '../../data/store';
 import { courseKey } from '../../utils/course';
 import { dueIds, today } from '../../utils/learn';
@@ -28,7 +29,10 @@ export function Review({ store }: { store: Store }) {
   return (
     <div className="mx-auto max-w-xl space-y-5 px-4 py-8">
       <div className="space-y-1">
-        <h2 className="text-2xl font-bold">🃏 مرور امروز</h2>
+        <h2 className="flex items-center gap-2 text-2xl font-bold">
+          <Layers className="size-7 text-accent" />
+          مرور امروز
+        </h2>
         <p className="text-sm leading-7 text-muted">
           تکرار فاصله‌دار: هر کارتی که یادت بود دیرتر برمی‌گردد، و هر کدام که یادت نبود زودتر. روزی چند دقیقه کافی است.
         </p>
@@ -42,7 +46,7 @@ export function Review({ store }: { store: Store }) {
         </>
       ) : (
         <div className="space-y-3 rounded-2xl border border-line p-6 text-center">
-          <p className="text-3xl">✨</p>
+          <Sparkles className="mx-auto size-10 text-accent" />
           <p className="font-bold">امروز کارتی برای مرور نیست.</p>
           <p className="text-sm leading-7 text-muted">در هر دوره، تب «فلش‌کارت» یک موضوع را باز کن و کارت‌هایش را تمرین کن؛ از فردا به این‌جا می‌آیند.</p>
           <a href="#/" className={ghost}>برگشت به کتابخانه</a>

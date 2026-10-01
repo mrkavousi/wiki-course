@@ -7,6 +7,8 @@ type Props = { course: Course; known: Set<string>; selectedKey: string | null; o
 
 // Theme tokens; set through `style` because SVG presentation attributes don't take var().
 const ROLE_COLOR: Record<Role, string> = { prereq: 'var(--color-prereq)', next: 'var(--color-next)', related: 'var(--color-related)' };
+const DOT: Record<Role, string> = { prereq: 'bg-prereq', next: 'bg-next', related: 'bg-related' };
+const LEGEND: [Role, string][] = [['prereq', 'پیش‌نیاز (راست)'], ['related', 'مرتبط (پایین)'], ['next', 'پس‌نیاز (چپ)']];
 const clampK = (k: number) => Math.min(3, Math.max(0.4, k));
 const id = (s: string) => `clip-${s.replace(/[^\p{L}\p{N}]/gu, '_')}`;
 
@@ -24,14 +26,14 @@ function Bubble({ x, y, r, title, thumbnail, color, known, selected, onClick }: 
       <circle r={r} fill="none" strokeWidth={selected ? 4 : 2} style={{ stroke: color, filter: selected ? `drop-shadow(0 0 8px ${color})` : undefined }} />
       {known && (
         <g transform={`translate(${r * 0.72} ${-r * 0.72})`}>
-          <circle r={9} className="fill-accent" />
-          <text textAnchor="middle" dy={4} fontSize={11} fontWeight={700} className="fill-on-accent">✓</text>
+          <circle r={10} className="fill-accent" />
+          <path d="M-4.5 0.5 L-1.5 3.5 L4.5 -3" fill="none" strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round" className="stroke-on-accent" />
         </g>
       )}
       <text
         y={r + 16}
         textAnchor="middle"
-        fontSize={12}
+        fontSize={13}
         fontWeight={600}
         strokeWidth={4}
         paintOrder="stroke"
@@ -102,8 +104,8 @@ export function CourseGraph({ course, known, selectedKey, onSelect }: Props) {
             <g key={topicKey(t)} className="pointer-events-none">
               <line x2={x} y2={y} strokeOpacity={0.25 + 0.5 * (t.score / 100)} strokeWidth={1 + 3 * (t.score / 100)} strokeLinecap="round" style={{ stroke: ROLE_COLOR[t.role] }} />
               <g transform={`translate(${x / 2} ${y / 2})`}>
-                <rect x={-21} y={-11} width={42} height={22} rx={11} className="fill-bg" style={{ stroke: ROLE_COLOR[t.role] }} />
-                <text textAnchor="middle" dy={4} fontSize={11} fontWeight={700} className="fill-fg">{fa(t.score)}٪</text>
+                <rect x={-26} y={-12.5} width={52} height={25} rx={12.5} className="fill-bg" style={{ stroke: ROLE_COLOR[t.role] }} />
+                <text textAnchor="middle" dy={4.5} fontSize={13} fontWeight={700} className="fill-fg">{fa(t.score)}٪</text>
               </g>
             </g>
           ))}
@@ -134,9 +136,16 @@ export function CourseGraph({ course, known, selectedKey, onSelect }: Props) {
           />
         </g>
       </svg>
-      <p className="pointer-events-none absolute bottom-3 start-3 text-xs text-muted">
-        <span className="text-prereq">●</span> پیش‌نیاز (راست) · <span className="text-related">●</span> مرتبط (پایین) · <span className="text-next">●</span> پس‌نیاز (چپ) — نزدیک‌تر به مرکز یعنی نمره‌ی بیشتر · اسکرول برای زوم، کشیدن برای جابه‌جایی
-      </p>
+      <ul className="pointer-events-none absolute inset-x-3 bottom-3 flex flex-wrap items-center gap-x-4 gap-y-1 rounded-xl bg-panel/90 px-3 py-2 text-xs text-muted">
+        {LEGEND.map(([role, label]) => (
+          <li key={role} className="flex items-center gap-1.5">
+            <span className={`size-2.5 rounded-full ${DOT[role]}`} />
+            {label}
+          </li>
+        ))}
+        <li>نزدیک‌تر به مرکز یعنی نمره‌ی بیشتر</li>
+        <li className="hidden sm:block">اسکرول برای زوم · کشیدن برای جابه‌جایی</li>
+      </ul>
     </div>
   );
 }

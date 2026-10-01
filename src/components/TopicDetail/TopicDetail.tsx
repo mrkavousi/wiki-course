@@ -1,10 +1,11 @@
 import { useState } from 'react';
+import { BookOpen, Check, ExternalLink, KeyRound, PenLine, Route, Sparkles, Star } from 'lucide-react';
 import type { Course, Pack, Page, Role, Topic } from '../../types/course';
-import type { Store } from '../../data/store';
+import { readHref, type Store } from '../../data/store';
 import { topicKey } from '../../utils/course';
 import { Flashcards } from '../Flashcards/Flashcards';
 import { Quiz } from '../Quiz/Quiz';
-import { fa, ghost, primary } from '../ui';
+import { fa, ghost, ic, outline, primary } from '../ui';
 
 type Job = { status: string; error: string } | null;
 type Props = {
@@ -41,6 +42,7 @@ export function TopicDetail({ course, page, topic, store, pack, packJob, busy, o
         {what} این موضوع هنوز ساخته نشده. هوش مصنوعی از روی متن خود مقاله نکات کلیدی، ۶ فلش‌کارت و ۴ سؤال می‌سازد؛ یک بار، و بعد روی همین دستگاه می‌ماند.
       </p>
       <button className={primary} disabled={!!packJob?.status} onClick={onBuildPack}>
+        <Sparkles className={ic} />
         {packJob?.status || 'ساخت فلش‌کارت و آزمون'}
       </button>
       {packJob?.error && <p className="text-sm text-danger">{packJob.error}</p>}
@@ -68,39 +70,54 @@ export function TopicDetail({ course, page, topic, store, pack, packJob, busy, o
 
       {pack?.keyPoints.length ? (
         <section>
-          <h3 className="mb-2 font-bold">🔑 نکات کلیدی</h3>
+          <h3 className="mb-2 flex items-center gap-2 font-bold">
+            <KeyRound className={ic} />
+            نکات کلیدی
+          </h3>
           <ul className="list-disc space-y-1.5 ps-5 leading-7">
             {pack.keyPoints.map((p) => <li key={p} dir="auto">{p}</li>)}
           </ul>
         </section>
       ) : (
         <div>
-          <button className="text-sm font-semibold text-accent hover:underline disabled:opacity-60" disabled={!!packJob?.status} onClick={onBuildPack}>
-            {packJob?.status || '+ ساخت نکات کلیدی، فلش‌کارت و آزمون'}
+          <button className="flex items-center gap-1.5 text-sm font-semibold text-accent hover:underline disabled:opacity-60" disabled={!!packJob?.status} onClick={onBuildPack}>
+            <Sparkles className={ic} />
+            {packJob?.status || 'ساخت نکات کلیدی، فلش‌کارت و آزمون'}
           </button>
           {packJob?.error && <p className="mt-1 text-sm text-danger">{packJob.error}</p>}
         </div>
       )}
 
       <div className="grid grid-cols-2 gap-2">
-        <button className={`${known ? ghost : primary} col-span-2`} aria-pressed={known} onClick={() => store.toggleKnown(key)}>
-          {known ? '✓ بلدم (برای برداشتن بزن)' : 'این را بلدم'}
-        </button>
-        <a className={ghost} href={page.url} target="_blank" rel="noopener noreferrer">
-          بخوان در ویکی‌پدیا ↗
+        <a className={`${primary} col-span-2`} href={readHref(page.lang, page.title)}>
+          <BookOpen className={ic} />
+          مطالعه‌ی مقاله
         </a>
-        <button className={ghost} aria-pressed={saved} onClick={() => store.toggleSaved(page)}>
-          {saved ? '★ در کتابخانه' : '☆ ذخیره'}
+        <button className={known ? outline : ghost} aria-pressed={known} onClick={() => store.toggleKnown(key)}>
+          <Check className={ic} />
+          {known ? 'بلدم' : 'این را بلدم'}
         </button>
+        <button className={ghost} aria-pressed={saved} onClick={() => store.toggleSaved(page)}>
+          <Star className={`${ic} ${saved ? 'fill-current' : ''}`} />
+          {saved ? 'در کتابخانه' : 'ذخیره'}
+        </button>
+        <a className={`${ghost} ${topic ? '' : 'col-span-2'}`} href={page.url} target="_blank" rel="noopener noreferrer">
+          <ExternalLink className={ic} />
+          ویکی‌پدیا
+        </a>
         {topic && (
-          <button className={`${ghost} col-span-2`} disabled={busy} onClick={() => onBuildCourse(page.url)}>
-            ساخت دوره‌ی این موضوع
+          <button className={ghost} disabled={busy} onClick={() => onBuildCourse(page.url)}>
+            <Route className={ic} />
+            دوره‌ی این موضوع
           </button>
         )}
       </div>
 
       <label className="block space-y-1.5">
-        <span className="font-bold">✍️ با زبان خودت توضیح بده</span>
+        <span className="flex items-center gap-2 font-bold">
+          <PenLine className={ic} />
+          با زبان خودت توضیح بده
+        </span>
         <span className="block text-xs leading-6 text-muted">
           تکنیک فاینمن: اگر نتوانی ساده توضیحش بدهی، هنوز کامل نفهمیده‌ای. این یادداشت در خروجی Markdown و پرامپت «معلم خصوصی» هم می‌آید.
         </span>

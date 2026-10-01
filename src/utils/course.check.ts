@@ -3,6 +3,7 @@ import type { Course, State } from '../types/course';
 import { cleanItems, cleanPack, courseKey, extractJson, extractLists, parseWikiUrl, ROLES } from './course';
 import { courseMarkdown, nextStep, PROMPTS } from './export';
 import { EMPTY_STATE, dueIds, mergeBackup, rate, streak } from './learn';
+import { FORMULA, boldSegments, cleanTerms, outline, parseArticle, termRegex } from './reader';
 
 assert.deepEqual(parseWikiUrl('https://en.wikipedia.org/wiki/Linear_algebra#History'), { lang: 'en', title: 'Linear algebra' });
 assert.deepEqual(parseWikiUrl('fa.m.wikipedia.org/wiki/%D8%AC%D8%A8%D8%B1_%D8%AE%D8%B7%DB%8C'), { lang: 'fa', title: 'جبر خطی' });
@@ -74,4 +75,51 @@ const tutor = PROMPTS.find((p) => p.id === 'tutor')!.build(ctx);
 assert.ok(tutor.includes('گام بعدی من: «P2»') && tutor.includes('my words') && tutor.includes('1. ✓ P1'));
 
 assert.equal(courseKey('en', 'Linear algebra'), 'en-Linear_algebra');
+
+// ---------- reader ----------
+// Plain-text extract: "== H ==" headings, one paragraph per line, formulas as runs of indented junk lines.
+const extract = [
+  'Linear algebra is the study of lines such as',
+  '',
+  '  ',
+  '    a',
+  '      1',
+  'and their maps, with Gauss in 1809.',
+  '== History ==',
+  '',
+  'It began early. Gauss used it.',
+  'Second paragraph.',
+  '=== Gauss ===',
+  'Carl Friedrich Gauss worked on it.',
+  '== See also ==',
+  '',
+  '== پانویس ==',
+  '== Empty ==',
+].join('\n');
+const secs = parseArticle(extract, 'Linear algebra');
+assert.deepEqual(secs.map((s) => [s.level, s.title, s.paras.length]), [[1, 'Linear algebra', 1], [2, 'History', 2], [3, 'Gauss', 1]]);
+assert.equal(secs[0].paras[0], `Linear algebra is the study of lines such as ${FORMULA} and their maps, with Gauss in 1809.`);
+
+// Terms: whole words only, Persian letter variants and ZWNJ suffixes tolerated.
+assert.ok(termRegex('Gauss').test('Carl Gauss.') && !termRegex('Gauss').test('Gaussian'));
+assert.ok(termRegex('ماتریس').test('ماتریس‌ها مهم‌اند') && !termRegex('ماتریس').test('ماتریسی‌شدن'.replace('‌', '')));
+assert.ok(termRegex('علي').test('علی رفت'), 'Arabic yeh matches Persian yeh');
+assert.ok(termRegex('نرم افزار').test('نرم‌افزار'), 'a space in the term matches a ZWNJ in the text');
+assert.ok(termRegex('f(x)').test('the value f(x) is'), 'regex metacharacters in terms are escaped');
+assert.deepEqual(cleanTerms(['Gauss', ' gauss ', 'Newton', 'x', 7, 'a'.repeat(80)], 'Carl Gauss lived'), ['Gauss']);
+assert.deepEqual(cleanTerms('nope', 'text'), []);
+
+// Bolding: first mention per section only, longest wins at the same spot, overlaps skipped, text preserved.
+const terms = ['linear', 'linear algebra', 'Gauss'].map(termRegex);
+const seen = new Set<number>();
+const segs = boldSegments('Linear algebra needs Gauss and linear maps.', terms, seen);
+assert.deepEqual(segs.filter((s) => s.term !== undefined).map((s) => [s.text, s.term]), [['Linear algebra', 1], ['Gauss', 2]]);
+assert.equal(segs.map((s) => s.text).join(''), 'Linear algebra needs Gauss and linear maps.');
+const next = boldSegments('Gauss again, and linear.', terms, seen); // same section: Gauss already bolded
+assert.deepEqual(next.filter((s) => s.term !== undefined).map((s) => s.text), ['linear']);
+assert.equal(boldSegments('no terms here', terms, new Set()).length, 1);
+assert.ok(outline(secs).startsWith('## Linear algebra') && !outline(secs).includes(FORMULA));
+
+assert.ok(courseMarkdown({ ...ctx, packs: { 'fa:P1': { key: 'fa-P1', lang: 'fa', title: 'P1', keyPoints: ['kp'], cards: [], quiz: [], generatedAt: '' } } }).includes('نکته‌ی کلیدی: kp'));
+assert.ok(!/\p{Extended_Pictographic}/u.test(md + tutor), 'exports contain no emoji');
 console.log('course.check ok');

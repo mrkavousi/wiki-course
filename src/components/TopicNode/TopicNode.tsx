@@ -1,3 +1,4 @@
+import { Check } from 'lucide-react';
 import type { Page } from '../../types/course';
 import { fa } from '../ui';
 
@@ -22,7 +23,7 @@ const RING: Record<NodeState, string> = {
 export function TopicNode({ page, score, state, selected, size = 84, badge, onClick }: Props) {
   return (
     <button onClick={onClick} className="group flex w-36 flex-col items-center gap-1.5 text-center" aria-pressed={selected}>
-      {badge && <span className="rounded-full bg-accent px-2.5 py-0.5 text-xs font-bold text-on-accent">{badge}</span>}
+      {badge && <span className="mb-1.5 rounded-full bg-accent px-2.5 py-0.5 text-xs font-bold text-on-accent">{badge}</span>}
       <span className="relative">
         <span
           style={{ width: size, height: size }}
@@ -31,7 +32,9 @@ export function TopicNode({ page, score, state, selected, size = 84, badge, onCl
           {page.thumbnail ? <img src={page.thumbnail} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover" /> : page.title[0]}
         </span>
         {state === 'known' && (
-          <span className="absolute -bottom-1 -end-1 flex h-7 w-7 items-center justify-center rounded-full bg-accent text-sm font-bold text-on-accent">✓</span>
+          <span className="absolute -bottom-1 -end-1 flex size-7 items-center justify-center rounded-full bg-accent text-on-accent">
+            <Check className="size-4" strokeWidth={3} />
+          </span>
         )}
       </span>
       <span dir="auto" className="line-clamp-2 text-sm font-semibold leading-snug">
