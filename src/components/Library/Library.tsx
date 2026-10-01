@@ -21,11 +21,13 @@ const starBtn = 'flex size-9 items-center justify-center rounded-full text-accen
 
 const refPage = (c: CourseRef): Page => ({ title: c.title, lang: c.lang, url: wikiUrl(c.lang, c.title), summary: '', thumbnail: c.thumbnail });
 
-function Thumb({ src, title, className, ariaHidden }: { src?: string; title: string; className: string; ariaHidden?: boolean }) {
+function Thumb({ src, title, className }: { src?: string; title: string; className: string }) {
+  // The fallback letter is always decorative: the real title renders as its own text right beside it,
+  // so it's hidden from assistive tech/text extraction here once, rather than trusting every caller to ask for it.
   return src ? (
     <img src={src} alt="" loading="lazy" decoding="async" className={`shrink-0 bg-fg/10 object-cover ${className}`} />
   ) : (
-    <span className={`flex shrink-0 items-center justify-center bg-fg/10 font-bold text-muted ${className}`} aria-hidden={ariaHidden}>
+    <span className={`flex shrink-0 items-center justify-center bg-fg/10 font-bold text-muted ${className}`} aria-hidden="true">
       {title[0]}
     </span>
   );
@@ -38,6 +40,7 @@ export function Library({ store, busy, onBuild, onRead }: Props) {
   const known = new Set(state.known);
   const savedKeys = new Set(state.saved.map(topicKey));
   const courses = [...new Map([...state.recent, ...SAMPLES].map((c) => [c.key, c])).values()];
+  const isNew = !state.recent.length && !state.saved.length && !state.known.length && !state.days.length;
   // undefined = still loading, null = not built yet
   const [savedCourses, setSavedCourses] = useState<Record<string, Course | null>>({});
 
@@ -82,32 +85,39 @@ export function Library({ store, busy, onBuild, onRead }: Props) {
         </div>
       </section>
 
-      <section className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-        <a href="#/review" className={`${card} ${lift} bg-accent/5 p-4 hover:border-accent`}>
-          <div className="mb-3 flex size-10 items-center justify-center rounded-xl bg-accent/10">
-            <Layers className="size-5 text-accent" />
+      {isNew ? (
+        <section className={`${card} flex items-center gap-3 bg-accent/5 p-4 text-sm`}>
+          <Sparkles className="size-8 flex-none text-accent" />
+          <p className="text-muted">با یکی از پیشنهادهای بالا یا لینک خودت شروع کن؛ آمار مرور و زنجیره‌ی یادگیری بعد از اولین قدم اینجا ظاهر می‌شود.</p>
+        </section>
+      ) : (
+        <section className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+          <a href="#/review" className={`${card} ${lift} bg-accent/5 p-4 hover:border-accent`}>
+            <div className="mb-3 flex size-10 items-center justify-center rounded-xl bg-accent/10">
+              <Layers className="size-5 text-accent" />
+            </div>
+            <p className="text-sm text-muted">مرور امروز</p>
+            <p className="text-2xl font-bold">{fa(due)} کارت</p>
+            <p className="text-sm text-muted">{due ? 'بزن تا شروع کنیم' : 'امروز کارت جدیدی نداری؛ برای حفظ زنجیره سراغ یک دوره‌ی جدید برو'}</p>
+          </a>
+          <div className={`${card} bg-prereq/5 p-4`}>
+            <div className="mb-3 flex size-10 items-center justify-center rounded-xl bg-prereq/10">
+              <Flame className="size-5 text-prereq" />
+            </div>
+            <p className="text-sm text-muted">زنجیره یادگیری</p>
+            <p className="text-2xl font-bold">{fa(streak(state.days, day))}</p>
+            <p className="text-sm text-muted">با هر مرور روزانه، زنجیره‌ات را حفظ کن</p>
           </div>
-          <p className="text-sm text-muted">مرور امروز</p>
-          <p className="text-2xl font-bold">{fa(due)} کارت</p>
-          <p className="text-sm text-muted">{due ? 'بزن تا شروع کنیم' : 'امروز کارت جدیدی نداری؛ برای حفظ زنجیره سراغ یک دوره‌ی جدید برو'}</p>
-        </a>
-        <div className={`${card} bg-prereq/5 p-4`}>
-          <div className="mb-3 flex size-10 items-center justify-center rounded-xl bg-prereq/10">
-            <Flame className="size-5 text-prereq" />
+          <div className={`${card} bg-accent/5 p-4`}>
+            <div className="mb-3 flex size-10 items-center justify-center rounded-xl bg-accent/10">
+              <CircleCheck className="size-5 text-accent" />
+            </div>
+            <p className="text-sm text-muted">جعبه‌ی دانشی که مسلط شدی</p>
+            <p className="text-2xl font-bold">{fa(state.known.length)}</p>
+            <p className="text-sm text-muted">هر موضوع بلد شده، در تمام دوره‌ها پیش‌نیاز حساب می‌شود و نیازی به دوباره خواندن ندارد</p>
           </div>
-          <p className="text-sm text-muted">زنجیره یادگیری</p>
-          <p className="text-2xl font-bold">{fa(streak(state.days, day))}</p>
-          <p className="text-sm text-muted">با هر مرور روزانه، زنجیره‌ات را حفظ کن</p>
-        </div>
-        <div className={`${card} bg-accent/5 p-4`}>
-          <div className="mb-3 flex size-10 items-center justify-center rounded-xl bg-accent/10">
-            <CircleCheck className="size-5 text-accent" />
-          </div>
-          <p className="text-sm text-muted">جعبه‌ی دانشی که مسلط شدی</p>
-          <p className="text-2xl font-bold">{fa(state.known.length)}</p>
-          <p className="text-sm text-muted">در همه‌ی دوره‌ها مشترک است</p>
-        </div>
-      </section>
+        </section>
+      )}
 
       <section>
         <h2 className="mb-3 text-xl font-bold">کتابخانه‌ی من</h2>
@@ -166,7 +176,7 @@ export function Library({ store, busy, onBuild, onRead }: Props) {
             const saved = savedKeys.has(topicKey(c));
             return (
               <li key={c.key} className={`${card} ${lift} flex items-center gap-3 p-2`}>
-                <Thumb src={c.thumbnail} title={c.title} className="h-11 w-11 rounded-lg" ariaHidden={!c.thumbnail} />
+                <Thumb src={c.thumbnail} title={c.title} className="h-11 w-11 rounded-lg" />
                 <a href={courseHref(c.key)} dir="auto" className="min-w-0 flex-1 truncate font-medium hover:text-accent">
                   {c.title}
                 </a>
@@ -201,13 +211,14 @@ export function Library({ store, busy, onBuild, onRead }: Props) {
       </section>
 
       {/* Privacy notice */}
-      <section className="border-t border-line pt-8">
-        <p className="flex items-start gap-3 text-sm text-muted">
-          <ShieldCheck className="mt-0.5 size-5 flex-none text-accent" />
-          <span>
+      <section className={`${card} flex items-start gap-3 p-4 text-sm`}>
+        <ShieldCheck className="mt-0.5 size-5 flex-none text-accent" />
+        <span>
+          <span className="block font-bold">مدیریت داده‌ها و حریم خصوصی</span>
+          <span className="text-muted">
             اطلاعات شما بدون نیاز به ثبت‌نام روی همین دستگاه ذخیره می‌شود. برای انتقال به دستگاه دیگر از تنظیمات نسخه‌ی پشتیبان بگیر.
           </span>
-        </p>
+        </span>
       </section>
     </div>
   );

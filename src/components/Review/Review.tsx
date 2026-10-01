@@ -47,7 +47,7 @@ export function Review({ store }: { store: Store }) {
       ) : (
         <div className="space-y-3 rounded-2xl border border-line p-6 text-center">
           <Sparkles className="mx-auto size-10 text-accent" />
-          <p className="font-bold">امروز کارتی برای مرور نیست.</p>
+          <p className="font-bold">همه‌ی مرورهای امروز تمام شد!</p>
           <p className="text-sm leading-7 text-muted">در هر دوره، تب «فلش‌کارت» یک موضوع را باز کن و کارت‌هایش را تمرین کن؛ از فردا به این‌جا می‌آیند.</p>
           <a href="#/" className={ghost}>برگشت به کتابخانه</a>
         </div>
