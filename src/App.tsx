@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import type { AI, CourseRef } from './types/course';
-import { applyTheme, courseHref, findCourse, loadAI, loadSamples, local, saveAI, saveCourse, useRoute, useStore, type ThemePref } from './data/store';
+import type { AI } from './types/course';
+import { applyTheme, courseHref, findCourse, loadAI, local, saveAI, saveCourse, useRoute, useStore, type ThemePref } from './data/store';
 import { buildCourse } from './lib/build';
 import { courseKey, parseWikiUrl } from './utils/course';
 import { streak, today } from './utils/learn';
@@ -22,7 +22,6 @@ const iconBtn = 'rounded-lg px-2 py-1 text-lg leading-none hover:bg-fg/10';
 export default function App() {
   const store = useStore();
   const route = useRoute();
-  const [samples, setSamples] = useState<CourseRef[]>([]);
   const [ai, setAi] = useState<AI>(loadAI);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [job, setJob] = useState<{ status: string; error: string } | null>(null);
@@ -30,7 +29,6 @@ export default function App() {
   const [theme, setTheme] = useState<ThemePref>(() => local.get('wc:theme', 'auto'));
 
   useEffect(() => {
-    loadSamples().then(setSamples);
     navigator.storage?.persist?.(); // ask the browser not to evict our data under storage pressure
   }, []);
 
@@ -53,7 +51,7 @@ export default function App() {
   const build = async (url: string, force = false) => {
     try {
       const { lang, title } = parseWikiUrl(url);
-      const cached = !force && (await findCourse(courseKey(lang, title), samples));
+      const cached = !force && (await findCourse(courseKey(lang, title)));
       if (cached) return void (location.hash = courseHref(cached.key));
       if (needAI()) return;
       setJob({ status: 'شروع…', error: '' });
@@ -111,7 +109,7 @@ export default function App() {
         <CourseView key={`${route.key}:${rev}`} courseKey={route.key} store={store} ai={ai} busy={busy} needAI={needAI} onBuild={build} />
       ) : (
         <div className="min-h-0 flex-1 lg:overflow-y-auto">
-          {route.name === 'review' ? <Review store={store} /> : <Library store={store} samples={samples} busy={busy} onBuild={build} />}
+          {route.name === 'review' ? <Review store={store} /> : <Library store={store} busy={busy} onBuild={build} />}
         </div>
       )}
 

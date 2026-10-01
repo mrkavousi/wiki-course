@@ -1,4 +1,5 @@
-// Builds a course in Node and saves it as a bundled sample under public/courses (the app itself builds in the browser).
+// Builds a course in Node and saves it as a bundled sample: body in public/courses/<key>.json, listed in src/data/samples.json
+// (the app itself builds courses in the browser).
 // Run: npm run build:course -- <wikipedia url>        (.env: AI_BASE_URL, AI_API_KEY, optional AI_MODEL)
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import type { CourseRef } from '../src/types/course';
@@ -15,7 +16,7 @@ if (!url || !AI_BASE_URL || !AI_API_KEY) {
 try {
   const course = await buildCourse(url, { baseUrl: AI_BASE_URL, key: AI_API_KEY, model: AI_MODEL }, (m) => console.log(m));
   writeFileSync(`public/courses/${course.key}.json`, JSON.stringify(course, null, 1));
-  const idx = 'public/courses/index.json';
+  const idx = 'src/data/samples.json';
   const list: CourseRef[] = existsSync(idx) ? JSON.parse(readFileSync(idx, 'utf8')) : [];
   const ref: CourseRef = { key: course.key, title: course.root.title, lang: course.root.lang, thumbnail: course.root.thumbnail };
   writeFileSync(idx, JSON.stringify([ref, ...list.filter((c) => c.key !== course.key)], null, 1));

@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { AI, Course, CourseRef, Pack, Page, State } from '../types/course';
 import { topicKey } from '../utils/course';
 import { EMPTY_STATE, PASS, mergeBackup, rate, today } from '../utils/learn';
+import samplesJson from './samples.json';
 
 // localStorage can throw (private mode, quota), so every access is guarded.
 export const local = {
@@ -46,16 +47,14 @@ const kv = {
   },
 };
 
-export const loadSamples = (): Promise<CourseRef[]> =>
-  fetch('/courses/index.json')
-    .then((r) => (r.ok ? r.json() : []))
-    .catch(() => []);
+/** Courses shipped with the site: the list is bundled (renders without a fetch), each body is public/courses/<key>.json. */
+export const SAMPLES: CourseRef[] = samplesJson;
 
-/** A course built on this device, else the bundled sample with that key. Pass `samples` to skip the network for keys that can't be there. */
-export async function findCourse(key: string, samples?: CourseRef[]): Promise<Course | null> {
+/** A course built on this device, else the bundled sample with that key. */
+export async function findCourse(key: string): Promise<Course | null> {
   const mine = await kv.get<Course>(`course/${key}`);
   if (mine) return mine;
-  if (samples && !samples.some((s) => s.key === key)) return null;
+  if (!SAMPLES.some((s) => s.key === key)) return null;
   const res = await fetch(`/courses/${encodeURIComponent(key)}.json`).catch(() => null);
   return res?.ok ? res.json() : null;
 }

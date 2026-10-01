@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react';
 import type { Course, CourseRef, Page } from '../../types/course';
-import { courseHref, findCourse, type Store } from '../../data/store';
+import { courseHref, findCourse, SAMPLES, type Store } from '../../data/store';
 import { courseKey, pathOf, topicKey, wikiUrl } from '../../utils/course';
 import { dueIds, PASS, streak, today } from '../../utils/learn';
 import { card, fa } from '../ui';
 
-type Props = { store: Store; samples: CourseRef[]; busy: boolean; onBuild: (url: string) => void };
+type Props = { store: Store; busy: boolean; onBuild: (url: string) => void };
 
 const TIPS = [
   ['🧭', 'از پیش‌نیازها شروع کن', 'مسیر به ترتیب اهمیت چیده شده. هر چه بلدی را علامت بزن تا «گام بعدی» معلوم شود.'],
@@ -24,26 +24,26 @@ function Thumb({ src, title, className }: { src?: string; title: string; classNa
   );
 }
 
-export function Library({ store, samples, busy, onBuild }: Props) {
+export function Library({ store, busy, onBuild }: Props) {
   const { state } = store;
   const day = today();
   const due = dueIds(state.boxes, day).length;
   const known = new Set(state.known);
   const savedKeys = new Set(state.saved.map(topicKey));
-  const courses = [...new Map([...state.recent, ...samples].map((c) => [c.key, c])).values()];
+  const courses = [...new Map([...state.recent, ...SAMPLES].map((c) => [c.key, c])).values()];
   // undefined = still loading, null = not built yet
   const [savedCourses, setSavedCourses] = useState<Record<string, Course | null>>({});
 
   // Progress bars need each saved topic's course (built on this device or a bundled sample).
   useEffect(() => {
     let live = true;
-    Promise.all(state.saved.map(async (p) => [topicKey(p), await findCourse(courseKey(p.lang, p.title), samples)] as const)).then(
+    Promise.all(state.saved.map(async (p) => [topicKey(p), await findCourse(courseKey(p.lang, p.title))] as const)).then(
       (rows) => live && setSavedCourses(Object.fromEntries(rows)),
     );
     return () => {
       live = false;
     };
-  }, [state.saved, samples]);
+  }, [state.saved]);
 
   return (
     <div className="mx-auto max-w-5xl space-y-10 px-4 py-8">
