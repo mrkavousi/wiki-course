@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { Check, Download, Moon, Sun, SunMoon, Trash2, Upload, X } from 'lucide-react';
+import { Check, Download, Link2, Moon, Sun, SunMoon, Trash2, Upload, X } from 'lucide-react';
 import type { AI } from '../../types/course';
-import { backupJson, restoreJson, wipeAll, type Store, type ThemePref } from '../../data/store';
+import { MAX_LINK, backupJson, restoreJson, transferLink, wipeAll, type Store, type ThemePref } from '../../data/store';
 import { testAI } from '../../lib/build';
 import { download } from '../../utils/export';
 import { today } from '../../utils/learn';
@@ -57,8 +57,9 @@ export function Settings({ ai, store, theme, onTheme, onSave }: Props) {
     e.target.value = ''; // let the same file be picked again
     if (!file) return;
     try {
-      store.restore(await restoreJson(await file.text()));
-      setDataMsg({ kind: 'ok', text: 'پشتیبان بازیابی شد. دوره‌ها، پیشرفت و یادداشت‌های فایل به داده‌های فعلی اضافه شدند و چیزی پاک نشد.' });
+      const p = await restoreJson(await file.text());
+      store.restore(p.state);
+      setDataMsg({ kind: 'ok', text: `پشتیبان بازیابی شد (${fa(p.courses.length)} دوره). فایل به داده‌های فعلی اضافه شد و چیزی پاک نشد.${p.skipped ? ` ${fa(p.skipped)} مورد نامعتبر نادیده گرفته شد.` : ''}` });
     } catch (err: any) {
       setDataMsg({ kind: 'err', text: err instanceof SyntaxError ? 'این فایل JSON معتبر نیست. چیزی تغییر نکرد.' : err.message });
     }
@@ -141,6 +142,29 @@ export function Settings({ ai, store, theme, onTheme, onSave }: Props) {
           </label>
         </div>
         <Note msg={dataMsg} />
+      </Section>
+
+      <Section title="انتقال به دستگاه دیگر با لینک">
+        <p className="text-xs leading-6 text-muted">
+          بدون حساب کاربری و بدون سرور: همه‌ی دوره‌ها و پیشرفتت در خود لینک فشرده می‌شود (هیچ‌جا فرستاده نمی‌شود). لینک را برای خودت بفرست و در دستگاه دیگر باز کن. هر کس این لینک را داشته باشد همه‌ی یادداشت‌هایت را می‌بیند؛ مثل پسورد با آن رفتار کن.
+        </p>
+        <button
+          type="button"
+          className={ghost}
+          onClick={async () => {
+            const link = await transferLink(store.state);
+            if (link.length > MAX_LINK) return setDataMsg({ kind: 'err', text: 'داده‌هایت برای یک لینک زیادی بزرگ است. از فایل پشتیبان استفاده کن.' });
+            try {
+              await navigator.clipboard.writeText(link);
+              toast('لینک انتقال کپی شد');
+            } catch {
+              window.prompt('این لینک را کپی کن:', link); // clipboard blocked
+            }
+          }}
+        >
+          <Link2 className={ic} />
+          کپی لینک انتقال
+        </button>
       </Section>
 
       <Section title="حذف همه‌ی داده‌ها">

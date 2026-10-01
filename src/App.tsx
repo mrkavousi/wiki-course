@@ -10,6 +10,7 @@ import { CourseBuilder, type Job } from './components/CourseBuilder/CourseBuilde
 import { CourseView } from './components/CourseView/CourseView';
 import { Discover } from './components/Discover/Discover';
 import { Home } from './components/Home/Home';
+import { Import } from './components/Import/Import';
 import { Insights } from './components/Insights/Insights';
 import { Library } from './components/Library/Library';
 import { Reader } from './components/Reader/Reader';
@@ -24,7 +25,7 @@ const THEMES: Record<ThemePref, [typeof Sun, ThemePref, string]> = {
   light: [Sun, 'dark', 'تم: روشن'],
   dark: [Moon, 'auto', 'تم: تیره'],
 };
-const NAV: Record<string, NavId | null> = { home: 'home', library: 'library', course: 'library', read: 'library', review: 'review', discover: 'discover', insights: 'insights', settings: 'settings', new: null };
+const NAV: Record<string, NavId | null> = { home: 'home', library: 'library', course: 'library', read: 'library', review: 'review', discover: 'discover', insights: 'insights', settings: 'settings', import: null, new: null };
 
 export default function App() {
   const store = useStore();
@@ -134,6 +135,8 @@ export default function App() {
               <Reader lang={route.lang} title={route.title} course={route.course} store={store} ai={ai} needAI={needAI} />
             ) : route.name === 'review' ? (
               <Review store={store} />
+            ) : route.name === 'import' ? (
+              <Import data={route.data} store={store} />
             ) : route.name === 'settings' ? (
               <Settings
                 ai={ai}

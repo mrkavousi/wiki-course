@@ -277,3 +277,33 @@ test('settings: theme and weekly goal persist; wiping data asks first', async ({
   await page.getByRole('button', { name: 'انصراف' }).click();
   expect((await state(page)).goal).toBe(3); // cancelled: nothing was deleted
 });
+
+test('share: a course link opens in a fresh browser, previews, and adds only after confirming', async ({ page, browser }) => {
+  await page.context().grantPermissions(['clipboard-read', 'clipboard-write']);
+  await seed(page);
+  await page.goto(COURSE);
+  await page.getByText('خروجی و پرامپت').click();
+  await page.getByRole('button', { name: 'کپی لینک اشتراک‌گذاری دوره' }).click();
+  await expect.poll(() => page.evaluate(() => navigator.clipboard.readText())).toContain('#/import?d=');
+  const link = await page.evaluate(() => navigator.clipboard.readText());
+
+  const other = await (await browser.newContext({ baseURL: 'http://localhost:4173' })).newPage();
+  await other.addInitScript(() => localStorage.setItem('wc:state', JSON.stringify({ onboarded: true })));
+  await other.goto(link);
+  await expect(other.getByRole('heading', { name: 'افزودن از لینک' })).toBeVisible();
+  await expect(other.getByText('جبر خطی')).toBeVisible();
+  expect((await state(other)).recent ?? []).toEqual([]); // previewing adds nothing
+  await other.getByRole('button', { name: 'افزودن به کتابخانه‌ی من' }).click();
+  await expect(other).toHaveURL(/#\/c\/fa-/);
+  expect((await state(other)).recent.map((r: any) => r.key)).toEqual(['fa-جبر_خطی']);
+  await other.close();
+});
+
+test('share: a broken or malicious link is refused and changes nothing', async ({ page }) => {
+  await seed(page);
+  await page.goto('#/import?d=not-a-real-link');
+  await expect(page.getByText('این لینک باز نشد')).toBeVisible();
+  await page.goto('#/import');
+  await expect(page.getByText('لینک ناقص است')).toBeVisible();
+  expect((await state(page)).recent ?? []).toEqual([]);
+});

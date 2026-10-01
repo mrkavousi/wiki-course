@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
-import { Archive, ArchiveRestore, ArrowLeft, ArrowRight, ChevronDown, CircleCheck, CircleDashed, CirclePlay, ClipboardCopy, Clock, Download, ExternalLink, Network, PartyPopper, RefreshCw, Route, Star } from 'lucide-react';
+import { Archive, ArchiveRestore, ArrowLeft, ArrowRight, ChevronDown, CircleCheck, CircleDashed, CirclePlay, ClipboardCopy, Clock, Download, ExternalLink, Link2, Network, PartyPopper, RefreshCw, Route, Star } from 'lucide-react';
 import type { AI, Course, Pack, Page } from '../../types/course';
-import { courseHref, findCourse, loadPack, savePack, type Store } from '../../data/store';
+import { MAX_LINK, courseHref, courseShareLink, findCourse, loadPack, savePack, type Store } from '../../data/store';
 import { buildPack } from '../../lib/build';
 import { PASS, dueIds, today } from '../../utils/learn';
 import { LEVEL_LABEL, STATUS_LABEL, courseStats, levelOf } from '../../utils/progress';
@@ -114,10 +114,10 @@ export function CourseView({ courseKey: key, topicParam, store, ai, busy, needAI
     if (innerWidth < 1024) location.hash = courseHref(key, k);
     else history.replaceState(null, '', courseHref(key, k));
   };
-  const copy = async (text: string) => {
+  const copy = async (text: string, done = 'کپی شد؛ در ChatGPT، Gemini یا Claude بچسبان') => {
     try {
       await navigator.clipboard.writeText(text);
-      toast('کپی شد؛ در ChatGPT، Gemini یا Claude بچسبان');
+      toast(done);
     } catch {
       window.prompt('این متن را کپی کن:', text); // clipboard blocked (e.g. insecure context)
     }
@@ -225,6 +225,16 @@ export function CourseView({ courseKey: key, topicParam, store, ai, busy, needAI
                 <MenuItem onClick={() => download(`${course.root.title}.md`, courseMarkdown(ctx))}>
                   <Download className={ic} />
                   دانلود رودمپ (Markdown)
+                </MenuItem>
+                <MenuItem
+                  onClick={async () => {
+                    const link = await courseShareLink(course);
+                    if (link.length > MAX_LINK) return toast('این دوره برای یک لینک زیادی بزرگ است؛ از «دانلود رودمپ» استفاده کن');
+                    await copy(link, 'لینک دوره کپی شد؛ هر کس بازش کند می‌تواند این دوره را اضافه کند');
+                  }}
+                >
+                  <Link2 className={ic} />
+                  کپی لینک اشتراک‌گذاری دوره
                 </MenuItem>
                 <p className="px-3 pt-2 text-xs text-muted">کپی پرامپت آماده برای هوش مصنوعی:</p>
                 {PROMPTS.map((p) => (

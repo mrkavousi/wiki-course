@@ -28,6 +28,7 @@ It is a personal, local-first tool: all learner data lives in the browser.
 | `#/read/<lang>/<title>` (`?c=<courseKey>`) | `Reader` | article reader (needs no AI in easy mode); remembers the scroll position. With `?c=` it offers the course's next topic |
 | `#/review` | `Review` | today's due flashcards across all topics, three ratings |
 | `#/discover` | `Discover` | unstarted sample courses and next topics from your own courses |
+| `#/import?d=<gzip+base64url>` | `Import` | opens a share or transfer link: previews what is inside and adds it only after confirmation |
 | `#/settings` | `Settings` | theme, weekly goal, AI endpoint, backup and restore, delete all data |
 | `#/insights` | `Insights` | weekly goal, activity, weak topics, quiz results, course completion |
 
@@ -152,7 +153,7 @@ Vercel imports the GitHub repo. Framework preset Vite, build `npm run build` (`t
 3. **AI quality.** Scores and reasons are estimates (no web search). Results are sometimes thin: the Quantum mechanics sample has only 4 topics. "ساخت دوباره" rebuilds a course.
 4. **Reader limits.** Plain-text extracts drop formulas (shown as a "formula" chip), tables, image captions and list bullets. No scroll restore, no offline. The section skip-list for references (`parseArticle`) only covers English and Persian headings.
 5. **No linter or formatter.** Pure logic is checked by one assert script; browser flows by a Playwright smoke suite (`tests/smoke.spec.ts`, `npm run test:e2e`, Wikipedia and the AI stubbed; locally `PW_CHANNEL=chrome npm run test:e2e` reuses installed Chrome). CI (`.github/workflows/ci.yml`) runs `npm ci`, `npm run check`, `npm run build` and the e2e suite on pull requests and pushes to `main`. `npm run check` fetches `tsx` through `npx --yes` each time instead of declaring it.
-6. **Device-local data.** There is no sync; the backup file is the only transfer path.
+6. **No accounts, by decision.** There is no server and no sync. Data moves by backup file, by a course share link (course plus study packs, no progress) or by a transfer link (a whole backup). A link is the backup JSON gzipped (`CompressionStream`) into the URL fragment, which browsers never send to a server; `MAX_LINK` (200 KB) refuses larger ones (a course is 2 to 5 KB, all eight samples 16 KB). Anyone holding a transfer link can read the notes in it. **Everything that comes in, from a link or a file, goes through `utils/share.ts` (`sanitizeCourse`, `sanitizePack`, `sanitizeTerms`, `sanitizeState`)**: keys must match their article, links are rebuilt as Wikipedia-only URLs, numbers are clamped, scalars (goal, onboarded, lastBackup) are never imported, decompression is capped at 5 MB. Keep that rule when adding stored data: extend the sanitizer and its asserts.
 7. **CORS dependency.** The static design relies on the gateway's `Access-Control-Allow-Origin: *`. If that changes, a small serverless proxy is needed.
 8. **Docs.** `README.md` is Persian only. `public/courses/en-Linear_algebra.json` is hand-made (marked by its `note`), not AI output.
 9. **Graph layout** is a fixed ring; with more than about 30 nodes labels will overlap.
@@ -162,7 +163,7 @@ Vercel imports the GitHub repo. Framework preset Vite, build `npm run build` (`t
 12. **Review and missing packs.** A due card whose pack is gone from Cache Storage cannot be shown. The review page says so (progress is kept) instead of claiming everything is done; the header badge still counts it.
 13. **Swipe grading** (right = good, left = hard, after flipping; touch and pen only) is a shortcut; the three buttons remain the accessible path. There is no "easy" swipe.
 14. **Not built, by decision:** interface language (the UI is Persian only; English is a large translation job), notification settings and a content-language preference (no feature behind them yet). Vazirmatn stays the only font (no Estedad: one fewer font to load). Empty states get subject artwork from the same generated motifs as covers; there is no hand-drawn illustration set.
-15. **Phase 4 not done:** accounts and sync, analytics, SEO, error monitoring. Data boundaries are clean (`State` in, backup JSON out) so sync can be added later.
+15. **Phase 4 partly done:** device transfer works without a server (see 6). Still not done: accounts and live sync, analytics, SEO, error monitoring.
 
 ## 10. Suggested next steps
 
