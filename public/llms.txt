@@ -1,0 +1,22 @@
+# Wiki Course
+
+> Wiki Course is a free, Persian-language (RTL) web app that turns any Wikipedia article into a learning course: prerequisites, next steps and related articles, each with a thumbnail, summary, relevance score (0-100) and a one-sentence reason. It also has an in-app reader, per-topic flashcards and quizzes, and spaced review. It is local-first: all learner data stays in the browser.
+
+URL: https://wiki-course.vercel.app/
+App: https://wiki-course.vercel.app/#/app
+Source: https://github.com/mrkavousi/wiki-course
+
+## Who it is for
+People who want to learn a topic from Wikipedia and do not know where to start: students, people preparing for an exam or a job, and curious readers.
+
+## What it does
+- Build a course from a Wikipedia link (any language) or by searching words.
+- Show the course as a step-by-step roadmap or a graph; mark topics as known.
+- Read articles in an in-app reader (text is exactly Wikipedia's; other-language versions are Wikipedia's own).
+- Build key points, 6 flashcards and 4 quiz questions per topic; review cards with Leitner boxes.
+- Library, own-words notes, day streak, weekly goal, insights, JSON backup and restore.
+- Installable PWA that works offline for content already opened.
+
+## Requirements and limits
+- Sample courses and reading work with no setup. Building new courses, study packs and key terms needs an OpenAI-compatible AI endpoint and API key entered in Settings (stored only in the browser).
+- No account, no backend, no server-side storage of user data.

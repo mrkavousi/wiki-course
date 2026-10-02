@@ -35,7 +35,7 @@ export function Review({ store }: { store: Store }) {
   const upcoming = [1, 2, 3].map((n) => ({ n, count: Object.values(store.state.boxes).filter((b) => b.due === addDays(day, n)).length }));
   const finish = (
     <>
-      <a href="#/" className={ghost}>خانه</a>
+      <a href="#/app" className={ghost}>خانه</a>
       <a href="#/library" className={ghost}>کتابخانه</a>
     </>
   );
@@ -53,7 +53,7 @@ export function Review({ store }: { store: Store }) {
           </p>
         </div>
         {items?.length ? (
-          <a href="#/" className={`${ghost} shrink-0`}>
+          <a href="#/app" className={`${ghost} shrink-0`}>
             خروج
           </a>
         ) : null}

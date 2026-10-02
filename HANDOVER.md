@@ -3,7 +3,7 @@
 For developers and AI agents picking this project up. Read this first, then `AGENTS.md` (the short rule list) and `graphify-out/GRAPH_REPORT.md` (the code map).
 
 - **Status (2026-10-02):** v0.4.0 (see `CHANGELOG.md`): the v0.3 product (app shell, dashboard, builder, library, insights) with a visual redesign, an installable offline PWA, and About, Privacy and 404 pages. Live at https://wiki-course.vercel.app. Source: github.com/mrkavousi/wiki-course. Every push to `main` auto-deploys on Vercel (about 20 s).
-- **Stack:** React 19, TypeScript 7, Vite 8, Tailwind 4 (`@tailwindcss/vite`), `lucide-react`. About 4,500 lines of TypeScript in `src/` and `scripts/`. No backend, no database, no server-side environment variables.
+- **Stack:** React 19, TypeScript 7, Vite 8, Tailwind 4 (`@tailwindcss/vite`), `lucide-react` (and `gsap` for the landing page only). About 4,500 lines of TypeScript in `src/` and `scripts/`. No backend, no database, no server-side environment variables.
 - **Language:** the UI, README and AI-generated content are Persian (RTL). Code, comments, commits and this document are English.
 
 ## 1. What it is
@@ -21,7 +21,8 @@ It is a personal, local-first tool: all learner data lives in the browser.
 
 | Route (hash) | Component | Purpose |
 |---|---|---|
-| `#/` | `Home` | dashboard: builder strip, the one next action, today's review, active courses, weekly progress, suggestions |
+| `#/` (new visitors), `#/welcome` | `LandingPage` | marketing story with real screenshots; returning visitors are redirected from `#/` to `#/app` (see `useRoute` in `store.ts`) |
+| `#/app` | `Home` | dashboard: builder strip, the one next action, today's review, active courses, weekly progress, suggestions |
 | `#/new` (`?url=` or `?q=`) | `CourseBuilder` | paste a link or type words (Wikipedia search), preview the article, choose depth and purpose, build; progress is a blurred modal with named stages |
 | `#/library` | `Library` | search, filters (language, status, subject), sort, grid/list, favourite, archive, delete |
 | `#/c/<courseKey>` (`?t=<topicKey>`) | `CourseView` with `Roadmap`, `CourseGraph`, `TopicDetail` | course overview (cover, level, progress, mastery) and the selected topic (tabs: about, flashcards, quiz). With `?t=` a phone shows that topic as its own screen with a breadcrumb (Back returns to the path); desktop keeps two panes and keeps the address in sync |

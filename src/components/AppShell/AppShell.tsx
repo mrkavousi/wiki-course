@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Compass, Flame, Info, Menu, ShieldCheck, House, Layers, Library, Plus, Route, Search, Settings as SettingsIcon, TriangleAlert, WifiOff, X, ChartColumn } from 'lucide-react';
+import { Compass, Flame, Info, Menu, ShieldCheck, Sparkles, House, Layers, Library, Plus, Route, Search, Settings as SettingsIcon, TriangleAlert, WifiOff, X, ChartColumn } from 'lucide-react';
 import type { ThemePref } from '../../data/store';
 import { iconBtn, ic, fa, primary } from '../ui';
 
@@ -17,7 +17,7 @@ type Props = {
 };
 
 const ITEMS: { id: NavId; href: string; label: string; icon: typeof House; mobile: boolean }[] = [
-  { id: 'home', href: '#/', label: 'خانه', icon: House, mobile: true },
+  { id: 'home', href: '#/app', label: 'خانه', icon: House, mobile: true },
   { id: 'library', href: '#/library', label: 'کتابخانه', icon: Library, mobile: true },
   { id: 'review', href: '#/review', label: 'مرور', icon: Layers, mobile: true },
   { id: 'discover', href: '#/discover', label: 'کشف', icon: Compass, mobile: true },
@@ -65,7 +65,7 @@ export function AppShell({ nav, due, streak, job, onDismissJob, saveOk, theme, o
       </a>
 
       <aside aria-label="نوار کناری" className="hidden w-60 shrink-0 flex-col gap-1 border-e border-line bg-panel p-3 lg:flex">
-        <a href="#/" className="mb-3 flex items-center gap-2 px-2 py-2 text-lg font-extrabold">
+        <a href="#/app" className="mb-3 flex items-center gap-2 px-2 py-2 text-lg font-extrabold">
           <span className="flex size-8 items-center justify-center rounded-xl bg-linear-to-br from-accent to-sub-physics text-on-accent"><Route className="size-5" /></span>
           <span>Wiki <span className="text-grad">Course</span></span>
         </a>
@@ -85,6 +85,10 @@ export function AppShell({ nav, due, streak, job, onDismissJob, saveOk, theme, o
         <a href="#/settings" aria-current={nav === 'settings' ? 'page' : undefined} className={`${link(nav === 'settings')} mt-auto`}>
           <SettingsIcon className="size-5" />
           تنظیمات
+        </a>
+        <a href="#/welcome" className={link(false)}>
+          <Sparkles className="size-5" />
+          معرفی Wiki Course
         </a>
       </aside>
 
@@ -146,7 +150,7 @@ export function AppShell({ nav, due, streak, job, onDismissJob, saveOk, theme, o
           <div className="absolute inset-0 bg-black/50" aria-hidden="true" />
           <aside id="drawer" role="dialog" aria-modal="true" aria-label="منو" onClick={(e) => e.stopPropagation()} className="drawer pb-safe absolute inset-y-0 start-0 flex w-72 max-w-[85%] flex-col gap-1 overflow-y-auto border-e border-line bg-panel p-3">
             <div className="mb-3 flex items-center justify-between">
-              <a href="#/" className="flex items-center gap-2 px-2 text-lg font-extrabold">
+              <a href="#/app" className="flex items-center gap-2 px-2 text-lg font-extrabold">
                 <span className="flex size-8 items-center justify-center rounded-xl bg-linear-to-br from-accent to-sub-physics text-on-accent"><Route className="size-5" /></span>
                 <span>Wiki <span className="text-grad">Course</span></span>
               </a>
@@ -172,6 +176,7 @@ export function AppShell({ nav, due, streak, job, onDismissJob, saveOk, theme, o
               </a>
             </nav>
             <nav aria-label="درباره" className="mt-auto flex flex-col gap-1 border-t border-line pt-3">
+              <a href="#/welcome" className={link(false)}><Sparkles className="size-5" />معرفی Wiki Course</a>
               <a href="#/about" className={link(false)}><Info className="size-5" />درباره</a>
               <a href="#/privacy" className={link(false)}><ShieldCheck className="size-5" />حریم خصوصی</a>
             </nav>

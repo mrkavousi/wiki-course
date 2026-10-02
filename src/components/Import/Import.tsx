@@ -50,7 +50,7 @@ export function Import({ data, store }: { data: string; store: Store }) {
       <div className="mx-auto w-full max-w-xl p-4">
         <h1 className="sr-only">افزودن از لینک</h1>
         <ErrorState title="این لینک باز نشد" text={phase.text} lost="چیزی به داده‌هایت اضافه یا از آن کم نشد.">
-          <a href="#/" className={ghost}>برگشت به خانه</a>
+          <a href="#/app" className={ghost}>برگشت به خانه</a>
         </ErrorState>
       </div>
     );
@@ -100,7 +100,7 @@ export function Import({ data, store }: { data: string; store: Store }) {
           <Download className={ic} />
           افزودن به کتابخانه‌ی من
         </button>
-        <a href="#/" className={ghost}>
+        <a href="#/app" className={ghost}>
           انصراف
         </a>
       </div>

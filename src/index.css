@@ -247,3 +247,7 @@ body {
   50% { box-shadow: inset 0 -3px 0 var(--color-accent), 0 0 18px -2px var(--color-accent); transform: none; }
 }
 .tab-nudge { animation: tab-nudge 1.2s ease-in-out 3; }
+
+/* Landing page: each screenshot ships in both themes; the one that does not match is hidden (and, being lazy, never downloaded). */
+:root[data-theme='light'] .shot-dark,
+:root[data-theme='dark'] .shot-light { display: none; }

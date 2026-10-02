@@ -274,7 +274,7 @@ export function Settings({ ai, store, theme, onTheme, onSave }: Props) {
         onCancel={() => setWipe(false)}
         onConfirm={async () => {
           await wipeAll();
-          location.hash = '#/';
+          location.hash = '#/app';
           location.reload();
         }}
       />

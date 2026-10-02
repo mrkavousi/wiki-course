@@ -257,7 +257,7 @@ export function Reader({ lang, title, course: courseId, store, ai, needAI }: Pro
     void el.offsetWidth; // restart the animation
     el.classList.add('term-flash');
   };
-  const back = () => (history.length > 1 ? history.back() : (location.hash = '#/'));
+  const back = () => (history.length > 1 ? history.back() : (location.hash = '#/app'));
 
   const size = prefs.size;
   const bar = 'flex items-center overflow-hidden rounded-lg border border-line text-sm';

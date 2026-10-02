@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { Suspense, lazy, useEffect, useState } from 'react';
 import { Moon, Sun, SunMoon } from 'lucide-react';
 import type { AI, BuildOpts } from './types/course';
 import { applyTheme, courseHref, findCourse, loadAI, local, readHref, saveAI, saveCourse, useRoute, useStore, type ThemePref } from './data/store';
@@ -20,6 +20,8 @@ import { Review } from './components/Review/Review';
 import { SearchCommand } from './components/SearchCommand/SearchCommand';
 import { Settings } from './components/Settings/Settings';
 import { ToastProvider } from './components/Toast/Toast';
+
+const LandingPage = lazy(() => import('./components/LandingPage/LandingPage').then((m) => ({ default: m.LandingPage }))); // its own chunk (with GSAP): the app never pays for it
 
 // icon, next preference when clicked, label
 const THEMES: Record<ThemePref, [typeof Sun, ThemePref, string]> = {
@@ -125,6 +127,14 @@ export default function App() {
   // A new key remounts the page, so every screen opens scrolled to the top.
   const page = route.name === 'read' ? `read:${route.lang}:${route.title}` : route.name;
   const builder = <CourseBuilder job={job} hasAI={hasAI} recent={store.state.recent} onBuild={build} onRead={read} onSettings={openSettings} />;
+
+  if (route.name === 'landing') {
+    return (
+      <Suspense fallback={null}>
+        <LandingPage />
+      </Suspense>
+    );
+  }
 
   return (
     <ToastProvider>

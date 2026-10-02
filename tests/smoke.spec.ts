@@ -40,7 +40,7 @@ async function stubWikipedia(page: Page) {
 
 test('home: onboarding dismiss persists', async ({ page }) => {
   await page.addInitScript(() => localStorage.getItem('wc:state') || localStorage.setItem('wc:state', '{}'));
-  await page.goto('/');
+  await page.goto('/#/app');
   await page.getByRole('button', { name: 'بستن راهنما' }).click();
   await page.reload();
   await expect(page.getByRole('heading', { name: 'از هر مقاله، یک مسیر یادگیری' })).toBeVisible();
@@ -249,7 +249,7 @@ test('cards: swiping a flipped card right grades it good', async ({ page }) => {
 
 test('search: arrow keys move through results', async ({ page }) => {
   await seed(page);
-  await page.goto('/');
+  await page.goto('/#/app');
   await page.getByRole('heading', { level: 1 }).waitFor(); // the shortcut exists once the app has mounted
   await page.keyboard.press('Control+k');
   await page.getByLabel('عبارت جست‌وجو یا لینک ویکی‌پدیا').fill('a');
@@ -406,4 +406,21 @@ test('settings: AI calls are logged with token counts and an estimated cost', as
   const s = await state(page);
   expect(s.usage).toHaveLength(1);
   expect(s.usage[0]).toMatchObject({ kind: 'pack', inT: 1000, outT: 500 });
+});
+
+test('landing: new visitors see it, the CTA opens the app, returning visitors skip it', async ({ page }) => {
+  const errors: string[] = [];
+  page.on('pageerror', (e) => errors.push(String(e)));
+  await page.goto('/');
+  await expect(page.getByRole('heading', { level: 1 })).toContainText('یک مسیر یادگیری');
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await page.getByRole('link', { name: 'شروع یادگیری' }).first().click();
+  await expect(page).toHaveURL(/#\/app$/);
+  await page.getByRole('link', { name: 'معرفی Wiki Course' }).first().click(); // the sidebar link back to the landing page
+  await expect(page).toHaveURL(/#\/welcome$/);
+  await page.evaluate(() => localStorage.setItem('wc:state', JSON.stringify({ onboarded: true })));
+  await page.goto('/#/');
+  await page.reload();
+  await expect(page).toHaveURL(/#\/app$/);
+  expect(errors).toEqual([]);
 });

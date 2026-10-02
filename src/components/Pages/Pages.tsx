@@ -91,7 +91,7 @@ export function NotFound() {
       <h1 className="text-3xl font-extrabold">این صفحه پیدا نشد</h1>
       <p className="text-muted">آدرس اشتباه است یا صفحه جابه‌جا شده.</p>
       <div className="flex flex-wrap justify-center gap-2 pt-2">
-        <a href="#/" className={primary}>برگشت به خانه</a>
+        <a href="#/app" className={primary}>برگشت به خانه</a>
         <a href="#/library" className={ghost}>کتابخانه</a>
       </div>
     </div>
