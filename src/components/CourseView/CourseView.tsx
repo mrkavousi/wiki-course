@@ -83,6 +83,8 @@ export function CourseView({ courseKey: key, topicParam, store, ai, busy, needAI
   const steps = pathOf(course);
   const done = steps.filter((s) => known.has(topicKey(s.page))).length;
   const page = [course.root, ...course.topics].find((p) => topicKey(p) === selected) ?? course.root;
+  const at = steps.findIndex((s) => topicKey(s.page) === topicKey(page));
+  const prev: Page | null = at > 0 ? steps[at - 1].page : null; // the step before this one on the path
   const topic = course.topics.find((t) => topicKey(t) === topicKey(page));
   const saved = store.state.saved.some((p) => topicKey(p) === topicKey(course.root));
   const ctx: ExportCtx = { course, known, notes: store.state.notes, packs };
@@ -246,6 +248,8 @@ export function CourseView({ courseKey: key, topicParam, store, ai, busy, needAI
             onBuildCourse={(url) => onBuild(url)}
             next={done === steps.length ? null : nextStep(ctx)}
             onNext={() => select(topicKey(nextStep(ctx)))}
+            prev={prev}
+            onPrev={() => prev && select(topicKey(prev))}
           />
         </aside>
       </div>

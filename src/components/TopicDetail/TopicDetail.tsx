@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { ArrowLeft, BookOpen, Check, ClipboardCheck, ExternalLink, KeyRound, Loader, PenLine, Route, Sparkles, Star } from 'lucide-react';
+import { ArrowLeft, ArrowRight, BookOpen, Check, ClipboardCheck, ExternalLink, KeyRound, Loader, PenLine, Route, Sparkles, Star } from 'lucide-react';
 import type { Course, Pack, Page, Role, Topic } from '../../types/course';
 import { readHref, type Store } from '../../data/store';
 import { topicKey } from '../../utils/course';
@@ -20,6 +20,8 @@ type Props = {
   onBuildCourse: (url: string) => void;
   next: Page | null; // the next topic on the path that isn't known yet (null: the whole path is known)
   onNext: () => void;
+  prev: Page | null; // the step before this one on the path
+  onPrev: () => void;
 };
 
 const ROLE: Record<Role | 'root', [string, string]> = {
@@ -31,7 +33,7 @@ const ROLE: Record<Role | 'root', [string, string]> = {
 const tool = 'flex min-h-14 flex-col items-center justify-center gap-1 px-2 py-2 text-center text-sm font-medium hover:bg-fg/5';
 const TABS = [['about', 'درباره'], ['cards', 'فلش‌کارت'], ['quiz', 'آزمون']] as const;
 
-export function TopicDetail({ course, page, topic, store, pack, packJob, busy, onBuildPack, onBuildCourse, next, onNext }: Props) {
+export function TopicDetail({ course, page, topic, store, pack, packJob, busy, onBuildPack, onBuildCourse, next, onNext, prev, onPrev }: Props) {
   const [tab, setTab] = useState<(typeof TABS)[number][0]>('about');
   const [learned, setLearned] = useState(false); // just marked as known: show where to go next
   const { state } = store;
@@ -172,7 +174,7 @@ export function TopicDetail({ course, page, topic, store, pack, packJob, busy, o
           {topic && (
             <button className={`${tool} disabled:opacity-50`} disabled={busy} onClick={() => onBuildCourse(page.url)}>
               <Route className="size-5" />
-              دوره‌ی این موضوع
+              ایجاد دوره‌ی این مطلب
             </button>
           )}
         </div>
@@ -195,6 +197,23 @@ export function TopicDetail({ course, page, topic, store, pack, packJob, busy, o
           className="w-full rounded-lg border border-line bg-bg p-3 leading-7 placeholder:text-muted focus:border-accent focus:outline-none"
         />
       </label>
+
+      {(prev || next) && (
+        <nav aria-label="مرور موضوع‌های مسیر" className="flex gap-2">
+          {prev && (
+            <button className={`${ghost} min-w-0 flex-1`} onClick={onPrev}>
+              <ArrowRight className={ic} />
+              <span className="min-w-0 truncate">قبلی: <span dir="auto">{prev.title}</span></span>
+            </button>
+          )}
+          {next && (
+            <button className={`${ghost} min-w-0 flex-1`} onClick={onNext}>
+              <span className="min-w-0 truncate">بعدی: <span dir="auto">{next.title}</span></span>
+              <ArrowLeft className={ic} />
+            </button>
+          )}
+        </nav>
+      )}
 
       {!topic && (
         <div className="space-y-1 border-t border-line pt-3 text-xs leading-6 text-muted">

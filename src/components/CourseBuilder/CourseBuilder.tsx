@@ -6,14 +6,13 @@ import { DEFAULT_OPTS, DEPTH_CAP, previewArticle, searchArticles, type Hit, type
 import { courseKey, parseWikiUrl, wikiUrl } from '../../utils/course';
 import { MIN_PER_TOPIC, daysAt } from '../../utils/progress';
 import { Cover } from '../Cover/Cover';
-import { ProgressBar } from '../Progress/Progress';
+import { BuildDialog, STAGES, type Job } from '../BuildDialog/BuildDialog';
+
+export type { Job };
+export { STAGES };
 import { ErrorState } from '../States/States';
 import { Skeleton } from '../States/States';
 import { badge, card, fa, field, fmtMinutes, ghost, ic, outline, primary } from '../ui';
-
-export type Job = { status: string; error: string; stage?: number } | null;
-/** Named stages of a build; `buildCourse` reports the index (see Status in lib/build.ts). */
-export const STAGES = ['خواندن مقاله‌ی مبدأ', 'پیدا کردن پیش‌نیازها و چیدن مسیر', 'بررسی مقاله‌ها در ویکی‌پدیا', 'ذخیره‌ی دوره'];
 
 const DEPTHS: [Depth, string][] = [['quick', 'سریع'], ['standard', 'استاندارد'], ['deep', 'عمیق']];
 const PURPOSES: [Purpose, string][] = [['general', 'درک کلی'], ['exam', 'امتحان'], ['work', 'کار'], ['research', 'پژوهش']];
@@ -52,17 +51,10 @@ export function CourseBuilder({ job, hasAI, onBuild, onRead, onSettings, compact
   const run = useRef(0); // ignores a preview that finished after the link was changed
   const building = !!job?.status;
   const [hidden, setHidden] = useState(false); // the progress dialog was sent to the background
-  const dlg = useRef<HTMLDialogElement>(null);
   useEffect(() => {
     if (building) setHidden(false); // each new build opens the dialog again
   }, [building]);
   const modal = !!job && !hidden;
-  useEffect(() => {
-    const d = dlg.current;
-    if (!d) return;
-    if (modal && !d.open) d.showModal();
-    else if (!modal && d.open) d.close();
-  }, [modal]);
 
   const search = async (q: string, lang: string) => {
     const me = ++searchRun.current;
@@ -254,60 +246,12 @@ export function CourseBuilder({ job, hasAI, onBuild, onRead, onSettings, compact
       {form}
       {results}
 
-      {/* Progress as a modal over a blurred page, so the build is the only thing on screen; Esc or the button sends it to the background. */}
-      <dialog
-        ref={dlg}
-        onCancel={(e) => (e.preventDefault(), setHidden(true))}
-        aria-label="پیشرفت ساخت"
-        className="m-auto w-[min(30rem,calc(100%-2rem))] rounded-3xl border border-line bg-panel p-0 text-fg shadow-2xl backdrop:bg-black/40 backdrop:backdrop-blur-md"
-      >
-        {job && (
-          <div className="space-y-4 p-6">
-            {job.error ? (
-              <ErrorState
-                title="ساخت دوره کامل نشد"
-                text={job.error}
-                lost="چیزی ذخیره نشد و دوره‌های قبلی‌ات سالم‌اند."
-                onRetry={pre.state === 'ready' ? () => onBuild(pre.p.url, { opts, force: pre.exists }) : undefined}
-              >
-                <button className={ghost} onClick={() => setHidden(true)}>
-                  بستن
-                </button>
-              </ErrorState>
-            ) : (
-              <>
-                <div className="flex items-center gap-3">
-                  <span className="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-accent-soft text-accent">
-                    <Sparkles className="size-6 motion-safe:animate-pulse" />
-                  </span>
-                  <div className="min-w-0">
-                    <h2 className="font-bold">در حال ساخت دوره…</h2>
-                    <p className="truncate text-sm text-muted" role="status">{job.status}</p>
-                  </div>
-                </div>
-                <ProgressBar value={Math.min((job.stage ?? 0) + 0.5, STAGES.length)} max={STAGES.length} label="پیشرفت ساخت دوره" className="h-2" />
-                <ol className="space-y-2.5">
-                  {STAGES.map((label, i) => {
-                    const at = job.stage ?? 0;
-                    const state = i < at ? 'done' : i === at ? 'now' : 'todo';
-                    return (
-                      <li key={label} className={`flex items-center gap-2.5 text-sm ${state === 'todo' ? 'text-muted' : ''} ${state === 'now' ? 'font-semibold' : ''}`} aria-current={state === 'now' ? 'step' : undefined}>
-                        {state === 'done' ? <Check className={`${ic} text-accent`} /> : state === 'now' ? <Loader className={`${ic} text-accent motion-safe:animate-spin`} /> : <span className="size-[1.15em] shrink-0 rounded-full border border-line" />}
-                        {label}
-                        <span className="sr-only">{state === 'done' ? '(انجام شد)' : state === 'now' ? '(در حال انجام)' : '(در صف)'}</span>
-                      </li>
-                    );
-                  })}
-                </ol>
-                <p className="text-sm leading-7 text-muted">معمولاً بین ۱۰ تا ۴۰ ثانیه طول می‌کشد. می‌توانی این پنجره را ببندی؛ ساخت در پس‌زمینه ادامه پیدا می‌کند.</p>
-                <button className={`${ghost} w-full`} onClick={() => setHidden(true)}>
-                  ادامه در پس‌زمینه
-                </button>
-              </>
-            )}
-          </div>
-        )}
-      </dialog>
+      <BuildDialog
+        job={job}
+        open={modal}
+        onHide={() => setHidden(true)}
+        onRetry={pre.state === 'ready' ? () => onBuild(pre.p.url, { opts, force: pre.exists }) : undefined}
+      />
 
       {job && hidden && (
         <section aria-label="پیشرفت ساخت" className={`${card} space-y-3 p-4`}>

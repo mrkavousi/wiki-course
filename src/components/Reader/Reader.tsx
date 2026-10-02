@@ -1,6 +1,6 @@
 import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowLeft, ArrowRight, BookOpen, Check, ExternalLink, Highlighter, Info, Languages, List, Minus, Plus, RefreshCw, Sparkles, Star, Type } from 'lucide-react';
-import type { AI } from '../../types/course';
+import type { AI, Page } from '../../types/course';
 import { READER_SIZES, courseHref, findCourse, loadTerms, readHref, saveTerms, useReaderPrefs, type ReaderMode, type Store } from '../../data/store';
 import { buildTerms, fetchArticle, fetchLangLinks, type Article, type LangLink } from '../../lib/build';
 import { courseKey, pathOf, topicKey, wikiUrl } from '../../utils/course';
@@ -112,6 +112,28 @@ function LangPicker({ lang, title, course, onClose }: { lang: string; title: str
   );
 }
 
+/** Previous and next topic of the course path as two equal buttons (one alone fills the row). */
+function StepNav({ from, prev, next }: { from: Course; prev?: Page; next?: Page }) {
+  if (!prev && !next) return null;
+  const cell = `${ghost} min-w-0 flex-1`;
+  return (
+    <div className="flex gap-2">
+      {prev && (
+        <a href={readHref(prev.lang, prev.title, from.key)} className={cell}>
+          <ArrowRight className={ic} />
+          <span className="min-w-0 truncate"><span className="max-sm:hidden">موضوع </span>قبلی: <span dir="auto">{prev.title}</span></span>
+        </a>
+      )}
+      {next && (
+        <a href={readHref(next.lang, next.title, from.key)} className={cell}>
+          <span className="min-w-0 truncate"><span className="max-sm:hidden">موضوع </span>بعدی: <span dir="auto">{next.title}</span></span>
+          <ArrowLeft className={ic} />
+        </a>
+      )}
+    </div>
+  );
+}
+
 const HEADING = ['', '', 'mt-10 text-[1.4em]', 'mt-8 text-[1.2em]', 'mt-6 text-[1.08em]'];
 
 /** Distraction-free article reader. Easy: clean text. Enhanced: the AI's key terms in bold, once per section. */
@@ -140,6 +162,9 @@ export function Reader({ lang, title, course: courseId, store, ai, needAI }: Pro
       live = false;
     };
   }, [courseId]);
+  const steps = from ? pathOf(from) : [];
+  const at = steps.findIndex((s) => topicKey(s.page) === topic);
+  const prev = at > 0 ? steps[at - 1].page : undefined; // the step before this one on the course path
   const next = from ? pathOf(from).find((s) => topicKey(s.page) !== topic && !store.state.known.includes(topicKey(s.page)))?.page : undefined;
 
   // Reading position: restored once when the article is on screen, then saved a moment after each scroll.
@@ -277,9 +302,6 @@ export function Reader({ lang, title, course: courseId, store, ai, needAI }: Pro
           <Languages className={ic} />
           <span className="max-sm:hidden">{lang.toUpperCase()}</span>
         </button>
-        <a href={article?.url ?? wikiUrl(lang, title)} target="_blank" rel="noopener noreferrer" className={`${bar} size-11 justify-center hover:bg-fg/5`} aria-label="باز کردن در ویکی‌پدیا" title="باز کردن در ویکی‌پدیا">
-          <ExternalLink className={ic} />
-        </a>
       </div>
 
       {error ? (
@@ -388,10 +410,6 @@ export function Reader({ lang, title, course: courseId, store, ai, needAI }: Pro
           })}
 
           <footer className="mt-12 space-y-4 border-t border-line pt-6 text-base">
-            <button className={`${known ? outline : primary} max-lg:hidden`} aria-pressed={known} onClick={() => store.toggleKnown(topic)}>
-              <Check className={ic} />
-              {known ? 'بلدم (برای برداشتن بزن)' : 'خواندم و بلدم'}
-            </button>
             <p className="text-sm leading-7 text-muted">
               متن از ویکی‌پدیا گرفته شده و با مجوز{' '}
               <a href="https://creativecommons.org/licenses/by-sa/4.0/" target="_blank" rel="noopener noreferrer" className="underline hover:text-fg">
@@ -402,17 +420,20 @@ export function Reader({ lang, title, course: courseId, store, ai, needAI }: Pro
                 صفحه‌ی اصلی و فهرست نویسندگان
               </a>
             </p>
-            {next && from && (
-              <a href={readHref(next.lang, next.title, from.key)} className={`${known ? primary : ghost} max-lg:hidden`}>
-                موضوع بعدی: <span dir="auto">{next.title}</span>
-                <ArrowLeft className={ic} />
-              </a>
-            )}
-            {from && (
-              <a href={courseHref(from.key)} className={`${ghost} max-lg:hidden`}>
-                برگشت به دوره
-              </a>
-            )}
+            <div className="space-y-2 max-lg:hidden">
+              <button className={`${known ? outline : primary} w-full`} aria-pressed={known} onClick={() => store.toggleKnown(topic)}>
+                <Check className={ic} />
+                {known ? 'بلدم (برای برداشتن بزن)' : 'خواندم و بلدم'}
+              </button>
+              {from && (
+                <>
+                  <StepNav from={from} prev={prev} next={next} />
+                  <a href={courseHref(from.key)} className={`${ghost} w-full`}>
+                    برگشت به دوره
+                  </a>
+                </>
+              )}
+            </div>
             <p className="hidden text-sm text-muted lg:block">میان‌بر: <kbd>M</kbd> بلدم · <kbd>+</kbd> و <kbd>-</kbd> اندازه‌ی متن</p>
           </footer>
         </article>
@@ -431,11 +452,10 @@ export function Reader({ lang, title, course: courseId, store, ai, needAI }: Pro
               {saved ? 'ذخیره‌شده' : 'ذخیره'}
             </button>
           </div>
-          {next && from && (
-            <a href={readHref(next.lang, next.title, from.key)} className={`${known ? primary : ghost} mx-auto mt-2 flex max-w-3xl`}>
-              موضوع بعدی: <span dir="auto" className="truncate">{next.title}</span>
-              <ArrowLeft className={ic} />
-            </a>
+          {from && (prev || next) && (
+            <div className="mx-auto mt-2 max-w-3xl">
+              <StepNav from={from} prev={prev} next={next} />
+            </div>
           )}
         </div>
       )}

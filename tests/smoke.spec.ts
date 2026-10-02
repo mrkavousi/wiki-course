@@ -361,3 +361,18 @@ test('study pack: after it is built the flashcards tab opens and the quiz tab is
   await page.getByRole('tab', { name: /آزمون/ }).click();
   await expect(page.getByRole('tab', { name: /آزمون/ })).not.toHaveClass(/tab-nudge/);
 });
+
+test('topic: "create a course for this topic" shows the build dialog on the spot', async ({ page }) => {
+  await page.route('https://stub.test/**', () => {}); // never answers: the build stays in progress
+  await seed(page);
+  await stubWikipedia(page);
+  await page.addInitScript(() => localStorage.setItem('wc:ai', JSON.stringify({ baseUrl: 'https://stub.test/v1', key: 'k', model: 'm' })));
+  await page.goto(COURSE);
+  await page.locator('button[aria-pressed]', { hasText: 'ریاضیات' }).first().click();
+  await page.getByRole('button', { name: 'ایجاد دوره‌ی این مطلب' }).click();
+  await expect(page.getByRole('dialog', { name: 'پیشرفت ساخت' })).toBeVisible();
+  await expect(page.getByText('خواندن مقاله‌ی مبدأ')).toBeVisible();
+  await page.getByRole('button', { name: 'ادامه در پس‌زمینه' }).click();
+  await expect(page.getByRole('dialog', { name: 'پیشرفت ساخت' })).toBeHidden();
+  await expect(page.getByRole('status').filter({ hasText: /./ }).first()).toBeVisible(); // the shell banner takes over
+});

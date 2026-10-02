@@ -6,6 +6,7 @@ import { DEFAULT_OPTS, buildCourse } from './lib/build';
 import { courseKey, parseWikiUrl } from './utils/course';
 import { dueIds, streak, today } from './utils/learn';
 import { AppShell, type NavId } from './components/AppShell/AppShell';
+import { BuildDialog } from './components/BuildDialog/BuildDialog';
 import { CourseBuilder, type Job } from './components/CourseBuilder/CourseBuilder';
 import { CourseView } from './components/CourseView/CourseView';
 import { Discover } from './components/Discover/Discover';
@@ -34,6 +35,12 @@ export default function App() {
   const [ai, setAi] = useState<AI>(loadAI);
   const [searchOpen, setSearchOpen] = useState(false);
   const [job, setJob] = useState<Job>(null);
+  const [jobHidden, setJobHidden] = useState(false); // the progress dialog was sent to the background (the shell banner takes over)
+  const building = !!job?.status;
+  useEffect(() => {
+    if (building) setJobHidden(false); // every new build opens the dialog
+  }, [building]);
+  const dialogOpen = !!job && !jobHidden && (building || !!job.build);
   const [rev, setRev] = useState(0); // remounts the course view after a rebuild of the same course
   const [theme, setTheme] = useState<ThemePref>(() => local.get('wc:theme', 'auto'));
   const hasAI = !!(ai.baseUrl && ai.key);
@@ -94,7 +101,7 @@ export default function App() {
       setRev((n) => n + 1);
       location.hash = courseHref(course.key);
     } catch (e: any) {
-      setJob({ status: '', error: String(e.message ?? e) });
+      setJob({ status: '', error: String(e.message ?? e), build: true });
     }
   };
 
@@ -122,7 +129,7 @@ export default function App() {
         due={dueIds(store.state.boxes, today()).length}
         streak={streak(store.state.days, today())}
         // the builder page shows progress and errors itself
-        job={route.name === 'new' ? null : job}
+        job={route.name === 'new' || dialogOpen ? null : job}
         onDismissJob={() => setJob(null)}
         saveOk={store.saveOk}
         theme={{ icon: ThemeIcon, label: themeLabel, next: () => setTheme(nextTheme) }}
@@ -176,6 +183,7 @@ export default function App() {
           </div>
         )}
       </AppShell>
+      {route.name !== 'new' && <BuildDialog job={job} open={dialogOpen} onHide={() => setJobHidden(true)} />}
 
       <SearchCommand open={searchOpen} store={store} onClose={() => setSearchOpen(false)} onBuild={build} onRead={read} />
     </ToastProvider>
