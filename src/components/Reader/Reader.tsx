@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
+import { Fragment, Suspense, lazy, useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowLeft, ArrowRight, Check, ClipboardCopy, ExternalLink, Focus, Info, Languages, List, Minimize2, RefreshCw, Share2, Sparkles, Star } from 'lucide-react';
 import type { AI, Page } from '../../types/course';
 import { READER_FONTS, READER_SIZES, courseHref, findCourse, loadTerms, readHref, saveTerms, useReaderPrefs, type ReaderMode, type Store } from '../../data/store';
@@ -11,8 +11,9 @@ import { card, field, fa, ghost, ic, outline, primary } from '../ui';
 import { shareText, type ShareInput } from '../../utils/shareImage';
 import { ReaderSettings } from './ReaderSettings';
 import { SelectionBar } from './SelectionBar';
-import { ShareDialog } from './ShareDialog';
 import { Toc } from './Toc';
+
+const ShareDialog = lazy(() => import('./ShareDialog')); // the ten share templates load only when the dialog opens
 
 type Props = { lang: string; title: string; course?: string; store: Store; ai: AI; needAI: () => boolean };
 type Job = { status: string; error: string } | null;
@@ -294,7 +295,7 @@ export function Reader({ lang, title, course: courseId, store, ai, needAI }: Pro
   const back = () => (history.length > 1 ? history.back() : (location.hash = '#/app'));
 
   const size = prefs.size;
-  const source = { article: article?.title ?? title, url: article?.url ?? wikiUrl(lang, title) };
+  const source = { article: article?.title ?? title, url: article?.url ?? wikiUrl(lang, title), thumbnail: article?.thumbnail };
   const chapter = (i: number): ShareInput => ({ ...source, title: blocks[i].title, text: sections[i].paras.join('\n') });
   const copyChapter = async (i: number) => {
     try {
@@ -314,7 +315,11 @@ export function Reader({ lang, title, course: courseId, store, ai, needAI }: Pro
 
   return (
     <div ref={root} className={`mx-auto max-w-3xl px-4 lg:max-w-6xl lg:pb-16 ${focus ? 'pb-16' : 'pb-44'}`}>
-      {share && <ShareDialog input={share} onClose={() => setShare(null)} />}
+      {share && (
+        <Suspense fallback={null}>
+          <ShareDialog input={share} onClose={() => setShare(null)} />
+        </Suspense>
+      )}
       {article && <SelectionBar within={articleEl} source={source} focus={focus} onImage={(text) => setShare({ ...source, text })} />}
       {langs && <LangPicker lang={lang} title={article?.title ?? title} course={courseId} onClose={() => setLangs(false)} />}
       {focus ? (

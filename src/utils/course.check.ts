@@ -7,7 +7,11 @@ import { courseStats, daysAt, levelOf, nextAction, weakTopics, weekStats } from 
 import { sanitizeCourse, sanitizePack, sanitizePage, sanitizeState, pack as packLink, unpack } from './share';
 import { seed, subjectOf } from './subject';
 import { FORMULA, boldSegments, cleanTerms, outline, parseArticle, termRegex } from './reader';
-import { COLORS, cleanQuote, shareText, withEllipsis, wrapLines } from './shareImage';
+import { cleanQuote, shareText } from './shareImage';
+import { calculateFontSize, fitBlocks, truncateText, withEllipsis, wrapLines, type Block } from '../share/textFit';
+import { contrast } from '../share/color';
+import { sentences } from '../share/rtl';
+import { TEMPLATES } from '../share/templates';
 
 assert.deepEqual(parseWikiUrl('https://en.wikipedia.org/wiki/Linear_algebra#History'), { lang: 'en', title: 'Linear algebra' });
 assert.deepEqual(parseWikiUrl('fa.m.wikipedia.org/wiki/%D8%AC%D8%A8%D8%B1_%D8%AE%D8%B7%DB%8C'), { lang: 'fa', title: 'جبر خطی' });
@@ -227,14 +231,36 @@ assert.equal(cleanQuote(`a ${FORMULA}   b\n\n  c  `), 'a b\n\nc', 'formula place
 const st = shareText({ text: 'متن', title: 'فصل', article: 'ریاضیات', url: 'https://fa.wikipedia.org/wiki/x' });
 assert.ok(st.includes('«ریاضیات»') && st.includes('https://fa.wikipedia.org/wiki/x') && st.includes('Wiki Course'), 'shared text names its source and the app');
 assert.ok(!st.endsWith('.'), 'no trailing full stop');
-const lum = (h: string) => {
-  const [r, g, b] = [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16) / 255).map((v) => (v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4));
-  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
-};
-const ratio = (a: string, b: string) => (Math.max(lum(a), lum(b)) + 0.05) / (Math.min(lum(a), lum(b)) + 0.05);
-for (const c of COLORS) {
-  for (const bg of [...c.bg, c.card]) for (const fg of [c.fg, c.muted]) assert.ok(ratio(fg, bg) >= 4.5, `${c.id}: ${fg} on ${bg} is ${ratio(fg, bg).toFixed(2)}`);
-  for (const bg of [...c.bg, c.card]) assert.ok(ratio(c.accent, bg) >= 3, `${c.id}: accent on ${bg}`);
+
+
+// ---------- text fitting ----------
+assert.equal(truncateText('یک دو سه چهار پنج', 10), 'یک دو سه…', 'cut at a word boundary');
+assert.equal(truncateText('کوتاه', 10), 'کوتاه');
+assert.ok(calculateFontSize(8, 90, 50) === 90 && calculateFontSize(200, 90, 50) === 50, 'short titles stay big, long ones reach the minimum');
+assert.ok(calculateFontSize(60, 90, 50) < 90 && calculateFontSize(60, 90, 50) > 50);
+assert.deepEqual(sentences('اول. دوم؟ سوم!'), ['اول.', 'دوم؟', 'سوم!'], 'sentences keep their end marks');
+const wide = (t: string, _w: number, size: number) => t.length * size * 0.5; // a made-up font: every character is half the size wide
+const blk = (id: string, text: string, size: number, o: Partial<Block> = {}): Block => ({ id, text, weight: 500, size, min: size * 0.6, lh: 1.5, maxLines: 99, gap: 10, ...o });
+const words = (n: number) => Array.from({ length: n }, (_, i) => `w${i}`).join(' ');
+const small = fitBlocks(wide, [blk('title', 'Title', 80), blk('body', words(10), 40)], 800, 1000);
+assert.ok(!small.overflow && !small.truncated && small.minFont === 40 * 1 && small.placed[0].size === 80, 'short content keeps full size');
+const medium = fitBlocks(wide, [blk('title', 'Title', 80), blk('body', words(180), 40)], 800, 700);
+assert.ok(!medium.overflow && medium.total <= 700 && medium.placed[1].size < 40, 'a longer body shrinks to fit');
+const huge = fitBlocks(wide, [blk('title', words(30), 80, { maxLines: 4 }), blk('body', words(2000), 40, { min: 28 }), blk('quote', words(60), 40, { maxLines: 5 })], 800, 800);
+assert.ok(!huge.overflow && huge.total <= 800 && huge.truncated, 'very long content is cut, never overflowing');
+assert.ok(huge.placed.every((p) => p.size >= 24), 'text never goes below the readable minimum');
+assert.ok(huge.placed.find((p) => p.id === 'body')!.lines.at(-1)!.endsWith('…'), 'the cut body ends in an ellipsis');
+assert.ok(huge.placed.find((p) => p.id === 'quote')!.lines.length <= 5, 'the quote has a line cap');
+const noQuote = fitBlocks(wide, [blk('title', 'Title', 80), blk('body', words(60), 40)], 800, 400);
+assert.equal(noQuote.placed.length, 2, 'a missing block takes no space');
+assert.equal(TEMPLATES.length, 10, 'ten templates');
+assert.equal(new Set(TEMPLATES.map((t) => t.id)).size, 10, 'template ids are unique');
+for (const t of TEMPLATES) {
+  for (const bg of t.palette.surfaces) {
+    assert.ok(contrast(t.palette.text, bg) >= 4.5, `${t.id}: text on ${bg} is ${contrast(t.palette.text, bg).toFixed(2)}`);
+    assert.ok(contrast(t.palette.muted, bg) >= 4.5, `${t.id}: muted on ${bg} is ${contrast(t.palette.muted, bg).toFixed(2)}`);
+  }
+  for (const bg of t.palette.inverse?.surfaces ?? []) for (const fg of [t.palette.inverse!.text, t.palette.inverse!.muted]) assert.ok(contrast(fg, bg) >= 4.5, `${t.id}: ${fg} on ${bg} is ${contrast(fg, bg).toFixed(2)}`);
 }
 
 console.log('course.check ok');

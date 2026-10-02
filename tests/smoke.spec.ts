@@ -477,7 +477,10 @@ test('reader: chapters are cards by default and the setting can turn that off', 
   await expect(page.locator('section[data-chapter]')).toHaveCount(0); // remembered
 });
 
-test('reader: a chapter card can be copied, and shared as text or as a story picture', async ({ page, context }) => {
+test('reader: a chapter card can be copied, and shared as a picture with ten templates', async ({ page, context }) => {
+  const errors: string[] = [];
+  page.on('pageerror', (e) => errors.push(String(e)));
+  page.on('console', (m) => m.type() === 'error' && errors.push(m.text()));
   await context.grantPermissions(['clipboard-read', 'clipboard-write']);
   await stubWikipedia(page);
   await seed(page);
@@ -488,25 +491,79 @@ test('reader: a chapter card can be copied, and shared as text or as a story pic
   expect(copied).toContain('Linear algebra text');
   expect(copied).toContain('Wiki Course');
   await page.getByRole('button', { name: 'اشتراک‌گذاری فصل Section 0' }).click();
-  const canvas = page.getByRole('img', { name: 'پیش‌نمایش تصویر استوری' });
-  await expect(canvas).toBeVisible();
-  expect(await canvas.evaluate((c: HTMLCanvasElement) => [c.width, c.height])).toEqual([1080, 1920]);
-  const snap = () => canvas.evaluate((c: HTMLCanvasElement) => c.toDataURL().length);
-  await page.waitForTimeout(500);
-  await expect(page.getByLabel('عنوان')).toHaveValue('Section 0');
+  const preview = page.locator('canvas[data-preview][data-ready]');
+  await expect(preview).toBeVisible();
+  expect(await preview.evaluate((c: HTMLCanvasElement) => [c.width, c.height])).toEqual([1080, 1350]); // Instagram 4:5 by default
+  await expect(page.getByRole('radio')).toHaveCount(10);
+  const first = await preview.getAttribute('data-template');
+  const snap = () => preview.evaluate((c: HTMLCanvasElement) => c.toDataURL().length);
   const before = await snap();
-  await page.getByLabel('عنوان').fill('عنوان دلخواه');
-  await page.waitForTimeout(500);
-  expect(await snap()).not.toBe(before); // the edited title is redrawn
-  const edited = await snap();
-  await page.getByRole('button', { name: 'نارنجی' }).click();
-  await page.getByRole('button', { name: 'کارت', exact: true }).click();
-  await page.waitForTimeout(600);
-  expect(await snap()).not.toBe(edited); // the colour and frame change the picture
+  await page.getByRole('radio', { name: 'سینمایی' }).click();
+  await expect(preview).not.toHaveAttribute('data-template', first!);
+  await expect(preview).toHaveAttribute('data-template', 'cinematic');
+  expect(await snap()).not.toBe(before); // another template draws another picture
+  await page.getByRole('radio', { name: 'سینمایی' }).press('ArrowLeft'); // RTL: left is the next template
+  await expect(preview).toHaveAttribute('data-template', 'soft');
+  await page.getByLabel('عنوان', { exact: true }).fill('عنوان دلخواه');
+  await page.getByRole('button', { name: 'استوری' }).click();
+  await expect.poll(() => preview.evaluate((c: HTMLCanvasElement) => [c.width, c.height])).toEqual([1080, 1920]);
+  await expect(preview).toHaveAttribute('data-overflow', 'false');
   const [dl] = await Promise.all([page.waitForEvent('download'), page.getByRole('button', { name: 'دانلود تصویر' }).first().click()]);
   expect(dl.suggestedFilename()).toBe('wiki-course.png');
   await page.keyboard.press('Escape');
-  await expect(canvas).toBeHidden();
+  await expect(preview).toBeHidden();
+  expect(errors).toEqual([]);
+});
+
+test('share templates: short, long and mixed text and a missing quote never overflow', async ({ page }) => {
+  await stubWikipedia(page);
+  await seed(page);
+  await page.goto('#/read/fa/ریاضیات');
+  await page.locator('article h1').waitFor();
+  await page.getByRole('button', { name: 'اشتراک‌گذاری فصل Section 0' }).click();
+  const preview = page.locator('canvas[data-preview][data-ready]');
+  await expect(preview).toBeVisible();
+  const body = page.locator('dialog textarea').first(); // the text field (the quote field is the second)
+  const cases: [string, string, boolean][] = [
+    ['کوتاه', 'سلسله‌ای ایرانی در دوران باستان', false],
+    ['بلند', 'سلسله‌ی اشکانی بیش از چهار سده بر بخش بزرگی از غرب آسیا فرمان راند. '.repeat(30), true],
+    ['فارسی و انگلیسی', 'ساخت دوره با OpenAI و React در سال 2026 انجام می‌شود و متن Wiki Course با مجوز CC BY-SA 4.0 کنار AI درست نمایش داده می‌شود', false],
+  ];
+  const radios = page.getByRole('radio');
+  for (const [, text, cut] of cases) {
+    await body.fill(text);
+    for (let i = 0; i < 10; i++) {
+      await radios.nth(i).click();
+      await expect(preview).toHaveAttribute('data-ready', 'true');
+      await page.waitForTimeout(250);
+      await expect(preview).toHaveAttribute('data-overflow', 'false');
+      if (!cut) await expect(preview).toHaveAttribute('data-truncated', 'false');
+      else await expect(preview).toHaveAttribute('data-truncated', 'true');
+    }
+  }
+  await page.locator('dialog textarea').nth(1).fill(''); // no quote: still fine
+  await expect(preview).toHaveAttribute('data-overflow', 'false');
+});
+
+test('share editor: spaces, commas and trailing separators survive while typing in every field', async ({ page }) => {
+  await stubWikipedia(page);
+  await seed(page);
+  await page.goto('#/read/fa/ریاضیات');
+  await page.locator('article h1').waitFor();
+  await page.getByRole('button', { name: 'اشتراک‌گذاری فصل Section 0' }).click();
+  const category = page.getByLabel('دسته', { exact: true });
+  await category.pressSequentially('تاریخ ایران ');
+  await expect(category).toHaveValue('تاریخ ایران ');
+  const tags = page.getByLabel(/برچسب‌ها/);
+  await tags.pressSequentially('اشکانیان، ایران باستان، ');
+  await expect(tags).toHaveValue('اشکانیان، ایران باستان، ');
+  const quote = page.locator('dialog textarea').nth(1);
+  await quote.pressSequentially('الف ب ');
+  await expect(quote).toHaveValue('الف ب ');
+  const title = page.getByLabel('عنوان', { exact: true });
+  await title.fill('');
+  await title.pressSequentially('عنوان یک ');
+  await expect(title).toHaveValue('عنوان یک ');
 });
 
 test('reader: selecting text shows a bar to copy it or make a picture of it', async ({ page, context }) => {
@@ -522,5 +579,5 @@ test('reader: selecting text shows a bar to copy it or make a picture of it', as
   await bar.getByRole('button', { name: 'کپی' }).click();
   expect(await page.evaluate(() => navigator.clipboard.readText())).toContain('Intro paragraph');
   await bar.getByRole('button', { name: 'تصویر' }).click();
-  await expect(page.getByRole('img', { name: 'پیش‌نمایش تصویر استوری' })).toBeVisible();
+  await expect(page.locator('canvas[data-preview]')).toBeVisible();
 });

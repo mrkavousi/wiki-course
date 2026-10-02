@@ -6,7 +6,7 @@ import { useToast } from '../Toast/Toast';
 type Pos = { top: number; left: number } | 'phone';
 
 /** A small bar that appears over selected article text: copy it, send it as text, or turn it into a picture. */
-export function SelectionBar({ within, source, focus, onImage }: { within: RefObject<HTMLElement | null>; source: Pick<ShareInput, 'article' | 'url'>; focus: boolean; onImage: (text: string) => void }) {
+export function SelectionBar({ within, source, focus, onImage }: { within: RefObject<HTMLElement | null>; source: Pick<ShareInput, 'article' | 'url' | 'thumbnail'>; focus: boolean; onImage: (text: string) => void }) {
   const [sel, setSel] = useState<{ text: string; pos: Pos } | null>(null);
   const toast = useToast();
 
