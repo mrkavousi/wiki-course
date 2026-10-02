@@ -7,6 +7,11 @@ Versions 0.1.0 to 0.3.0 were assigned afterwards from the commit history and tag
 ## [Unreleased]
 
 ### Added
+- Reader: every chapter (each heading and its text) is shown as a card of its own, set apart from the page background with a border, a soft shadow, a gradient accent edge and a numbered badge that matches the contents list; sub-sections are lighter nested cards. The reader settings have a "نمای فصل‌ها" switch (card or plain, card by default), kept with the other reader preferences.
+- Reader focus mode: a "تمرکز" button (or the F key) hides the sidebar, top and bottom bars, banners, contents, source line and action bars, leaving only the text and a thin progress bar at the top of the screen. A floating "خروج از تمرکز" button, Esc or leaving the page ends it; the source and licence line is back as soon as it ends. Implemented with `data-focus` on `<html>` and `data-chrome` on the shell parts, so the scroll position and progress carry on unchanged.
+- Reader: reading progress. A thin bar under the top bar (also on phones) and, on desktop, "N٪ خوانده شده" above the contents. The bar is a `progressbar` and follows the same scroll listener that saves the reading position.
+- Reader: contents as cards, one per section. On desktop they sit in a sticky column on the right with the section being read highlighted; on phones they stay in the collapsible list inside the article.
+- Reader settings: one "تنظیمات" button (popover on desktop, bottom sheet on phones) holds reading mode, text size, font (Vazirmatn, system, Naskh as installed on the device), text background (app default, light, paper, dark) and the other-languages list. Font and background are stored with the other reader preferences (`wc:reader`), so backups are unchanged.
 - Landing page at `#/` (and `#/welcome`): a scroll-driven story of the product built from real screenshots of the app (`public/landing/`, made by `scripts/capture-landing.ts`): hero, the problem, what it is, a pinned four-step "how it works", feature stories, a pinned app showcase, FAQ and a closing call to action. Animations use GSAP + ScrollTrigger in their own lazy chunk (`src/animations/`), so the app bundle is unchanged; phones get a simpler layout without pinning, and `prefers-reduced-motion` turns every scene off.
 - The dashboard moved to `#/app`. Visitors who already used the app (onboarded, or any course/saved topic/activity day) are sent from `#/` straight to `#/app`; the sidebar and drawer have a small "معرفی Wiki Course" link back to the landing page.
 - Landing copy reviewed: one friendly second-person voice, no sentence-final periods, no "login" wording (the app has no accounts), the mid-page button opens the sample course it names, and phrases are kept together with non-breaking spaces plus `text-balance`/`text-pretty`.
@@ -23,6 +28,7 @@ Versions 0.1.0 to 0.3.0 were assigned afterwards from the commit history and tag
 - `ExportMenu` (`src/components/CourseView/`): export, share, AI prompts and course upkeep (archive, rebuild) in grouped sections.
 
 ### Changed
+- Reader top bar is now just back, title and settings; on phones it sticks below the app header (before, it slid under it) and headings scroll to just below both bars.
 - Builder input: the paste button becomes a red clear (X) button while there is text, and the placeholder is the short "عنوان مقاله یا لینک مقاله".
 - Builder search results open as an overlay directly under the input (previously a list further down the page that the phone keyboard covered); the list is sized to the space left above the keyboard and tab bar, and Esc closes it.
 - Reader toolbar: removed the "open in Wikipedia" icon beside the language button (the source link under the article title remains).

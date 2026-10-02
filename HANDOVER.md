@@ -26,7 +26,7 @@ It is a personal, local-first tool: all learner data lives in the browser.
 | `#/new` (`?url=` or `?q=`) | `CourseBuilder` | paste a link or type words (Wikipedia search), preview the article, choose depth and purpose, build; progress is a blurred modal with named stages |
 | `#/library` | `Library` | search, filters (language, status, subject), sort, grid/list, favourite, archive, delete |
 | `#/c/<courseKey>` (`?t=<topicKey>`) | `CourseView` with `Roadmap`, `CourseGraph`, `TopicDetail` | course overview (cover, level, progress, mastery) and the selected topic (tabs: about, flashcards, quiz). With `?t=` a phone shows that topic as its own screen with a breadcrumb (Back returns to the path); desktop keeps two panes and keeps the address in sync |
-| `#/read/<lang>/<title>` (`?c=<courseKey>`) | `Reader` | article reader (needs no AI in easy mode); remembers the scroll position. With `?c=` it offers the course's next topic |
+| `#/read/<lang>/<title>` (`?c=<courseKey>`) | `Reader` | article reader (needs no AI in easy mode); remembers the scroll position; reading progress, card contents (sticky column on desktop) and a settings popover (mode, size, font, background, chapter cards, language), focus mode. With `?c=` it offers the course's next topic |
 | `#/review` | `Review` | today's due flashcards across all topics, three ratings |
 | `#/discover` | `Discover` | unstarted sample courses and next topics from your own courses |
 | `#/import?d=<gzip+base64url>` | `Import` | opens a share or transfer link: previews what is inside and adds it only after confirmation |

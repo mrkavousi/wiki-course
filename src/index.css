@@ -251,3 +251,22 @@ body {
 /* Landing page: each screenshot ships in both themes; the one that does not match is hidden (and, being lazy, never downloaded). */
 :root[data-theme='light'] .shot-dark,
 :root[data-theme='dark'] .shot-light { display: none; }
+
+/* Reader page colours: the article block can be forced to a fixed palette; every token class inside follows. */
+[data-reader-bg] { background: var(--color-bg); color: var(--color-fg); }
+[data-reader-bg='light'] {
+  --color-bg: #fbfbf9; --color-panel: #ffffff; --color-fg: #17211b; --color-muted: #566159; --color-line: #dde3dc;
+  --color-accent: #0f766e; --color-accent-soft: #d5f0ec; --color-surface-2: #eef3f1;
+}
+[data-reader-bg='paper'] {
+  --color-bg: #f4ecd8; --color-panel: #faf4e4; --color-fg: #2b2418; --color-muted: #5b5140; --color-line: #d9cdb0;
+  --color-accent: #0f766e; --color-accent-soft: #e3e8d2; --color-surface-2: #ebe2c8;
+}
+[data-reader-bg='dark'] {
+  --color-bg: #0b1210; --color-panel: #121c18; --color-fg: #e8eee9; --color-muted: #a3b0a7; --color-line: #263630;
+  --color-accent: #2dd4bf; --color-accent-soft: #0f2f2b; --color-surface-2: #182520;
+}
+
+/* Reader focus mode: the app's own chrome (sidebar, top bar, banners, bottom bar) steps aside; only the article and the progress bar stay. */
+html[data-focus] [data-chrome] { display: none !important; }
+html[data-focus] #main { padding-bottom: 0; }

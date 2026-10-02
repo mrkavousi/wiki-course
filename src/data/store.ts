@@ -266,12 +266,22 @@ export type Store = ReturnType<typeof useStore>;
 // ---------- reader preferences ----------
 export type ReaderMode = 'easy' | 'enhanced';
 export const READER_SIZES = [1, 1.125, 1.25, 1.4, 1.6]; // rem; index 1 (18px) is the default
-export type ReaderPrefs = { mode: ReaderMode; size: number };
+export const READER_FONTS = { vazir: ['وزیرمتن', 'inherit'], system: ['سیستم', 'ui-sans-serif, system-ui, "Segoe UI", Tahoma, sans-serif'], naskh: ['نسخ', '"Noto Naskh Arabic", "Geeza Pro", "Traditional Arabic", "Times New Roman", serif'] } as const; // [label, font-family]; no font is downloaded
+export const READER_BGS = { app: 'پیش‌فرض', light: 'روشن', paper: 'کاغذی', dark: 'تیره' } as const;
+export type ReaderFont = keyof typeof READER_FONTS;
+export type ReaderBg = keyof typeof READER_BGS;
+export type ReaderPrefs = { mode: ReaderMode; size: number; font: ReaderFont; bg: ReaderBg; cards: boolean }; // cards: every chapter is a card of its own
 
 export function useReaderPrefs() {
   const [prefs, setPrefs] = useState<ReaderPrefs>(() => {
     const p = local.get<Partial<ReaderPrefs>>('wc:reader', {});
-    return { mode: p.mode === 'enhanced' ? 'enhanced' : 'easy', size: Number.isInteger(p.size) && p.size! >= 0 && p.size! < READER_SIZES.length ? p.size! : 1 };
+    return {
+      mode: p.mode === 'enhanced' ? 'enhanced' : 'easy',
+      size: Number.isInteger(p.size) && p.size! >= 0 && p.size! < READER_SIZES.length ? p.size! : 1,
+      font: p.font && p.font in READER_FONTS ? p.font : 'vazir',
+      bg: p.bg && p.bg in READER_BGS ? p.bg : 'app',
+      cards: p.cards !== false,
+    };
   });
   const set = useCallback((next: Partial<ReaderPrefs>) => {
     setPrefs((prev) => {

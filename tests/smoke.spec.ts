@@ -341,7 +341,8 @@ test('reader: other-language versions come from Wikipedia language links and ope
     return r.fulfill({ json: { query: { pages: [{ title: 'Calculus', langlinks: [{ lang: 'de', autonym: 'Deutsch', title: 'Analysis' }, { lang: 'fa', autonym: 'فارسی', title: 'حساب دیفرانسیل' }] }] } } });
   });
   await page.goto('#/read/en/Calculus');
-  await page.getByRole('button', { name: 'زبان‌های دیگر' }).click();
+  await page.getByRole('button', { name: 'تنظیمات خوانشگر' }).click();
+  await page.getByRole('button', { name: 'زبان‌های دیگر' }).click(); // the language list lives inside the reader settings
   await expect(page.getByRole('link', { name: /Deutsch/ })).toBeVisible();
   await page.getByRole('link', { name: /فارسی/ }).click();
   await expect(page).toHaveURL(/#\/read\/fa\//);
@@ -423,4 +424,55 @@ test('landing: new visitors see it, the CTA opens the app, returning visitors sk
   await page.reload();
   await expect(page).toHaveURL(/#\/app$/);
   expect(errors).toEqual([]);
+});
+
+test('reader: progress follows scrolling, the contents card for the current section lights up, the page colour persists', async ({ page }) => {
+  await stubWikipedia(page);
+  await seed(page);
+  await page.goto('#/read/fa/ریاضیات');
+  await page.locator('article h1').waitFor();
+  const bar = page.getByRole('progressbar', { name: 'پیشرفت خواندن' });
+  await expect(bar).toHaveAttribute('aria-valuenow', '0');
+  await page.evaluate(() => { const sc = document.querySelector<HTMLElement>('.page-in')!; const el = sc.scrollHeight > sc.clientHeight && getComputedStyle(sc).overflowY === 'auto' ? sc : document.documentElement; const max = el.scrollHeight - el.clientHeight; el === sc ? sc.scrollTo({ top: max * 0.6 }) : scrollTo({ top: max * 0.6 }); });
+  await expect.poll(async () => Number(await bar.getAttribute('aria-valuenow'))).toBeGreaterThan(40);
+  await expect(page.locator('aside [aria-current="location"]')).toBeVisible();
+  await page.getByRole('button', { name: 'تنظیمات خوانشگر' }).click();
+  await page.getByRole('button', { name: 'کاغذی' }).click();
+  await page.keyboard.press('Escape');
+  await page.reload();
+  await expect(page.locator('article[data-reader-bg="paper"]')).toBeVisible();
+});
+
+test('reader: focus mode hides the app chrome and the contents, keeps the progress bar, and Esc or the button leaves it', async ({ page }) => {
+  await stubWikipedia(page);
+  await seed(page);
+  await page.goto('#/read/fa/ریاضیات');
+  await page.locator('article h1').waitFor();
+  await page.getByRole('button', { name: 'حالت تمرکز' }).click();
+  await expect(page.getByRole('navigation', { name: 'اصلی' }).first()).toBeHidden();
+  await expect(page.getByRole('complementary', { name: 'فهرست مطالب' })).toBeHidden();
+  await expect(page.getByRole('progressbar', { name: 'پیشرفت خواندن' })).toBeVisible();
+  await expect(page.locator('article h1')).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(page.getByRole('button', { name: 'حالت تمرکز' })).toBeVisible();
+  await page.getByRole('button', { name: 'حالت تمرکز' }).click();
+  await page.getByRole('button', { name: 'خروج از حالت تمرکز' }).click();
+  await expect(page.getByRole('navigation', { name: 'اصلی' }).first()).toBeVisible();
+  await page.getByRole('button', { name: 'حالت تمرکز' }).click();
+  await page.goto('#/library'); // leaving the page must also end focus mode
+  await expect(page.getByRole('navigation', { name: 'اصلی' }).first()).toBeVisible();
+});
+
+test('reader: chapters are cards by default and the setting can turn that off', async ({ page }) => {
+  await stubWikipedia(page);
+  await seed(page);
+  await page.goto('#/read/fa/ریاضیات');
+  await page.locator('article h1').waitFor();
+  await expect(page.locator('section[data-chapter]').first()).toBeVisible();
+  await page.getByRole('button', { name: 'تنظیمات خوانشگر' }).click();
+  await page.getByRole('group', { name: 'نمای فصل‌ها' }).getByRole('button', { name: 'ساده' }).click();
+  await page.keyboard.press('Escape');
+  await expect(page.locator('section[data-chapter]')).toHaveCount(0);
+  await page.reload();
+  await expect(page.locator('section[data-chapter]')).toHaveCount(0); // remembered
 });

@@ -1,21 +1,18 @@
 import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
-import { ArrowLeft, ArrowRight, BookOpen, Check, ExternalLink, Highlighter, Info, Languages, List, Minus, Plus, RefreshCw, Sparkles, Star, Type } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Check, ExternalLink, Focus, Info, Languages, List, Minimize2, RefreshCw, Sparkles, Star } from 'lucide-react';
 import type { AI, Page } from '../../types/course';
-import { READER_SIZES, courseHref, findCourse, loadTerms, readHref, saveTerms, useReaderPrefs, type ReaderMode, type Store } from '../../data/store';
+import { READER_FONTS, READER_SIZES, courseHref, findCourse, loadTerms, readHref, saveTerms, useReaderPrefs, type ReaderMode, type Store } from '../../data/store';
 import { buildTerms, fetchArticle, fetchLangLinks, type Article, type LangLink } from '../../lib/build';
 import { courseKey, pathOf, topicKey, wikiUrl } from '../../utils/course';
 import type { Course } from '../../types/course';
 import { FORMULA, boldSegments, parseArticle, termRegex, type Seg } from '../../utils/reader';
 import { useToast } from '../Toast/Toast';
 import { card, field, fa, ghost, ic, outline, primary } from '../ui';
+import { ReaderSettings } from './ReaderSettings';
+import { Toc } from './Toc';
 
 type Props = { lang: string; title: string; course?: string; store: Store; ai: AI; needAI: () => boolean };
 type Job = { status: string; error: string } | null;
-
-const MODES: [ReaderMode, string, typeof BookOpen][] = [
-  ['easy', 'ساده', BookOpen],
-  ['enhanced', 'پیشرفته', Highlighter],
-];
 
 /** Text with each dropped formula shown as a small "formula" chip. */
 function Plain({ text }: { text: string }) {
@@ -144,6 +141,9 @@ export function Reader({ lang, title, course: courseId, store, ai, needAI }: Pro
   const [terms, setTerms] = useState<string[]>(); // undefined = never computed for this article
   const [job, setJob] = useState<Job>(null);
   const [langs, setLangs] = useState(false);
+  const [percent, setPercent] = useState(0); // reading progress 0-100
+  const [focus, setFocus] = useState(false); // focus mode: only the text and the progress bar
+  const [active, setActive] = useState(-1); // index of the section being read (-1: before the first heading)
   const key = courseKey(lang, title);
   const topic = topicKey({ lang, title });
   const known = store.state.known.includes(topic);
@@ -182,15 +182,44 @@ export function Reader({ lang, title, course: courseId, store, ai, needAI }: Pro
       clearTimeout(t);
       t = window.setTimeout(() => sc.max() > 0 && store.setPos(topic, Math.min(1, sc.top() / sc.max())), 700);
     };
-    sc.target.addEventListener('scroll', save, { passive: true });
-    return () => (clearTimeout(t), sc.target.removeEventListener('scroll', save));
+    // Progress and the current section: measured once per frame, and state only changes when the value does.
+    let raf = 0;
+    const measure = () => {
+      raf = 0;
+      const max = sc.max();
+      setPercent(max > 0 ? Math.min(100, Math.round((sc.top() / max) * 100)) : 0);
+      let a = -1;
+      for (let i = 1; ; i++) {
+        const h = document.getElementById(`sec-${i}`);
+        if (!h || h.getBoundingClientRect().top > 140) break;
+        a = i - 1;
+      }
+      setActive(a);
+    };
+    const onScroll = () => {
+      save();
+      raf ||= requestAnimationFrame(measure);
+    };
+    measure();
+    sc.target.addEventListener('scroll', onScroll, { passive: true });
+    return () => (clearTimeout(t), cancelAnimationFrame(raf), sc.target.removeEventListener('scroll', onScroll));
   }, [article, topic]); // eslint-disable-line react-hooks/exhaustive-deps -- store.setPos and toast are stable
 
-  // Desktop shortcuts: M marks the article known, + and - change the text size.
+  // Focus mode hides the app chrome through an attribute on <html> (see index.css); it always ends with the reader.
+  useEffect(() => {
+    if (!focus) return;
+    document.documentElement.dataset.focus = '';
+    const esc = (e: KeyboardEvent) => e.key === 'Escape' && setFocus(false);
+    addEventListener('keydown', esc);
+    return () => (delete document.documentElement.dataset.focus, removeEventListener('keydown', esc));
+  }, [focus]);
+
+  // Desktop shortcuts: M marks the article known, F toggles focus mode, + and - change the text size.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if ((e.target as HTMLElement).closest('input, textarea, select') || e.metaKey || e.ctrlKey || e.altKey) return;
       if (e.key.toLowerCase() === 'm') store.toggleKnown(topic);
+      else if (e.key.toLowerCase() === 'f' && article) setFocus((f) => !f);
       else if (e.key === '+' || e.key === '=') setPrefs({ size: Math.min(READER_SIZES.length - 1, prefs.size + 1) });
       else if (e.key === '-') setPrefs({ size: Math.max(0, prefs.size - 1) });
     };
@@ -260,50 +289,44 @@ export function Reader({ lang, title, course: courseId, store, ai, needAI }: Pro
   const back = () => (history.length > 1 ? history.back() : (location.hash = '#/app'));
 
   const size = prefs.size;
-  const bar = 'flex items-center overflow-hidden rounded-lg border border-line text-sm';
-  const sizeBtn = 'flex size-11 items-center justify-center hover:bg-fg/5 disabled:opacity-40';
+  const progress = (cls: string) => (
+    <div role="progressbar" aria-label="پیشرفت خواندن" aria-valuemin={0} aria-valuemax={100} aria-valuenow={percent} className={cls}>
+      <div className="h-full origin-right bg-accent transition-transform" style={{ transform: `scaleX(${percent / 100})` }} />
+    </div>
+  );
+  const toc = blocks.slice(1).map((b) => ({ title: b.title, level: b.level }));
+  const hasToc = toc.length > 1 && !focus;
 
   return (
-    <div ref={root} className="mx-auto max-w-3xl px-4 pb-44 lg:pb-16">
+    <div ref={root} className={`mx-auto max-w-3xl px-4 lg:max-w-6xl lg:pb-16 ${focus ? 'pb-16' : 'pb-44'}`}>
       {langs && <LangPicker lang={lang} title={article?.title ?? title} course={courseId} onClose={() => setLangs(false)} />}
-      <div className="sticky top-0 z-20 -mx-4 flex flex-wrap items-center gap-x-3 gap-y-2 glass border-b border-line px-4 py-2.5">
-        <button onClick={back} className="flex min-h-11 items-center gap-1 text-sm text-muted hover:text-fg">
-          <ArrowRight className={ic} />
-          بازگشت
-        </button>
-        <span dir="auto" className="min-w-0 flex-1 basis-40 truncate font-bold">
-          {article?.title ?? title}
-        </span>
-        <div className={bar} role="group" aria-label="حالت خوانش">
-          {MODES.map(([m, label, Icon]) => (
-            <button
-              key={m}
-              aria-pressed={prefs.mode === m}
-              onClick={() => setMode(m)}
-              className={`flex h-11 items-center gap-1.5 px-3 ${prefs.mode === m ? 'bg-accent text-on-accent' : 'hover:bg-fg/5'}`}
-            >
-              <Icon className={ic} />
-              {label}
-            </button>
-          ))}
-        </div>
-        <div className={bar} role="group" aria-label="اندازه‌ی متن">
-          <button className={sizeBtn} aria-label="متن کوچک‌تر" title="متن کوچک‌تر" disabled={size === 0} onClick={() => setPrefs({ size: size - 1 })}>
-            <Minus className={ic} />
+      {focus ? (
+        <>
+          {progress('fixed inset-x-0 top-0 z-[60] h-1 bg-fg/10')}
+          <button onClick={() => setFocus(false)} aria-label="خروج از حالت تمرکز" title="خروج از حالت تمرکز (Esc)" className="fixed end-3 top-4 z-[60] flex min-h-11 items-center gap-1.5 rounded-full border border-line bg-panel/90 px-3 text-sm text-muted shadow-lg backdrop-blur hover:text-fg max-sm:opacity-80">
+            <Minimize2 className={ic} />
+            <span className="max-sm:hidden">خروج از تمرکز</span>
           </button>
-          <span className="flex items-center gap-1 px-1 text-muted" title="اندازه‌ی متن">
-            <Type className={ic} />
-            <span className="w-4 text-center text-xs tabular-nums">{fa(size + 1)}</span>
+        </>
+      ) : (
+        <div className="sticky top-[3.8125rem] z-20 -mx-4 flex items-center lg:top-0 gap-3 glass border-b border-line px-4 py-2.5">
+          <button onClick={back} className="flex min-h-11 items-center gap-1 text-sm text-muted hover:text-fg">
+            <ArrowRight className={ic} />
+            بازگشت
+          </button>
+          <span dir="auto" className="min-w-0 flex-1 truncate font-bold">
+            {article?.title ?? title}
           </span>
-          <button className={sizeBtn} aria-label="متن بزرگ‌تر" title="متن بزرگ‌تر" disabled={size === READER_SIZES.length - 1} onClick={() => setPrefs({ size: size + 1 })}>
-            <Plus className={ic} />
-          </button>
+          {article && (
+            <button onClick={() => setFocus(true)} className={`${ghost} shrink-0 max-sm:px-3`} aria-label="حالت تمرکز" title="حالت تمرکز (F)">
+              <Focus className={ic} />
+              <span className="max-sm:hidden">تمرکز</span>
+            </button>
+          )}
+          <ReaderSettings prefs={prefs} set={setPrefs} onMode={setMode} onLang={() => setLangs(true)} lang={lang.toUpperCase()} />
+          {article && progress('absolute inset-x-0 bottom-0 h-1 bg-fg/10')}
         </div>
-        <button onClick={() => setLangs(true)} className={`${bar} h-11 gap-1.5 px-3 hover:bg-fg/5`} aria-label="زبان‌های دیگر" title="این مقاله به زبان‌های دیگر">
-          <Languages className={ic} />
-          <span className="max-sm:hidden">{lang.toUpperCase()}</span>
-        </button>
-      </div>
+      )}
 
       {error ? (
         <div className={`${card} mt-8 space-y-3 p-6`}>
@@ -319,11 +342,28 @@ export function Reader({ lang, title, course: courseId, store, ai, needAI }: Pro
           در حال خواندن مقاله…
         </p>
       ) : (
-        <article style={{ fontSize: `${READER_SIZES[size]}rem` }} className="mx-auto mt-6 max-w-[38em]">
-          {article.thumbnail && <img src={article.thumbnail} alt="" decoding="async" className="mb-6 max-h-72 w-full rounded-lg bg-fg/5 object-cover" />}
+        <div className={hasToc ? 'lg:grid lg:grid-cols-[16rem_minmax(0,1fr)] lg:gap-8' : ''}>
+        {hasToc && (
+          <aside aria-label="فهرست مطالب" className="max-lg:hidden">
+            <div className="sticky top-[4.5rem] mt-6 flex max-h-[calc(100dvh-6rem)] flex-col gap-3">
+              <p className="flex items-center justify-between gap-2 text-sm text-muted">
+                <span className="flex items-center gap-1.5 font-semibold text-fg"><List className={ic} />فهرست مطالب</span>
+                <span className="tabular-nums">{fa(percent)}٪ خوانده شده</span>
+              </p>
+              <Toc sticky items={toc} active={active} onJump={(i) => jump(`sec-${i + 1}`, 'start')} />
+            </div>
+          </aside>
+        )}
+        <article
+          data-reader-bg={prefs.bg === 'app' ? undefined : prefs.bg}
+          style={{ fontSize: `${READER_SIZES[size]}rem`, fontFamily: READER_FONTS[prefs.font][1] }}
+          className={`mx-auto mt-6 w-full max-w-[38em] ${prefs.bg === 'app' ? '' : 'rounded-2xl border border-line p-5'}`}
+        >
+          {article.thumbnail && !focus && <img src={article.thumbnail} alt="" decoding="async" className="mb-6 max-h-72 w-full rounded-lg bg-fg/5 object-cover" />}
           <h1 dir="auto" className="mb-3 text-[1.9em] font-extrabold leading-tight">
             {article.title}
           </h1>
+          {!focus && (
           <p className="mb-5 text-[0.8em] leading-7 text-muted">
             منبع:{' '}
             <a href={article.url} target="_blank" rel="noopener noreferrer" className="underline hover:text-fg">
@@ -331,6 +371,7 @@ export function Reader({ lang, title, course: courseId, store, ai, needAI }: Pro
             </a>{' '}
             · CC BY-SA 4.0 · متن همین است که در ویکی‌پدیا آمده؛ هیچ بخشی را هوش مصنوعی نوشته یا تغییر نداده است.
           </p>
+          )}
 
           {hasFormula && (
             <p className="mb-5 flex items-start gap-2 rounded-lg bg-fg/5 p-3 text-[0.85em] leading-7 text-muted">
@@ -339,7 +380,7 @@ export function Reader({ lang, title, course: courseId, store, ai, needAI }: Pro
             </p>
           )}
 
-          {enhanced && terms === undefined && (
+          {enhanced && !focus && terms === undefined && (
             <div className={`${card} mb-6 space-y-3 p-4 text-[0.85em] leading-7`}>
               <p>برای پررنگ‌کردن اصطلاحات مهم، هوش مصنوعی یک بار مقاله را بررسی می‌کند و نتیجه روی همین دستگاه می‌ماند.</p>
               <button className={primary} disabled={!!job?.status} onClick={makeTerms}>
@@ -350,7 +391,7 @@ export function Reader({ lang, title, course: courseId, store, ai, needAI }: Pro
             </div>
           )}
 
-          {enhanced && terms !== undefined && (
+          {enhanced && !focus && terms !== undefined && (
             <div className={`${card} mb-6 space-y-2 p-4 text-[0.85em]`}>
               <div className="flex items-center justify-between gap-2">
                 <b>اصطلاحات مهم</b>
@@ -376,31 +417,31 @@ export function Reader({ lang, title, course: courseId, store, ai, needAI }: Pro
             </div>
           )}
 
-          {blocks.length > 2 && (
-            <details className="mb-6 rounded-lg border border-line bg-panel px-4 py-2 text-[0.85em]">
-              <summary className="flex cursor-pointer list-none items-center gap-2 font-semibold">
+          {hasToc && (
+            <details className="mb-6 rounded-lg border border-line bg-panel px-4 py-2 text-[0.85em] lg:hidden">
+              <summary className="flex min-h-11 cursor-pointer list-none items-center gap-2 font-semibold">
                 <List className={ic} />
                 فهرست مطالب
               </summary>
-              <ul className="mt-2 space-y-1">
-                {blocks.slice(1).map((s, i) => (
-                  <li key={i} style={{ paddingInlineStart: `${(s.level - 2) * 1}rem` }}>
-                    <button dir="auto" onClick={() => jump(`sec-${i + 1}`, 'start')} className="min-h-11 text-start hover:text-accent">
-                      {s.title}
-                    </button>
-                  </li>
-                ))}
-              </ul>
+              <Toc items={toc} active={active} onJump={(i) => jump(`sec-${i + 1}`, 'start')} />
             </details>
           )}
 
           {blocks.map((s, i) => {
             const H = s.level <= 2 ? 'h2' : s.level === 3 ? 'h3' : 'h4';
+            const card = prefs.cards && i > 0; // chapters as cards; the intro stays plain text
+            const sub = s.level >= 3;
             return (
-              <section key={i}>
+              <section
+                key={i}
+                data-chapter={card ? '' : undefined}
+                className={card ? (sub ? 'mb-4 ms-4 [&>p:last-child]:mb-0 rounded-xl border border-line border-s-4 border-s-accent/50 bg-panel p-4' : 'elev relative mb-6 [&>p:last-child]:mb-0 overflow-hidden rounded-2xl border border-line bg-panel p-5 pt-6') : undefined}
+              >
+                {card && !sub && <span className="absolute inset-x-0 top-0 h-1.5 bg-linear-to-l from-accent to-sub-physics" aria-hidden="true" />}
                 {i > 0 && (
-                  <H id={`sec-${i}`} dir="auto" className={`mb-3 scroll-mt-20 font-bold leading-snug ${HEADING[Math.min(s.level, 4)]}`}>
-                    {s.title}
+                  <H id={`sec-${i}`} dir="auto" className={`mb-3 scroll-mt-32 font-bold lg:scroll-mt-20 leading-snug ${card ? `flex items-start gap-3 ${sub ? 'text-[1.1em]' : 'text-[1.3em]'}` : HEADING[Math.min(s.level, 4)]}`}>
+                    {card && <span className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-full bg-accent text-[0.6em] font-bold tabular-nums text-on-accent" aria-hidden="true">{fa(i)}</span>}
+                    <span className="min-w-0">{s.title}</span>
                   </H>
                 )}
                 {s.paras.map((segs, j) => (
@@ -410,6 +451,7 @@ export function Reader({ lang, title, course: courseId, store, ai, needAI }: Pro
             );
           })}
 
+          {!focus && (
           <footer className="mt-12 space-y-4 border-t border-line pt-6 text-base">
             <p className="text-sm leading-7 text-muted">
               متن از ویکی‌پدیا گرفته شده و با مجوز{' '}
@@ -435,13 +477,15 @@ export function Reader({ lang, title, course: courseId, store, ai, needAI }: Pro
                 </>
               )}
             </div>
-            <p className="hidden text-sm text-muted lg:block">میان‌بر: <kbd>M</kbd> بلدم · <kbd>+</kbd> و <kbd>-</kbd> اندازه‌ی متن</p>
+            <p className="hidden text-sm text-muted lg:block">میان‌بر: <kbd>M</kbd> بلدم · <kbd>F</kbd> تمرکز · <kbd>+</kbd> و <kbd>-</kbd> اندازه‌ی متن</p>
           </footer>
+          )}
         </article>
+        </div>
       )}
 
       {/* Phones: the actions stay within thumb reach, above the bottom navigation. */}
-      {article && (
+      {article && !focus && (
         <div className="fixed inset-x-0 bottom-16 z-30 border-t border-line bg-panel/95 p-2 backdrop-blur lg:hidden">
           <div className="mx-auto flex max-w-3xl gap-2">
             <button className={`${known ? outline : primary} flex-1`} aria-pressed={known} onClick={() => store.toggleKnown(topic)}>

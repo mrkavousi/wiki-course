@@ -64,7 +64,7 @@ export function AppShell({ nav, due, streak, job, onDismissJob, saveOk, theme, o
         رفتن به محتوا
       </a>
 
-      <aside aria-label="نوار کناری" className="hidden w-60 shrink-0 flex-col gap-1 border-e border-line bg-panel p-3 lg:flex">
+      <aside data-chrome="" aria-label="نوار کناری" className="hidden w-60 shrink-0 flex-col gap-1 border-e border-line bg-panel p-3 lg:flex">
         <a href="#/app" className="mb-3 flex items-center gap-2 px-2 py-2 text-lg font-extrabold">
           <span className="flex size-8 items-center justify-center rounded-xl bg-linear-to-br from-accent to-sub-physics text-on-accent"><Route className="size-5" /></span>
           <span>Wiki <span className="text-grad">Course</span></span>
@@ -93,7 +93,7 @@ export function AppShell({ nav, due, streak, job, onDismissJob, saveOk, theme, o
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="flex items-center gap-2 glass sticky top-0 z-30 border-b border-line px-3 py-2">
+        <header data-chrome="" className="flex items-center gap-2 glass sticky top-0 z-30 border-b border-line px-3 py-2">
           <button className={`${iconBtn} lg:hidden`} onClick={() => setMenu(true)} aria-label="باز کردن منو" aria-expanded={menu} aria-controls="drawer">
             <Menu className="size-6" />
           </button>
@@ -117,7 +117,7 @@ export function AppShell({ nav, due, streak, job, onDismissJob, saveOk, theme, o
         </header>
 
         {job && (
-          <div role="status" className={`flex items-center gap-3 px-4 py-2 text-sm ${job.error ? 'bg-danger/10 text-danger' : 'bg-accent/10'}`}>
+          <div data-chrome="" role="status" className={`flex items-center gap-3 px-4 py-2 text-sm ${job.error ? 'bg-danger/10 text-danger' : 'bg-accent/10'}`}>
             {job.status && <span className="size-3.5 shrink-0 rounded-full border-2 border-accent border-t-transparent motion-safe:animate-spin" />}
             <span className="min-w-0 flex-1 break-words">{job.error || job.status}</span>
             {job.error && (
@@ -128,7 +128,7 @@ export function AppShell({ nav, due, streak, job, onDismissJob, saveOk, theme, o
           </div>
         )}
         {!online && (
-          <p role="status" className="flex items-center gap-2 bg-gold/20 px-4 py-2 text-sm">
+          <p data-chrome="" role="status" className="flex items-center gap-2 bg-gold/20 px-4 py-2 text-sm">
             <WifiOff className={ic} />
             آفلاینی. دوره‌ها و کارت‌های ذخیره‌شده کار می‌کنند؛ ساخت دوره و خواندن مقاله به اینترنت نیاز دارند.
           </p>
@@ -184,7 +184,7 @@ export function AppShell({ nav, due, streak, job, onDismissJob, saveOk, theme, o
         </div>
       )}
 
-      <nav aria-label="اصلی" className="pb-safe fixed inset-x-0 bottom-0 z-40 glass border-t border-line lg:hidden">
+      <nav data-chrome="" aria-label="اصلی" className="pb-safe fixed inset-x-0 bottom-0 z-40 glass border-t border-line lg:hidden">
         <ul className="grid h-16 grid-cols-5">
           {ITEMS.filter((i) => i.mobile).map(({ id, href, label, icon: Icon }) => (
             <li key={id}>
