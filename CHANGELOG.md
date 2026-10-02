@@ -7,7 +7,7 @@ Versions 0.1.0 to 0.3.0 were assigned afterwards from the commit history and tag
 ## [Unreleased]
 
 ### Added
-- Previous-topic buttons next to the next-topic ones: in the reader (desktop footer and phone bar) and at the end of a topic's "about" tab. The pair are equal-width ghost buttons; one alone fills the row.
+- Previous/next topic buttons in the reader (desktop footer and phone bar) and at the end of a topic's "about" tab. They are the neighbours on the course path, so reading can go either way (a page off the path, such as a related topic, offers the first step not known yet as "next"). The pair are equal-width ghost buttons; one alone fills the row.
 - Topics without a study pack get a floating "build flashcards and quiz" button at the bottom left (above the tab bar on phones); it shows the build status while running. The flashcard and quiz tabs are unchanged.
 - Reader: a language button lists the article's versions in other Wikipedia languages (`fetchLangLinks`, Wikipedia's own language links, searchable, fa and English first) and opens the chosen one in the reader. No machine translation, so the "text is exactly Wikipedia's" promise still holds.
 - Course builder: type words instead of a link and Wikipedia is searched (`searchArticles` in `src/lib/build.ts`); results show a thumbnail and description, a fa/English toggle follows the script typed, and picking one opens the usual preview. From the home input, words continue on `#/new?q=`.

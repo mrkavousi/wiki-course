@@ -164,8 +164,9 @@ export function Reader({ lang, title, course: courseId, store, ai, needAI }: Pro
   }, [courseId]);
   const steps = from ? pathOf(from) : [];
   const at = steps.findIndex((s) => topicKey(s.page) === topic);
-  const prev = at > 0 ? steps[at - 1].page : undefined; // the step before this one on the course path
-  const next = from ? pathOf(from).find((s) => topicKey(s.page) !== topic && !store.state.known.includes(topicKey(s.page)))?.page : undefined;
+  const prev = at > 0 ? steps[at - 1].page : undefined; // the step before this one on the course path (undefined at the start or off the path)
+  // Previous and next are the neighbours on the path, so reading can go either way. A page that isn't on the path (a related topic) falls back to the first step not known yet.
+  const next = from ? (at >= 0 ? steps[at + 1]?.page : steps.find((s) => !store.state.known.includes(topicKey(s.page)))?.page) : undefined;
 
   // Reading position: restored once when the article is on screen, then saved a moment after each scroll.
   useEffect(() => {
