@@ -1,8 +1,8 @@
-import type { Box, Day, Grade, State } from '../types/course';
+import type { Box, Day, Grade, State, Usage } from '../types/course';
 import { topicKey } from './course';
 
 export const PASS = 75; // quiz % that counts as "I know this"
-export const EMPTY_STATE: State = { known: [], saved: [], recent: [], notes: {}, boxes: {}, quiz: {}, days: [], meta: {}, log: {}, pos: {}, goal: 5, onboarded: false, lastBackup: '' };
+export const EMPTY_STATE: State = { known: [], saved: [], recent: [], notes: {}, boxes: {}, quiz: {}, days: [], meta: {}, log: {}, pos: {}, goal: 5, onboarded: false, lastBackup: '', usage: [], price: { in: 26_000, out: 104_000 } }; // default price: Gemini 2.5 Flash-lite on ArvanCloud, toman per 1M tokens
 export const EMPTY_DAY: Day = { cards: 0, known: 0, quiz: 0, sec: 0 };
 
 /** Local calendar day as YYYY-MM-DD, so string comparison is date comparison. */
@@ -39,6 +39,15 @@ export function streak(days: string[], day: string) {
 const uniq = <T,>(xs: T[], key: (x: T) => string) => [...new Map(xs.map((x) => [key(x), x])).values()];
 
 /** Restore a backup: lists are merged, per-item maps take the backup's value, a day's counters keep the larger one. */
+/** Union of two AI-call logs (a call present in both counts once), oldest first, capped. */
+export function mergeUsage(a: Usage[], b: Usage[], cap = 1000): Usage[] {
+  const seen = new Set<string>();
+  return [...a, ...b]
+    .filter((u) => !seen.has(`${u.t}:${u.kind}:${u.inT}:${u.outT}`) && !!seen.add(`${u.t}:${u.kind}:${u.inT}:${u.outT}`))
+    .sort((x, y) => x.t - y.t)
+    .slice(-cap);
+}
+
 export function mergeBackup(local: State, b: Partial<State>): State {
   const log = { ...local.log };
   for (const [d, v] of Object.entries(b.log ?? {})) {
@@ -57,5 +66,6 @@ export function mergeBackup(local: State, b: Partial<State>): State {
     meta: { ...local.meta, ...b.meta },
     log,
     pos: { ...local.pos, ...b.pos },
+    usage: mergeUsage(local.usage, b.usage ?? []),
   };
 }

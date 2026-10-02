@@ -2,7 +2,8 @@
 //   Wikipedia -> article summary/thumbnail, lead-section links, plain text
 //   AI (ArvanCloud gateway -> Gemini 2.5 Flash-lite) -> prerequisites / next steps / related scored 0-100, flashcards, quiz, key terms
 // Only needs fetch: runs in the browser (the app; both APIs allow CORS) and in Node (scripts/build-course.ts).
-import type { AI, BuildOpts, Course, Pack, Page, Purpose, Topic } from '../types/course';
+import type { AI, BuildOpts, Course, Pack, Page, Purpose, Topic, Usage, UsageKind } from '../types/course';
+import { estimateTokens } from '../utils/usage';
 import { ROLES, cleanItems, cleanPack, courseKey, extractLists, parseWikiUrl, topicKey } from '../utils/course';
 import { cleanTerms, outline, parseArticle } from '../utils/reader';
 
@@ -120,7 +121,11 @@ const inBatches = async <T, R>(xs: T[], f: (x: T) => Promise<R>, n = 3) => {
 };
 
 // ---------- AI ----------
-async function chat(ai: AI, prompt: string): Promise<string> {
+/** Receives one record per answered call. The app stores them (cost stats in settings); Node scripts leave it unset. */
+let usageSink: ((u: Usage) => void) | null = null;
+export const setUsageSink = (f: ((u: Usage) => void) | null) => void (usageSink = f);
+
+async function chat(ai: AI, prompt: string, kind: UsageKind, retry = false): Promise<string> {
   const r = await getJson(`${ai.baseUrl.replace(/\/+$/, '')}/chat/completions`, {
     method: 'POST',
     headers: { Authorization: `apikey ${ai.key}`, 'content-type': 'application/json' },
@@ -128,11 +133,21 @@ async function chat(ai: AI, prompt: string): Promise<string> {
   }).catch((e: Error) => {
     throw new Error(`هوش مصنوعی: ${e.message}`);
   });
-  return r.choices?.[0]?.message?.content ?? ''; // may be empty: the gateway sometimes returns '' with finish=stop
+  const text: string = r.choices?.[0]?.message?.content ?? ''; // may be empty: the gateway sometimes returns '' with finish=stop
+  const u = r.usage;
+  const exact = Number.isFinite(u?.prompt_tokens) && Number.isFinite(u?.completion_tokens);
+  usageSink?.({
+    t: Date.now(), kind, model: ai.model,
+    inT: exact ? u.prompt_tokens : estimateTokens(prompt),
+    outT: exact ? u.completion_tokens : estimateTokens(text),
+    ...(exact ? {} : { est: true }),
+    ...(retry ? { retry: true } : {}),
+  });
+  return text;
 }
 
 /** True when the endpoint answers at all (settings "test connection"). */
-export const testAI = async (ai: AI) => (await chat(ai, 'Reply with the single word: ok')).trim().length > 0;
+export const testAI = async (ai: AI) => (await chat(ai, 'Reply with the single word: ok', 'test')).trim().length > 0;
 
 /** How to turn a parsed reply into usable items, and when that's good enough to stop asking. */
 type Judge<K extends string, T> = { clean: (d: Record<K, unknown[]>) => T; enough: (t: T) => boolean; size: (t: T) => number };
@@ -141,13 +156,13 @@ type Judge<K extends string, T> = { clean: (d: Record<K, unknown[]>) => T; enoug
  * Ask until the cleaned reply is good enough. The gateway randomly cuts answers short ('', '```json', half a JSON)
  * and the model sometimes writes broken JSON, so weak replies are retried; if none is good enough, the fullest one wins.
  */
-async function askJson<K extends string, T>(ai: AI, prompt: string, keys: readonly K[], status: Status, judge: Judge<K, T>): Promise<T> {
+async function askJson<K extends string, T>(ai: AI, prompt: string, keys: readonly K[], status: Status, judge: Judge<K, T>, kind: UsageKind): Promise<T> {
   let text = '';
   let best: T | undefined;
   for (let i = 1; i <= TRIES; i++) {
     status(i === 1 ? 'در حال پرسیدن از هوش مصنوعی…' : `پاسخ ناقص بود؛ تلاش ${fa(i)} از ${fa(TRIES)}…`);
     if (i > 1) await sleep(1500 * (i - 1));
-    text = await chat(ai, prompt);
+    text = await chat(ai, prompt, kind, i > 1);
     try {
       const t = judge.clean(extractLists(text, keys));
       if (judge.enough(t)) return t;
@@ -206,7 +221,7 @@ export async function buildTerms(a: Pick<Article, 'lang' | 'title' | 'text'>, ai
     clean: (d) => cleanTerms(d.terms, a.text),
     enough: (t) => t.length >= 8,
     size: (t) => t.length,
-  });
+  }, 'terms');
 }
 
 export async function buildCourse(url: string, ai: AI, status: Status = () => {}, opts: BuildOpts = DEFAULT_OPTS): Promise<Course> {
@@ -221,7 +236,7 @@ export async function buildCourse(url: string, ai: AI, status: Status = () => {}
     clean: (d) => ({ prereq: cleanItems(d.prereq, cap), next: cleanItems(d.next, cap), related: cleanItems(d.related, cap) }),
     enough: (r) => r.prereq.length >= Math.min(2, cap) && r.next.length >= Math.min(2, cap) && r.prereq.length + r.next.length + r.related.length >= need,
     size: (r) => r.prereq.length + r.next.length + r.related.length,
-  });
+  }, 'course');
 
   status('در حال پیدا کردن مقاله‌ها در ویکی‌پدیا…', 2);
   const seen = new Set([topicKey(root)]);
@@ -247,6 +262,6 @@ export async function buildPack(page: Pick<Page, 'lang' | 'title'>, ai: AI, stat
     clean: cleanPack,
     enough: (p) => p.cards.length >= 5 && p.quiz.length >= 3,
     size: (p) => p.cards.length + p.quiz.length,
-  });
+  }, 'pack');
   return { key: courseKey(page.lang, page.title), lang: page.lang, title: page.title, ...pack, generatedAt: new Date().toISOString() };
 }

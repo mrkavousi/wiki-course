@@ -217,3 +217,29 @@ assert.ok(!('goal' in imported) && !('lastBackup' in imported), 'scalars are nev
   await assert.rejects(unpack('not-gzip'));
   console.log('course.check ok');
 })();
+
+// ---------- AI usage log ----------
+import { costOf, estimateTokens, summarize } from './usage';
+import { mergeUsage } from './learn';
+const PRICE = { in: 26_000, out: 104_000 };
+assert.equal(costOf(1_000_000, 1_000_000, PRICE), 130_000, 'cost = input and output tokens at their own price per 1M');
+assert.equal(costOf(0, 0, PRICE), 0);
+assert.equal(estimateTokens('x'.repeat(30)), 10, 'about 3 characters per token');
+const D = (iso: string) => new Date(`${iso}T12:00:00`).getTime();
+const rows = [
+  { t: D('2026-10-01'), kind: 'course' as const, model: 'm', inT: 1000, outT: 500 },
+  { t: D('2026-10-07'), kind: 'pack' as const, model: 'm', inT: 2000, outT: 1000, retry: true },
+  { t: D('2026-10-07'), kind: 'pack' as const, model: 'm', inT: 100, outT: 50, est: true },
+];
+const su = summarize(rows, PRICE, '2026-10-07');
+assert.equal(su.today.calls, 2, 'two calls today');
+assert.equal(su.week.calls, 3, 'the 1st is within 7 days of the 7th');
+assert.equal(summarize(rows, PRICE, '2026-10-09').week.calls, 2, 'the 1st falls out of the window by the 9th');
+assert.equal(su.all.inT, 3100);
+assert.equal(su.byKind.pack?.calls, 2);
+assert.equal(su.retries, 1);
+assert.ok(su.all.est && !su.byKind.course?.est, 'a guessed count marks only the totals that include it');
+assert.equal(mergeUsage(rows, rows).length, 3, 'merging the same log twice adds nothing');
+assert.equal(mergeUsage([], rows, 2).length, 2, 'the log is capped, newest kept');
+assert.equal(sanitizeState({ usage: [{ t: 1, kind: 'pack', model: 'm', inT: 5, outT: 6 }, { t: 1, kind: 'evil', inT: 1, outT: 1 }, { t: 'x' }] }).usage?.length, 1, 'bad usage rows are dropped');
+assert.equal(sanitizeState({ price: { in: 1, out: 1 } }).price, undefined, 'the price is never imported from a file');

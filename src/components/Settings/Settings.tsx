@@ -1,13 +1,15 @@
 import { useState } from 'react';
-import { Check, Download, Link2, Moon, Sun, SunMoon, Trash2, Upload, X } from 'lucide-react';
+import { ChartNoAxesColumn, Check, Download, Link2, Moon, Sun, SunMoon, Trash2, Upload, X } from 'lucide-react';
 import type { AI } from '../../types/course';
 import { MAX_LINK, backupJson, restoreJson, transferLink, wipeAll, type Store, type ThemePref } from '../../data/store';
 import { testAI } from '../../lib/build';
 import { download } from '../../utils/export';
 import { today } from '../../utils/learn';
+import { summarize, type Totals } from '../../utils/usage';
 import { ConfirmModal } from '../ConfirmModal/ConfirmModal';
 import { useToast } from '../Toast/Toast';
-import { card, fa, field, ghost, ic, primary } from '../ui';
+import { ago, card, fa, field, ghost, ic, primary } from '../ui';
+import type { UsageKind } from '../../types/course';
 
 type Props = { ai: AI; store: Store; theme: ThemePref; onTheme: (t: ThemePref) => void; onSave: (ai: AI) => void };
 type Msg = { kind: 'info' | 'ok' | 'err'; text: string } | null;
@@ -28,6 +30,92 @@ const Note = ({ msg }: { msg: Msg }) =>
       <span className="min-w-0 break-words">{msg.text}</span>
     </p>
   );
+
+const KIND_LABEL: Record<UsageKind, string> = { course: 'ساخت دوره', pack: 'فلش‌کارت و آزمون', terms: 'اصطلاحات خوانشگر', test: 'تست اتصال' };
+const toman = (n: number) => `${fa(Math.round(n))} تومان`;
+const tokens = (t: Totals) => `${fa(t.inT + t.outT)} توکن`;
+
+/** AI usage and estimated cost: tokens come from the gateway's `usage` field, the price is the learner's own (cost is an estimate, not the invoice). */
+function UsageStats({ store }: { store: Store }) {
+  const { usage, price } = store.state;
+  const [clear, setClear] = useState(false);
+  const sum = summarize(usage, price, today());
+  const last = [...usage].reverse().slice(0, 8);
+  const cell = (label: string, t: Totals) => (
+    <div className="rounded-xl bg-surface-2 p-3 text-center">
+      <p className="text-xs text-muted">{label}</p>
+      <p className="text-lg font-bold tabular-nums">{t.calls ? `${t.est ? 'حدود ' : ''}${toman(t.cost)}` : '۰ تومان'}</p>
+      <p className="text-xs text-muted">{fa(t.calls)} فراخوانی · {tokens(t)}</p>
+    </div>
+  );
+  const priceField = (k: 'in' | 'out', label: string) => (
+    <label className="block space-y-1">
+      <span className="text-sm font-semibold">{label}</span>
+      <input
+        type="number"
+        min={0}
+        inputMode="numeric"
+        dir="ltr"
+        value={price[k]}
+        onChange={(e) => store.setPrice({ ...price, [k]: Math.max(0, Number(e.target.value) || 0) })}
+        className={`${field} text-start`}
+      />
+    </label>
+  );
+  return (
+    <Section title="مصرف هوش مصنوعی و هزینه‌ها">
+      <p className="text-sm leading-7 text-muted">هر بار که هوش مصنوعی جواب می‌دهد، تعداد توکن‌ها روی همین دستگاه ثبت می‌شود و با قیمت پایین ضرب می‌شود. این عدد تخمین است؛ مبلغ نهایی را صورت‌حساب ابرآروان تعیین می‌کند.</p>
+      <div className="grid gap-2 sm:grid-cols-3">
+        {cell('امروز', sum.today)}
+        {cell('۷ روز اخیر', sum.week)}
+        {cell('کل', sum.all)}
+      </div>
+      <div className="grid gap-3 sm:grid-cols-2">
+        {priceField('in', 'قیمت ورودی (تومان برای هر ۱ میلیون توکن)')}
+        {priceField('out', 'قیمت خروجی (تومان برای هر ۱ میلیون توکن)')}
+      </div>
+      {usage.length > 0 ? (
+        <>
+          <div>
+            <h3 className="mb-1 flex items-center gap-2 text-sm font-bold">
+              <ChartNoAxesColumn className={ic} aria-hidden="true" />
+              به تفکیک کار
+            </h3>
+            <ul className="divide-y divide-line rounded-xl border border-line text-sm">
+              {(Object.keys(KIND_LABEL) as UsageKind[]).filter((k) => sum.byKind[k]).map((k) => (
+                <li key={k} className="flex flex-wrap items-center justify-between gap-2 px-3 py-2">
+                  <span className="font-medium">{KIND_LABEL[k]}</span>
+                  <span className="text-muted">{fa(sum.byKind[k]!.calls)} بار · {tokens(sum.byKind[k]!)} · {toman(sum.byKind[k]!.cost)}</span>
+                </li>
+              ))}
+            </ul>
+            {sum.retries > 0 && <p className="mt-1 text-xs text-muted">{fa(sum.retries)} از فراخوانی‌ها تلاش دوباره بودند (پاسخ قبلی ناقص بود)؛ آن‌ها هم هزینه دارند.</p>}
+            {usage.some((u) => u.est) && <p className="mt-1 text-xs text-muted">برای بعضی فراخوانی‌ها gateway تعداد توکن نداد و از روی طول متن حدس زده شد (با «حدود» مشخص است).</p>}
+          </div>
+          <details>
+            <summary className="flex min-h-11 cursor-pointer items-center text-sm font-semibold">آخرین فراخوانی‌ها</summary>
+            <ul className="divide-y divide-line rounded-xl border border-line text-sm">
+              {last.map((u) => (
+                <li key={`${u.t}:${u.inT}:${u.outT}`} className="flex flex-wrap items-center justify-between gap-2 px-3 py-2">
+                  <span>{KIND_LABEL[u.kind]}{u.retry ? ' (تلاش دوباره)' : ''}</span>
+                  <span className="text-muted">{ago(u.t)} · {fa(u.inT)} ورودی + {fa(u.outT)} خروجی{u.est ? ' (حدودی)' : ''}</span>
+                </li>
+              ))}
+            </ul>
+          </details>
+          <button className={ghost} onClick={() => setClear(true)}>
+            <Trash2 className={ic} />
+            پاک کردن لاگ مصرف
+          </button>
+          <ConfirmModal open={clear} danger title="پاک کردن لاگ مصرف؟" text="فقط فهرست فراخوانی‌ها و آمار هزینه پاک می‌شود. دوره‌ها و پیشرفتت دست نمی‌خورد." confirmLabel="پاک کردن" onConfirm={() => (store.clearUsage(), setClear(false))} onCancel={() => setClear(false)} />
+        </>
+      ) : (
+        <p className="text-sm text-muted">هنوز فراخوانی ثبت نشده. بعد از اولین ساخت دوره، آمار اینجا پر می‌شود.</p>
+      )}
+      <p className="text-xs text-muted">این لاگ در فایل پشتیبان هم می‌آید و با بازیابی ادغام می‌شود. قیمت پیش‌فرض مدل Gemini 2.5 Flash-lite در ابرآروان است؛ اگر تعرفه عوض شد خودت اصلاحش کن.</p>
+    </Section>
+  );
+}
 
 /** Settings page: appearance, weekly goal, AI endpoint, backup/restore and deleting everything stored in this browser. */
 export function Settings({ ai, store, theme, onTheme, onSave }: Props) {
@@ -124,6 +212,8 @@ export function Settings({ ai, store, theme, onTheme, onSave }: Props) {
           <Note msg={aiMsg} />
         </form>
       </Section>
+
+      <UsageStats store={store} />
 
       <Section title="پشتیبان‌گیری">
         <p className="text-xs leading-6 text-muted">

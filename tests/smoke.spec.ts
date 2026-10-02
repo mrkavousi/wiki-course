@@ -376,3 +376,28 @@ test('topic: "create a course for this topic" shows the build dialog on the spot
   await expect(page.getByRole('dialog', { name: 'پیشرفت ساخت' })).toBeHidden();
   await expect(page.getByRole('status').filter({ hasText: /./ }).first()).toBeVisible(); // the shell banner takes over
 });
+
+test('settings: AI calls are logged with token counts and an estimated cost', async ({ page }) => {
+  await page.route('https://stub.test/**', (r) => {
+    const body = {
+      keyPoints: ['نکته'],
+      cards: [1, 2, 3, 4, 5, 6].map((i) => ({ q: `سؤال ${i}`, a: `جواب ${i}` })),
+      quiz: [0, 1, 2, 3].map((i) => ({ q: `پرسش ${i}`, options: ['الف', 'ب', 'ج', 'د'], answer: 1, explain: 'توضیح' })),
+    };
+    return r.fulfill({ status: 200, headers: { 'access-control-allow-origin': '*' }, json: { choices: [{ message: { content: JSON.stringify(body) } }], usage: { prompt_tokens: 1000, completion_tokens: 500 } } });
+  });
+  await seed(page);
+  await stubWikipedia(page);
+  await page.addInitScript(() => localStorage.setItem('wc:ai', JSON.stringify({ baseUrl: 'https://stub.test/v1', key: 'k', model: 'm' })));
+  await page.goto(COURSE);
+  await page.locator('button[aria-pressed]', { hasText: 'ریاضیات' }).first().click();
+  await page.getByRole('button', { name: 'ساخت فلش‌کارت و آزمون' }).click();
+  await expect(page.getByRole('tab', { name: /فلش‌کارت/ })).toHaveAttribute('aria-selected', 'true');
+  await page.goto('#/settings');
+  await expect(page.getByRole('heading', { name: 'مصرف هوش مصنوعی و هزینه‌ها' })).toBeVisible();
+  await expect(page.getByText('۷۸ تومان').first()).toBeVisible(); // 1000 in x 26,000 + 500 out x 104,000, per million
+  await expect(page.getByText(/فلش‌کارت و آزمون$/).first()).toBeVisible();
+  const s = await state(page);
+  expect(s.usage).toHaveLength(1);
+  expect(s.usage[0]).toMatchObject({ kind: 'pack', inT: 1000, outT: 500 });
+});

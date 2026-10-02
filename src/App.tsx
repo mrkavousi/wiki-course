@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Moon, Sun, SunMoon } from 'lucide-react';
 import type { AI, BuildOpts } from './types/course';
 import { applyTheme, courseHref, findCourse, loadAI, local, readHref, saveAI, saveCourse, useRoute, useStore, type ThemePref } from './data/store';
-import { DEFAULT_OPTS, buildCourse } from './lib/build';
+import { DEFAULT_OPTS, buildCourse, setUsageSink } from './lib/build';
 import { courseKey, parseWikiUrl } from './utils/course';
 import { dueIds, streak, today } from './utils/learn';
 import { AppShell, type NavId } from './components/AppShell/AppShell';
@@ -35,6 +35,10 @@ export default function App() {
   const [ai, setAi] = useState<AI>(loadAI);
   const [searchOpen, setSearchOpen] = useState(false);
   const [job, setJob] = useState<Job>(null);
+  useEffect(() => {
+    setUsageSink(store.logUsage); // every answered AI call is logged for the cost stats in settings
+    return () => setUsageSink(null);
+  }, [store.logUsage]);
   const [jobHidden, setJobHidden] = useState(false); // the progress dialog was sent to the background (the shell banner takes over)
   const building = !!job?.status;
   useEffect(() => {

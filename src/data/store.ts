@@ -1,7 +1,7 @@
 // Everything is stored in this browser: small state in localStorage, courses and study packs in Cache Storage
 // (they can outgrow localStorage's ~5MB). Backup files move it all to another device.
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import type { AI, Course, CourseRef, Day, Grade, Pack, Page, State, Terms } from '../types/course';
+import type { AI, Course, CourseRef, Day, Grade, Pack, Page, State, Terms, Usage } from '../types/course';
 import { courseKey, topicKey } from '../utils/course';
 import { pack, sanitizeCourse, sanitizePack, sanitizeState, sanitizeTerms } from '../utils/share';
 import { EMPTY_DAY, EMPTY_STATE, PASS, mergeBackup, rate, today } from '../utils/learn';
@@ -248,6 +248,10 @@ export function useStore() {
       setPos: (key: string, at: number) => update((s) => ({ ...s, pos: { ...s.pos, [key]: at } })),
       setGoal: (goal: number) => update((s) => ({ ...s, goal })),
       dismissOnboarding: () => update((s) => ({ ...s, onboarded: true })),
+      /** One answered AI call; the log keeps the newest 1000. */
+      logUsage: (u: Usage) => update((s) => ({ ...s, usage: [...s.usage, u].slice(-1000) })),
+      setPrice: (price: State['price']) => update((s) => ({ ...s, price })),
+      clearUsage: () => update((s) => ({ ...s, usage: [] })),
       markBackup: () => update((s) => ({ ...s, lastBackup: new Date().toISOString() })),
       restore: (b: Partial<State>) => update((s) => ({ ...mergeBackup(s, b), lastBackup: new Date().toISOString() })),
       reset: () => setState(EMPTY_STATE),

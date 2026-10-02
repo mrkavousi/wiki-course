@@ -1,6 +1,6 @@
 // Moving data between devices without a server: a backup is gzipped into a URL fragment (never sent anywhere), and
 // everything that comes back in, from a link or a file, is treated as untrusted and rebuilt field by field.
-import type { Card, Course, Day, Pack, Page, Question, State, Terms } from '../types/course';
+import type { Card, Course, Day, Pack, Page, Question, State, Terms, Usage, UsageKind } from '../types/course';
 import { ROLES, cleanPack, courseKey, wikiUrl } from './course';
 
 // ---------- link encoding ----------
@@ -138,5 +138,16 @@ export function sanitizeState(s: unknown): Partial<State> {
     const n = (x: unknown) => { const y = num(x, 0, 1e7); return Number.isNaN(y) ? 0 : Math.round(y); };
     out.log![k] = { cards: n(d.cards), known: n(d.known), quiz: n(d.quiz), sec: n(d.sec) } satisfies Day;
   });
+  const kinds: UsageKind[] = ['course', 'pack', 'terms', 'test'];
+  const usage = arr(o.usage)
+    .map((v): Usage | null => {
+      const x = rec(v);
+      const t = num(x.t, 0, 8.64e15), inT = num(x.inT, 0, 1e8), outT = num(x.outT, 0, 1e8);
+      if (Number.isNaN(t) || Number.isNaN(inT) || Number.isNaN(outT) || !kinds.includes(x.kind as UsageKind)) return null;
+      return { t, kind: x.kind as UsageKind, model: str(x.model, 80), inT: Math.round(inT), outT: Math.round(outT), ...(x.est === true ? { est: true } : {}), ...(x.retry === true ? { retry: true } : {}) };
+    })
+    .filter((u): u is Usage => !!u)
+    .slice(-1000);
+  if (usage.length) out.usage = usage; // the price is a local preference: never taken from a file
   return out;
 }

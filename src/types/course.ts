@@ -42,7 +42,13 @@ export type State = {
   goal: number; // active days per week the learner aims for
   onboarded: boolean; // the first-visit tips were dismissed
   lastBackup: string; // ISO time of the last backup download or restore
+  usage: Usage[]; // log of AI calls (newest last, capped), for the cost stats in settings
+  price: { in: number; out: number }; // toman per 1M input / output tokens, to estimate cost from `usage`
 };
+
+export type UsageKind = 'course' | 'pack' | 'terms' | 'test';
+/** One answered AI call. `est` = the gateway sent no token counts, so they were guessed from text length; `retry` = a re-ask after a weak reply. */
+export type Usage = { t: number; kind: UsageKind; model: string; inT: number; outT: number; est?: boolean; retry?: boolean };
 
 /** OpenAI-compatible chat endpoint (ArvanCloud AI gateway). */
 export type AI = { baseUrl: string; key: string; model: string };

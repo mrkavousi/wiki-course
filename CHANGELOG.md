@@ -7,6 +7,7 @@ Versions 0.1.0 to 0.3.0 were assigned afterwards from the commit history and tag
 ## [Unreleased]
 
 ### Added
+- Settings: "AI usage and costs" section. Every answered AI call is logged on the device (kind, model, input/output tokens from the gateway's `usage`, retries marked); totals for today, 7 days and all time, a breakdown by task, the last calls, and an editable price per 1M tokens (default 26,000 toman in / 104,000 out) turn tokens into an estimated cost. The log travels with backups (merged on restore); the price does not.
 - Previous/next topic buttons in the reader (desktop footer and phone bar) and at the end of a topic's "about" tab. They are the neighbours on the course path, so reading can go either way (a page off the path, such as a related topic, offers the first step not known yet as "next"). The pair are equal-width ghost buttons; one alone fills the row.
 - Topics without a study pack get a floating "build flashcards and quiz" button at the bottom left (above the tab bar on phones); it shows the build status while running. The flashcard and quiz tabs are unchanged.
 - Reader: a language button lists the article's versions in other Wikipedia languages (`fetchLangLinks`, Wikipedia's own language links, searchable, fa and English first) and opens the chosen one in the reader. No machine translation, so the "text is exactly Wikipedia's" promise still holds.
