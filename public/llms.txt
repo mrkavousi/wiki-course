@@ -12,7 +12,8 @@ People who want to learn a topic from Wikipedia and do not know where to start: 
 ## What it does
 - Build a course from a Wikipedia link (any language) or by searching words.
 - Show the course as a step-by-step roadmap or a graph; mark topics as known.
-- Read articles in an in-app reader (text is exactly Wikipedia's; other-language versions are Wikipedia's own).
+- Read articles in an in-app reader (text is exactly Wikipedia's; other-language versions are Wikipedia's own). The reader shows each chapter as a card, has a sticky contents column with the current section, a reading-progress bar, a focus mode, and settings for font, text size and page background.
+- Copy a chapter or any selected text, or turn it into a picture for Instagram (4:5 post, square, story or 1200x1500) with ten templates; the picture carries the article credit and CC BY-SA 4.0. Instagram has no web API for posting a story, so the picture is sent through the device's share sheet or downloaded.
 - Build key points, 6 flashcards and 4 quiz questions per topic; review cards with Leitner boxes.
 - Library, own-words notes, day streak, weekly goal, insights, JSON backup and restore.
 - Installable PWA that works offline for content already opened.

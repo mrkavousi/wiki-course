@@ -1,5 +1,5 @@
 // One-off: captures real app screens for the landing page into public/landing/ (PNG; converted to WebP with sharp (1440 px wide desktop, 600 px phone, q78)).
-// Usage: npx vite preview --port 4173 & PW_CHANNEL=chrome npx tsx scripts/capture-landing.ts
+// Usage: npx vite preview --port 4173 & PW_CHANNEL=chrome npx tsx scripts/capture-landing.ts   (SHOTS=reader,share captures only those)
 import { chromium } from '@playwright/test';
 import { readFileSync } from 'node:fs';
 
@@ -28,13 +28,21 @@ const PACK = (t: { lang: string; title: string }) => ({
   cards: [1, 2, 3, 4, 5, 6].map((i) => ({ q: `پرسش ${i}`, a: `پاسخ ${i}` })), quiz: [],
 });
 
+const READ = `#/read/fa/${encodeURIComponent(topics[0].title)}?c=${KEY}`;
+/** Scrolls whichever element scrolls the reader (an inner pane on desktop, the window on phones). */
+const scrollReader = (p: import('@playwright/test').Page, y: number) =>
+  p.evaluate((y) => { const sc = document.querySelector<HTMLElement>('.page-in')!; sc.scrollHeight > sc.clientHeight && getComputedStyle(sc).overflowY === 'auto' ? sc.scrollTo({ top: y }) : scrollTo({ top: y }); }, y).then(() => p.waitForTimeout(700));
+
 const shots: [name: string, hash: string, wait?: string, act?: (p: import('@playwright/test').Page) => Promise<void>][] = [
   ['dashboard', '#/app'],
   ['builder', '#/new'],
   ['roadmap', `#/c/${KEY}`],
   ['graph', `#/c/${KEY}`, undefined, async (p) => { await p.getByRole('button', { name: 'گراف' }).click(); await p.waitForTimeout(1500); }],
   ['topic', `#/c/${KEY}?t=${encodeURIComponent(tk(topics[0]))}`],
-  ['reader', `#/read/fa/${encodeURIComponent(topics[0].title)}?c=${KEY}`, undefined, async (p) => { await p.waitForTimeout(2500); }],
+  ['reader', READ, undefined, async (p) => { await p.waitForTimeout(2500); await scrollReader(p, 460); }],
+  ['readerCards', READ, undefined, async (p) => { await p.waitForTimeout(2500); await scrollReader(p, 700); }],
+  ['focus', READ, undefined, async (p) => { await p.waitForTimeout(2500); await p.getByRole('button', { name: 'حالت تمرکز' }).click(); await scrollReader(p, 900); }],
+  ['share', READ, undefined, async (p) => { await p.waitForTimeout(2500); await p.getByRole('button', { name: /^اشتراک‌گذاری فصل/ }).first().click(); await p.getByRole('radio', { name: process.env.TPL ?? 'میراث تزئینی' }).click(); await p.waitForTimeout(3500); }],
   ['insights', '#/insights'],
   ['library', '#/library'],
 ];
@@ -48,6 +56,7 @@ for (const theme of ['dark', 'light'] as const) {
     await page.goto(`${BASE}/#/app`);
     await page.evaluate(async (packs) => { const c = await caches.open('wiki-course'); for (const p of packs) await c.put(`/__kv/${encodeURIComponent('pack:' + p.key)}`, new Response(JSON.stringify(p), { headers: { 'content-type': 'application/json' } })); }, [PACK(topics[0])]);
     for (const [name, hash, , act] of shots) {
+      if (process.env.SHOTS && !process.env.SHOTS.split(',').includes(name)) continue;
       await page.goto(`${BASE}/${hash}`);
       await page.waitForTimeout(1200);
       if (act) await act(page);

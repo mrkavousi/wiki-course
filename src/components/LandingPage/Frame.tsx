@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 
-export type ShotName = 'dashboard' | 'builder' | 'roadmap' | 'graph' | 'topic' | 'reader' | 'insights' | 'library';
+export type ShotName = 'dashboard' | 'builder' | 'roadmap' | 'graph' | 'topic' | 'reader' | 'readerCards' | 'focus' | 'share' | 'insights' | 'library';
 
 const url = (s: ShotName, dev: 'd' | 'm', theme: 'dark' | 'light') => `/landing/${s}-${dev}-${theme}.webp`;
 
