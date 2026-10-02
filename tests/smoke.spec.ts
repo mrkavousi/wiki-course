@@ -120,6 +120,7 @@ test('library: search with no hits, archive and filter', async ({ page }) => {
   const all = await cards.count();
   await page.getByRole('button', { name: /بایگانی «جبر خطی»/ }).click();
   await expect(cards).toHaveCount(all - 1);
+  await page.getByRole('button', { name: /فیلتر پیشرفته/ }).click();
   await page.getByLabel('وضعیت').selectOption('archived');
   await expect(cards).toHaveCount(1);
   await page.getByLabel('وضعیت').selectOption('');

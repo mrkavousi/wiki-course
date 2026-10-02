@@ -4,7 +4,7 @@ import { ic, primary, ghost, card } from '../ui';
 /** Small links under every static page. */
 export function Footer() {
   return (
-    <footer className="mx-auto mt-6 flex w-full max-w-6xl flex-wrap items-center justify-between gap-x-6 border-t border-line px-4 py-4 text-sm text-muted">
+    <footer className="mx-auto mt-6 flex max-lg:hidden w-full max-w-6xl flex-wrap items-center justify-between gap-x-6 border-t border-line px-4 py-4 text-sm text-muted">
       <span>Wiki Course · محتوای مقاله‌ها از ویکی‌پدیا (CC BY-SA)</span>
       <nav aria-label="پیوندهای پایین صفحه" className="flex">
         <a href="#/about" className="inline-flex min-h-11 items-center px-2 hover:text-fg hover:underline">درباره</a>

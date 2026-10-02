@@ -70,9 +70,9 @@ export function ExportMenu({ ctx, busy, archived, onArchive, onRebuild, copy, to
 
   return (
     <>
-      <button ref={btn} className={ghost} aria-haspopup="true" aria-expanded={open} onClick={() => (open ? close() : show())}>
+      <button ref={btn} className={`${ghost} shrink-0 max-sm:px-3`} aria-label="خروجی و پرامپت" aria-haspopup="true" aria-expanded={open} onClick={() => (open ? close() : show())}>
         <EllipsisVertical className={ic} />
-        خروجی و پرامپت
+        <span className="max-sm:hidden">خروجی و پرامپت</span>
       </button>
       {open &&
         createPortal(

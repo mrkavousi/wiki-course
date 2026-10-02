@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Archive, ArchiveRestore, BookOpen, LayoutGrid, List, Plus, Search, SearchX, Star, Trash2 } from 'lucide-react';
+import { Archive, ArchiveRestore, BookOpen, LayoutGrid, List, ListFilter, Plus, Search, SearchX, Star, Trash2 } from 'lucide-react';
 import type { BuildOpts, Course, Page } from '../../types/course';
 import { allRefs, deleteCourse, local, useCourses, type Store } from '../../data/store';
 import { topicKey, wikiUrl } from '../../utils/course';
@@ -17,7 +17,6 @@ type Props = { store: Store; onBuild: (url: string, o?: { opts?: BuildOpts; forc
 type Sort = 'last' | 'progress' | 'created';
 type View = 'grid' | 'list';
 
-const select = `${field} !w-auto min-h-11 py-2 text-sm`;
 
 export function Library({ store, onBuild }: Props) {
   const { state } = store;
@@ -31,6 +30,7 @@ export function Library({ store, onBuild }: Props) {
   const [subject, setSubject] = useState<'' | Subject>('');
   const [sort, setSort] = useState<Sort>('last');
   const [favOnly, setFavOnly] = useState(false);
+  const [adv, setAdv] = useState(false); // the advanced filter panel
   const [view, setViewState] = useState<View>(() => (local.get<View>('wc:lib', 'grid') === 'list' ? 'list' : 'grid'));
   const [doomed, setDoomed] = useState<Course | null>(null);
   const setView = (v: View) => (setViewState(v), local.set('wc:lib', v));
@@ -48,6 +48,7 @@ export function Library({ store, onBuild }: Props) {
     .filter((r) => !needle || `${r.c.root.title} ${r.c.root.summary}`.toLowerCase().includes(needle))
     .sort((a, b) => (sort === 'progress' ? b.s.pct - a.s.pct : sort === 'created' ? b.c.generatedAt.localeCompare(a.c.generatedAt) : b.s.last - a.s.last));
   const filtered = !!(q || lang || status || subject || favOnly);
+  const advCount = [lang, status, subject, sort !== 'last' ? sort : ''].filter(Boolean).length;
   const clear = () => (setQ(''), setLang(''), setStatus(''), setSubject(''), setFavOnly(false));
 
   // Saved topics that have no course yet (a star on a course card is a favourite; these were saved from inside a course).
@@ -80,27 +81,15 @@ export function Library({ store, onBuild }: Props) {
       </header>
 
       <div className="flex flex-wrap items-center gap-2" role="search">
-        <div className="relative min-w-48 flex-1">
+        <div className="relative min-w-48 basis-full sm:basis-auto sm:flex-1">
           <Search className="pointer-events-none absolute start-3 top-1/2 size-4 -translate-y-1/2 text-muted" />
           <input type="search" value={q} onChange={(e) => setQ(e.target.value)} aria-label="جست‌وجو در کتابخانه" placeholder="جست‌وجو در عنوان و خلاصه" className={`${field} ps-9`} />
         </div>
-        <select aria-label="زبان" value={lang} onChange={(e) => setLang(e.target.value)} className={select}>
-          <option value="">همه‌ی زبان‌ها</option>
-          {langs.map((l) => <option key={l} value={l}>{l === 'fa' ? 'فارسی' : l === 'en' ? 'English' : l}</option>)}
-        </select>
-        <select aria-label="وضعیت" value={status} onChange={(e) => setStatus(e.target.value as Status | '')} className={select}>
-          <option value="">همه‌ی وضعیت‌ها</option>
-          {(Object.keys(STATUS_LABEL) as Status[]).map((s) => <option key={s} value={s}>{STATUS_LABEL[s]}</option>)}
-        </select>
-        <select aria-label="موضوع" value={subject} onChange={(e) => setSubject(e.target.value as Subject | '')} className={select}>
-          <option value="">همه‌ی حوزه‌ها</option>
-          {(Object.keys(SUBJECT_LABEL) as Subject[]).map((s) => <option key={s} value={s}>{SUBJECT_LABEL[s]}</option>)}
-        </select>
-        <select aria-label="مرتب‌سازی" value={sort} onChange={(e) => setSort(e.target.value as Sort)} className={select}>
-          <option value="last">آخرین فعالیت</option>
-          <option value="progress">بیشترین پیشرفت</option>
-          <option value="created">تازه‌ترین</option>
-        </select>
+        <button className={`${ghost} ${adv || advCount ? 'border-accent text-accent' : ''}`} aria-expanded={adv} aria-controls="lib-adv" onClick={() => setAdv(!adv)}>
+          <ListFilter className={ic} />
+          فیلتر پیشرفته
+          {advCount > 0 && <span className="min-w-5 rounded-full bg-accent px-1 text-center text-xs font-bold text-on-accent">{advCount.toLocaleString('fa')}</span>}
+        </button>
         <button className={`${ghost} ${favOnly ? 'border-accent bg-accent-soft text-accent' : ''}`} aria-pressed={favOnly} onClick={() => setFavOnly(!favOnly)}>
           <Star className={`${ic} ${favOnly ? 'fill-current' : ''}`} />
           ذخیره‌شده‌ها
@@ -118,6 +107,31 @@ export function Library({ store, onBuild }: Props) {
           ))}
         </div>
       </div>
+
+      {adv && (
+        <div id="lib-adv" className={`${card} grid gap-3 p-3 sm:grid-cols-2 lg:grid-cols-4`}>
+        <select aria-label="زبان" value={lang} onChange={(e) => setLang(e.target.value)} className={`${field} w-full text-sm`}>
+          <option value="">همه‌ی زبان‌ها</option>
+          {langs.map((l) => <option key={l} value={l}>{l === 'fa' ? 'فارسی' : l === 'en' ? 'English' : l}</option>)}
+        </select>
+        <select aria-label="وضعیت" value={status} onChange={(e) => setStatus(e.target.value as Status | '')} className={`${field} w-full text-sm`}>
+          <option value="">همه‌ی وضعیت‌ها</option>
+          {(Object.keys(STATUS_LABEL) as Status[]).map((s) => <option key={s} value={s}>{STATUS_LABEL[s]}</option>)}
+        </select>
+        <select aria-label="موضوع" value={subject} onChange={(e) => setSubject(e.target.value as Subject | '')} className={`${field} w-full text-sm`}>
+          <option value="">همه‌ی حوزه‌ها</option>
+          {(Object.keys(SUBJECT_LABEL) as Subject[]).map((s) => <option key={s} value={s}>{SUBJECT_LABEL[s]}</option>)}
+        </select>
+        <select aria-label="مرتب‌سازی" value={sort} onChange={(e) => setSort(e.target.value as Sort)} className={`${field} w-full text-sm`}>
+          <option value="last">آخرین فعالیت</option>
+          <option value="progress">بیشترین پیشرفت</option>
+          <option value="created">تازه‌ترین</option>
+        </select>
+          <button className={`${ghost} sm:col-span-2 lg:col-span-4`} onClick={() => (setLang(''), setStatus(''), setSubject(''), setSort('last'))}>
+            بازنشانی فیلترهای پیشرفته
+          </button>
+        </div>
+      )}
 
       {courses === undefined ? (
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">

@@ -17,6 +17,12 @@ Versions 0.1.0 to 0.3.0 were assigned afterwards from the commit history and tag
 - `ExportMenu` (`src/components/CourseView/`): export, share, AI prompts and course upkeep (archive, rebuild) in grouped sections.
 
 ### Changed
+- Course builder shows only two examples under the input (no history chips).
+- Library: language, status, domain and sort moved into an "advanced filter" panel (button with an active-filter count); search, favourites and the view switch stay outside.
+- Review shows how many cards come due on each of the next three days.
+- Discover: next steps from your courses come first; ready-made courses follow, as a swipeable rail on phones.
+- Phones: course tags fit one row (library link, language, depth and source are hidden there); the course action row (continue, save, view, export) is one line with icon-only secondary buttons; the footer is hidden below the desktop breakpoint.
+- Graph: two-finger pinch zoom on touch screens and +/- zoom buttons.
 - After a study pack is built the panel switches to the flashcards tab and the quiz tab glows, wiggles and shows a dot for a few seconds (until it is opened).
 - Home on phones: compact hero, swipeable card rails (`.rail`) for courses, suggestions and the quick-start guide; the weekly chart and the "review done" card are hidden.
 - Graph layout: nodes sit on concentric rings inside one wedge per role (higher score nearer the centre), then overlaps are relaxed away and the view zooms to fit; edge percentage labels are hidden above 16 topics.
@@ -24,6 +30,7 @@ Versions 0.1.0 to 0.3.0 were assigned afterwards from the commit history and tag
 - Course header meta (status, level, depth, time, source) and topic tags are `chip`s; topic actions are a primary row ("read", "I know this") plus a three-cell toolbar (save, Wikipedia, topic course). The flashcard and quiz shortcuts were dropped because the tabs cover them.
 
 ### Fixed
+- Unreadable "answer" tag on flashcards (and wrong tones on other chips): a `bg-*`/`text-*` override on `chip` collided with its own defaults and lost. `chip` is now split into `chipBase` (layout) and `chip` (muted tone); overriding sites use `chipBase`. Answer tag contrast is 5.5:1 in light and 9.2:1 in dark.
 - Horizontal overflow on the home and insights pages (grid tracks without `min-w-0`) and a document-level scrollbar on desktop (`sr-only` elements escaping the inner scroller).
 
 ## [0.4.0] - 2026-10-02

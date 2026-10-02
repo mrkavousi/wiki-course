@@ -39,7 +39,7 @@ const guessLang = (s: string) => (/[\u0600-\u06FF]/.test(s) ? 'fa' : 'en');
 
 type Pre = { state: 'idle' } | { state: 'loading' } | { state: 'ready'; p: Preview; exists: boolean } | { state: 'error'; kind: string; message: string };
 
-export function CourseBuilder({ job, hasAI, recent, onBuild, onRead, onSettings, compact }: Props) {
+export function CourseBuilder({ job, hasAI, onBuild, onRead, onSettings, compact }: Props) {
   const [url, setUrl] = useState(() => (compact ? '' : (() => { const q = new URLSearchParams(location.hash.split('?')[1]); return q.get('url') ?? q.get('q') ?? ''; })()));
   const [invalid, setInvalid] = useState('');
   const [pre, setPre] = useState<Pre>({ state: 'idle' });
@@ -177,14 +177,9 @@ export function CourseBuilder({ job, hasAI, recent, onBuild, onRead, onSettings,
       )}
       <div className="flex flex-wrap items-center gap-2 pt-1 text-sm">
         <span className="text-muted">نمونه:</span>
-        {EXAMPLES.map((t) => (
+        {EXAMPLES.slice(0, 2).map((t) => (
           <button key={t} type="button" disabled={building} onClick={() => pick(wikiUrl('fa', t))} className="min-h-11 rounded-lg border border-line px-3 text-sm hover:border-accent hover:text-accent disabled:opacity-50">
             {t}
-          </button>
-        ))}
-        {recent.slice(0, 2).map((c) => (
-          <button key={c.key} type="button" disabled={building} dir="auto" onClick={() => pick(wikiUrl(c.lang, c.title))} className="min-h-11 max-w-48 truncate rounded-lg border border-dashed border-line px-3 text-sm hover:border-accent hover:text-accent disabled:opacity-50" title="از تاریخچه">
-            {c.title}
           </button>
         ))}
         {url.trim() && !invalid && (

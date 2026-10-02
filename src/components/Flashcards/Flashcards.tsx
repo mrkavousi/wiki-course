@@ -3,7 +3,7 @@ import { PartyPopper } from 'lucide-react';
 import type { Box, Grade } from '../../types/course';
 import { nextInterval } from '../../utils/learn';
 import { ProgressBar } from '../Progress/Progress';
-import { chip, fa, ghost, inDays } from '../ui';
+import { chipBase, fa, ghost, inDays } from '../ui';
 
 export type CardItem = { id: string; q: string; a: string; topic?: string };
 type Props = {
@@ -107,7 +107,7 @@ export function Flashcards({ items, boxes, onRate, done }: Props) {
         className={`elev-hi relative flex min-h-56 w-full flex-col items-center justify-center gap-3 rounded-2xl border-2 p-6 text-center transition ${flipped ? 'border-accent bg-accent-soft' : 'border-line bg-panel hover:border-accent/60'}`}
       >
         <span key={String(flipped)} className="flip-in flex flex-col items-center gap-3">
-          <span className={`${chip} ${flipped ? 'bg-accent text-on-accent' : ''}`}>{flipped ? 'جواب' : 'سؤال'}</span>
+          <span className={`${chipBase} ${flipped ? 'bg-accent text-on-accent' : 'bg-surface-2 text-muted'}`}>{flipped ? 'جواب' : 'سؤال'}</span>
           <span dir="auto" className="text-xl font-semibold leading-9">{flipped ? card.a : card.q}</span>
           {!flipped && <span className="text-xs text-muted">اول جواب را در ذهنت بگو، بعد کارت را برگردان (Space)</span>}
         </span>

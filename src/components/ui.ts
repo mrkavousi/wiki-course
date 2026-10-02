@@ -17,7 +17,9 @@ export const badge = 'rounded-md border border-line px-1.5 py-0.5 font-mono text
 /** text-base (16px): smaller inputs make iOS Safari zoom the page on focus. */
 export const field = 'w-full rounded-xl border border-line bg-bg px-3 py-2.5 text-base placeholder:text-muted focus:border-accent focus:outline-none';
 /** Small status pill. */
-export const chip = 'inline-flex items-center gap-1 rounded-full bg-surface-2 px-2.5 py-0.5 text-xs font-medium text-muted';
+/** Pill layout only. Colours are separate because Tailwind orders same-property utilities by name, not by writing order, so a `bg-*`/`text-*` override added to a chip that already had its own would silently lose (or win) at random. */
+export const chipBase = 'inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium';
+export const chip = `${chipBase} bg-surface-2 text-muted`;
 export const fa = (n: number) => n.toLocaleString('fa');
 
 const rtf = new Intl.RelativeTimeFormat('fa', { numeric: 'auto' });

@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react';
-import { Layers, Sparkles } from 'lucide-react';
+import { CalendarDays, Layers, Sparkles } from 'lucide-react';
 import { loadPack, type Store } from '../../data/store';
 import { courseKey } from '../../utils/course';
-import { dueIds, nextDue, today } from '../../utils/learn';
+import { addDays, dueIds, nextDue, today } from '../../utils/learn';
 import { Flashcards, type CardItem } from '../Flashcards/Flashcards';
 import { EmptyState, Skeleton } from '../States/States';
-import { fa, ghost, inDays, primary } from '../ui';
+import { card, fa, ghost, inDays, primary } from '../ui';
 
 /** Today's due cards from every topic in one session; the list is fixed when the page opens. */
 export function Review({ store }: { store: Store }) {
@@ -31,6 +31,8 @@ export function Review({ store }: { store: Store }) {
   const dueCount = dueIds(store.state.boxes, day).length;
   const missing = items ? Math.max(0, dueCount - items.length) : 0; // due cards whose study pack is gone from this browser
   const back = nextDue(store.state.boxes, day);
+  // Cards that will come due on each of the next three days, so tomorrow isn't a surprise.
+  const upcoming = [1, 2, 3].map((n) => ({ n, count: Object.values(store.state.boxes).filter((b) => b.due === addDays(day, n)).length }));
   const finish = (
     <>
       <a href="#/" className={ghost}>خانه</a>
@@ -56,6 +58,20 @@ export function Review({ store }: { store: Store }) {
           </a>
         ) : null}
       </div>
+      <section className={`${card} p-3`} aria-label="برنامه‌ی سه روز آینده">
+        <h2 className="mb-2 flex items-center gap-2 text-sm font-bold">
+          <CalendarDays className="size-4 text-accent" aria-hidden="true" />
+          برنامه‌ی سه روز آینده
+        </h2>
+        <ul className="grid grid-cols-3 gap-2 text-center">
+          {upcoming.map(({ n, count }) => (
+            <li key={n} className="rounded-xl bg-surface-2 px-2 py-2">
+              <span className="block text-xl font-bold tabular-nums">{fa(count)}</span>
+              <span className="block text-xs text-muted">کارت · {inDays(n)}</span>
+            </li>
+          ))}
+        </ul>
+      </section>
       {items === null ? (
         <div className="space-y-3" aria-busy="true">
           <Skeleton className="h-5 w-1/3" />

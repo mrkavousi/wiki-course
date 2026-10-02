@@ -15,7 +15,7 @@ import { Cover } from '../Cover/Cover';
 import { ProgressBar } from '../Progress/Progress';
 import { ErrorState, Skeleton } from '../States/States';
 import { useToast } from '../Toast/Toast';
-import { badge, chip, fa, fmtMinutes, ghost, ic, primary } from '../ui';
+import { badge, chip, chipBase, fa, fmtMinutes, ghost, ic, primary } from '../ui';
 
 type Props = {
   courseKey: string;
@@ -126,31 +126,32 @@ export function CourseView({ courseKey: key, topicParam, store, ai, busy, needAI
       <header className={`shrink-0 flex-col gap-3 border-b border-line bg-panel p-4 sm:flex-row ${topicParam ? 'max-lg:hidden lg:flex' : 'flex'}`}>
         <Cover title={course.root.title} summary={course.root.summary} thumbnail={course.root.thumbnail} className="h-24 w-full shrink-0 rounded-lg sm:h-auto sm:w-40" />
         <div className="min-w-0 flex-1 space-y-2">
-          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
-            <a href="#/library" className="flex min-h-11 items-center gap-1 text-muted hover:text-fg">
+          {/* phones: one scrollable row of the tags that matter; the library link, language and source live elsewhere on small screens */}
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm max-sm:flex-nowrap max-sm:gap-x-2 max-sm:overflow-x-auto max-sm:[&>*]:shrink-0">
+            <a href="#/library" className="flex min-h-11 items-center gap-1 text-muted hover:text-fg max-sm:hidden">
               <ArrowRight className={ic} />
               کتابخانه
             </a>
-            <span className={badge}>{course.root.lang}</span>
-            <span className={`${chip} ${stats.status === 'active' ? 'bg-accent-soft text-accent' : ''}`}>
+            <span className={`${badge} max-sm:hidden`}>{course.root.lang}</span>
+            <span className={`${chipBase} ${stats.status === 'active' ? 'bg-accent-soft text-accent' : 'bg-surface-2 text-muted'}`}>
               <StatusIcon className={ic} aria-hidden="true" />
               {STATUS_LABEL[stats.status]}
             </span>
             <span className={chip}>
               <Gauge className={ic} aria-hidden="true" />
-              سطح تقریبی: {LEVEL_LABEL[levelOf(course)]}
+              سطح <span className="max-sm:hidden">تقریبی: </span>{LEVEL_LABEL[levelOf(course)]}
             </span>
             {course.opts && (
-              <span className={chip}>
+              <span className={`${chip} max-sm:hidden`}>
                 <Layers className={ic} aria-hidden="true" />
                 عمق {DEPTH_LABEL[course.opts.depth]}
               </span>
             )}
             <span className={chip}>
               <Clock className={ic} aria-hidden="true" />
-              {stats.minutes ? `${fmtMinutes(stats.minutes)} مانده` : 'تمام شد'}
+              {stats.minutes ? <>{fmtMinutes(stats.minutes)}<span className="max-sm:hidden"> مانده</span></> : 'تمام شد'}
             </span>
-            <a href={course.root.url} target="_blank" rel="noopener noreferrer" className={`${chip} min-h-8 hover:text-fg`}>
+            <a href={course.root.url} target="_blank" rel="noopener noreferrer" className={`${chip} min-h-8 hover:text-fg max-sm:hidden`}>
               <ExternalLink className={ic} aria-hidden="true" />
               منبع: ویکی‌پدیا
             </a>
@@ -167,8 +168,8 @@ export function CourseView({ courseKey: key, topicParam, store, ai, busy, needAI
               {stats.due ? ` · ${fa(stats.due)} کارت منتظر مرور` : ''}
             </span>
           </div>
-          <div className="flex flex-wrap items-center gap-2 pt-1">
-            <button className={primary} onClick={() => select(topicKey(nextStep(ctx)))}>
+          <div className="flex flex-wrap items-center gap-2 pt-1 max-sm:flex-nowrap">
+            <button className={`${primary} min-w-0 max-sm:flex-1 max-sm:px-3`} onClick={() => select(topicKey(nextStep(ctx)))}>
               {done === steps.length ? (
                 <>
                   همه را بلدی، مرور دوباره
@@ -181,20 +182,20 @@ export function CourseView({ courseKey: key, topicParam, store, ai, busy, needAI
                 </>
               )}
             </button>
-            <button className={ghost} aria-pressed={saved} onClick={() => store.toggleSaved(course.root)}>
+            <button className={`${ghost} max-sm:px-3`} aria-pressed={saved} aria-label={saved ? 'ذخیره‌شده' : 'ذخیره'} onClick={() => store.toggleSaved(course.root)}>
               <Star className={`${ic} ${saved ? 'fill-current' : ''}`} />
-              {saved ? 'ذخیره‌شده' : 'ذخیره'}
+              <span className="max-sm:hidden">{saved ? 'ذخیره‌شده' : 'ذخیره'}</span>
             </button>
-            <div className="flex overflow-hidden rounded-lg border border-line text-sm" role="group" aria-label="نما">
+            <div className="flex shrink-0 overflow-hidden rounded-lg border border-line text-sm" role="group" aria-label="نما">
               {(
                 [
                   ['roadmap', 'مسیر', Route],
                   ['graph', 'گراف', Network],
                 ] as const
               ).map(([v, label, Icon]) => (
-                <button key={v} aria-pressed={view === v} onClick={() => setView(v)} className={`flex min-h-11 items-center gap-1.5 px-3 ${view === v ? 'bg-accent text-on-accent' : 'hover:bg-fg/5'}`}>
+                <button key={v} aria-pressed={view === v} aria-label={label} onClick={() => setView(v)} className={`flex min-h-11 items-center gap-1.5 px-3 ${view === v ? 'bg-accent text-on-accent' : 'hover:bg-fg/5'}`}>
                   <Icon className={ic} />
-                  {label}
+                  <span className="max-sm:hidden">{label}</span>
                 </button>
               ))}
             </div>

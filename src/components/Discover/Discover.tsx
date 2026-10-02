@@ -10,7 +10,7 @@ import { badge, card, fa, ghost, ic, primary } from '../ui';
 
 type Props = { store: Store; onBuild: (url: string, o?: { opts?: BuildOpts; force?: boolean }) => void };
 
-/** Two sources of ideas: ready-made courses you haven't started, and next topics from courses you have. */
+/** Two sources of ideas, personal first: next topics from courses you have, then ready-made courses you haven't started (a swipeable rail on phones). */
 export function Discover({ store, onBuild }: Props) {
   const { state } = store;
   const day = today();
@@ -34,26 +34,6 @@ export function Discover({ store, onBuild }: Props) {
         <h1 className="text-2xl font-extrabold">کشف</h1>
         <p className="text-sm text-muted">یک مسیر آماده را شروع کن، یا از دوره‌هایی که داری یک قدم جلوتر برو.</p>
       </header>
-
-      <section aria-label="دوره‌های آماده">
-        <h2 className="mb-3 flex items-center gap-2 text-lg font-bold">
-          <Compass className={`${ic} text-accent`} />
-          دوره‌های آماده برای شروع
-        </h2>
-        {!fresh ? (
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {[0, 1, 2].map((i) => <CourseCardSkeleton key={i} />)}
-          </div>
-        ) : fresh.length ? (
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {fresh.map((c) => <CourseCard key={c.key} course={c} state={state} day={day} onToggleSaved={() => store.toggleSaved(c.root)} />)}
-          </div>
-        ) : (
-          <EmptyState icon={Sparkles} art="biology" title="همه‌ی دوره‌های آماده را شروع کرده‌ای" text="یک لینک ویکی‌پدیا بچسبان تا دوره‌ی خودت را بسازی.">
-            <a href="#/new" className={primary}>ساخت دوره</a>
-          </EmptyState>
-        )}
-      </section>
 
       <section aria-label="قدم بعدی از دوره‌های تو">
         <h2 className="mb-3 flex items-center gap-2 text-lg font-bold">
@@ -79,6 +59,25 @@ export function Discover({ store, onBuild }: Props) {
           </ul>
         ) : (
           <p className="text-sm text-muted">وقتی در یک دوره پیشرفت کنی، قدم‌های بعدی و موضوع‌های مرتبطش اینجا پیشنهاد می‌شوند.</p>
+        )}
+      </section>
+      <section aria-label="دوره‌های آماده">
+        <h2 className="mb-3 flex items-center gap-2 text-lg font-bold">
+          <Compass className={`${ic} text-accent`} />
+          دوره‌های آماده برای شروع
+        </h2>
+        {!fresh ? (
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {[0, 1, 2].map((i) => <CourseCardSkeleton key={i} />)}
+          </div>
+        ) : fresh.length ? (
+          <div className="rail sm:grid sm:grid-cols-2 sm:gap-3 lg:grid-cols-3">
+            {fresh.map((c) => <CourseCard key={c.key} course={c} state={state} day={day} onToggleSaved={() => store.toggleSaved(c.root)} />)}
+          </div>
+        ) : (
+          <EmptyState icon={Sparkles} art="biology" title="همه‌ی دوره‌های آماده را شروع کرده‌ای" text="یک لینک ویکی‌پدیا بچسبان تا دوره‌ی خودت را بسازی.">
+            <a href="#/new" className={primary}>ساخت دوره</a>
+          </EmptyState>
         )}
       </section>
     </div>

@@ -5,7 +5,7 @@ import { readHref, type Store } from '../../data/store';
 import { topicKey } from '../../utils/course';
 import { Flashcards } from '../Flashcards/Flashcards';
 import { Quiz } from '../Quiz/Quiz';
-import { chip, fa, ghost, ic, outline, primary } from '../ui';
+import { chip, chipBase, fa, ghost, ic, outline, primary } from '../ui';
 
 type Job = { status: string; error: string } | null;
 type Props = {
@@ -76,11 +76,11 @@ export function TopicDetail({ course, page, topic, store, pack, packJob, busy, o
       {page.thumbnail && <img src={page.thumbnail} alt="" loading="lazy" decoding="async" className="aspect-video w-full rounded-lg bg-fg/5 object-cover" />}
       <div className="space-y-2">
         <div className="flex flex-wrap items-center gap-1.5">
-          <span className={`${chip} font-semibold ${roleChip}`}>{roleLabel}</span>
+          <span className={`${chipBase} font-semibold ${roleChip}`}>{roleLabel}</span>
           {topic && <span className={chip}>ارتباط {fa(topic.score)}٪</span>}
           {state.quiz[key] !== undefined && <span className={chip}>بهترین آزمون {fa(state.quiz[key])}٪</span>}
           {known && (
-            <span className={`${chip} bg-accent-soft text-accent`}>
+            <span className={`${chipBase} bg-accent-soft text-accent`}>
               <Check className={ic} aria-hidden="true" />
               بلدم
             </span>

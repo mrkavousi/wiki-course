@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { Course, Role } from '../../types/course';
 import { topicKey } from '../../utils/course';
-import { Maximize } from 'lucide-react';
-import { fa, ic } from '../ui';
+import { Maximize, Minus, Plus } from 'lucide-react';
+import { fa, ic, iconBtn } from '../ui';
 
 type Props = { course: Course; known: Set<string>; selectedKey: string | null; onSelect: (key: string) => void };
 
@@ -50,6 +50,8 @@ function Bubble({ x, y, r, title, thumbnail, color, known, selected, onClick }: 
 export function CourseGraph({ course, known, selectedKey, onSelect }: Props) {
   const svg = useRef<SVGSVGElement>(null);
   const drag = useRef<{ x: number; y: number } | null>(null);
+  const pts = useRef(new Map<number, { x: number; y: number }>()); // active pointers, for two-finger pinch zoom
+  const pinch = useRef<{ d: number; k: number } | null>(null);
   const [size, setSize] = useState({ w: 800, h: 600 });
   const [view, setView] = useState({ x: 0, y: 0, k: 1 });
 
@@ -125,18 +127,42 @@ export function CourseGraph({ course, known, selectedKey, onSelect }: Props) {
         viewBox={`${-size.w / 2} ${-size.h / 2} ${size.w} ${size.h}`}
         className="h-full w-full cursor-grab touch-none select-none active:cursor-grabbing"
         onPointerDown={(e) => {
+          pts.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+          if (pts.current.size === 2) {
+            // second finger: switch from panning to pinching
+            const [a, b] = [...pts.current.values()];
+            pinch.current = { d: Math.hypot(a.x - b.x, a.y - b.y) || 1, k: view.k };
+            drag.current = null;
+            return;
+          }
           if ((e.target as Element).closest('[data-node]')) return;
           drag.current = { x: e.clientX, y: e.clientY };
           e.currentTarget.setPointerCapture(e.pointerId);
         }}
         onPointerMove={(e) => {
+          if (pts.current.has(e.pointerId)) pts.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+          if (pinch.current && pts.current.size >= 2) {
+            const [a, b] = [...pts.current.values()];
+            const k = clampK((pinch.current.k * Math.hypot(a.x - b.x, a.y - b.y)) / pinch.current.d);
+            setView((v) => ({ ...v, k }));
+            return;
+          }
           const d = drag.current;
           if (!d) return;
           const dx = e.clientX - d.x, dy = e.clientY - d.y;
           drag.current = { x: e.clientX, y: e.clientY };
           setView((v) => ({ ...v, x: v.x + dx, y: v.y + dy }));
         }}
-        onPointerUp={() => (drag.current = null)}
+        onPointerUp={(e) => {
+          pts.current.delete(e.pointerId);
+          if (pts.current.size < 2) pinch.current = null;
+          drag.current = null;
+        }}
+        onPointerCancel={(e) => {
+          pts.current.delete(e.pointerId);
+          pinch.current = null;
+          drag.current = null;
+        }}
       >
         <g transform={`translate(${view.x} ${view.y}) scale(${view.k})`}>
           {placed.map(({ t, x, y }) => (
@@ -175,6 +201,14 @@ export function CourseGraph({ course, known, selectedKey, onSelect }: Props) {
           />
         </g>
       </svg>
+      <div className="absolute end-3 top-3 flex overflow-hidden rounded-lg border border-line bg-panel/90" role="group" aria-label="زوم">
+        <button onClick={() => setView((v) => ({ ...v, k: clampK(v.k * 1.25) }))} className={iconBtn} aria-label="بزرگ‌نمایی" title="بزرگ‌نمایی">
+          <Plus className={ic} />
+        </button>
+        <button onClick={() => setView((v) => ({ ...v, k: clampK(v.k / 1.25) }))} className={iconBtn} aria-label="کوچک‌نمایی" title="کوچک‌نمایی">
+          <Minus className={ic} />
+        </button>
+      </div>
       <button onClick={fit} className="absolute start-3 top-3 flex min-h-11 items-center gap-1.5 rounded-lg border border-line bg-panel/90 px-3 text-sm font-medium hover:border-accent/60">
         <Maximize className={ic} />
         نمایش همه
