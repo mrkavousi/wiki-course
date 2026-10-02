@@ -476,3 +476,51 @@ test('reader: chapters are cards by default and the setting can turn that off', 
   await page.reload();
   await expect(page.locator('section[data-chapter]')).toHaveCount(0); // remembered
 });
+
+test('reader: a chapter card can be copied, and shared as text or as a story picture', async ({ page, context }) => {
+  await context.grantPermissions(['clipboard-read', 'clipboard-write']);
+  await stubWikipedia(page);
+  await seed(page);
+  await page.goto('#/read/fa/ریاضیات');
+  await page.locator('article h1').waitFor();
+  await page.getByRole('button', { name: 'کپی متن فصل Section 0' }).click();
+  const copied = await page.evaluate(() => navigator.clipboard.readText());
+  expect(copied).toContain('Linear algebra text');
+  expect(copied).toContain('Wiki Course');
+  await page.getByRole('button', { name: 'اشتراک‌گذاری فصل Section 0' }).click();
+  const canvas = page.getByRole('img', { name: 'پیش‌نمایش تصویر استوری' });
+  await expect(canvas).toBeVisible();
+  expect(await canvas.evaluate((c: HTMLCanvasElement) => [c.width, c.height])).toEqual([1080, 1920]);
+  const snap = () => canvas.evaluate((c: HTMLCanvasElement) => c.toDataURL().length);
+  await page.waitForTimeout(500);
+  await expect(page.getByLabel('عنوان')).toHaveValue('Section 0');
+  const before = await snap();
+  await page.getByLabel('عنوان').fill('عنوان دلخواه');
+  await page.waitForTimeout(500);
+  expect(await snap()).not.toBe(before); // the edited title is redrawn
+  const edited = await snap();
+  await page.getByRole('button', { name: 'نارنجی' }).click();
+  await page.getByRole('button', { name: 'کارت', exact: true }).click();
+  await page.waitForTimeout(600);
+  expect(await snap()).not.toBe(edited); // the colour and frame change the picture
+  const [dl] = await Promise.all([page.waitForEvent('download'), page.getByRole('button', { name: 'دانلود تصویر' }).first().click()]);
+  expect(dl.suggestedFilename()).toBe('wiki-course.png');
+  await page.keyboard.press('Escape');
+  await expect(canvas).toBeHidden();
+});
+
+test('reader: selecting text shows a bar to copy it or make a picture of it', async ({ page, context }) => {
+  await context.grantPermissions(['clipboard-read', 'clipboard-write']);
+  await stubWikipedia(page);
+  await seed(page);
+  await page.goto('#/read/fa/ریاضیات');
+  await page.locator('article h1').waitFor();
+  const bar = page.getByRole('toolbar', { name: 'اشتراک‌گذاری متن انتخاب‌شده' });
+  await expect(bar).toBeHidden();
+  await page.evaluate(() => { const p = document.querySelector('article section p')!; const r = document.createRange(); r.selectNodeContents(p); const s = getSelection()!; s.removeAllRanges(); s.addRange(r); });
+  await expect(bar).toBeVisible();
+  await bar.getByRole('button', { name: 'کپی' }).click();
+  expect(await page.evaluate(() => navigator.clipboard.readText())).toContain('Intro paragraph');
+  await bar.getByRole('button', { name: 'تصویر' }).click();
+  await expect(page.getByRole('img', { name: 'پیش‌نمایش تصویر استوری' })).toBeVisible();
+});

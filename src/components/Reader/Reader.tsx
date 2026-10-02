@@ -1,5 +1,5 @@
 import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
-import { ArrowLeft, ArrowRight, Check, ExternalLink, Focus, Info, Languages, List, Minimize2, RefreshCw, Sparkles, Star } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Check, ClipboardCopy, ExternalLink, Focus, Info, Languages, List, Minimize2, RefreshCw, Share2, Sparkles, Star } from 'lucide-react';
 import type { AI, Page } from '../../types/course';
 import { READER_FONTS, READER_SIZES, courseHref, findCourse, loadTerms, readHref, saveTerms, useReaderPrefs, type ReaderMode, type Store } from '../../data/store';
 import { buildTerms, fetchArticle, fetchLangLinks, type Article, type LangLink } from '../../lib/build';
@@ -8,7 +8,10 @@ import type { Course } from '../../types/course';
 import { FORMULA, boldSegments, parseArticle, termRegex, type Seg } from '../../utils/reader';
 import { useToast } from '../Toast/Toast';
 import { card, field, fa, ghost, ic, outline, primary } from '../ui';
+import { shareText, type ShareInput } from '../../utils/shareImage';
 import { ReaderSettings } from './ReaderSettings';
+import { SelectionBar } from './SelectionBar';
+import { ShareDialog } from './ShareDialog';
 import { Toc } from './Toc';
 
 type Props = { lang: string; title: string; course?: string; store: Store; ai: AI; needAI: () => boolean };
@@ -142,6 +145,8 @@ export function Reader({ lang, title, course: courseId, store, ai, needAI }: Pro
   const [job, setJob] = useState<Job>(null);
   const [langs, setLangs] = useState(false);
   const [percent, setPercent] = useState(0); // reading progress 0-100
+  const [share, setShare] = useState<ShareInput | null>(null); // what the share dialog is showing
+  const articleEl = useRef<HTMLElement>(null);
   const [focus, setFocus] = useState(false); // focus mode: only the text and the progress bar
   const [active, setActive] = useState(-1); // index of the section being read (-1: before the first heading)
   const key = courseKey(lang, title);
@@ -289,6 +294,16 @@ export function Reader({ lang, title, course: courseId, store, ai, needAI }: Pro
   const back = () => (history.length > 1 ? history.back() : (location.hash = '#/app'));
 
   const size = prefs.size;
+  const source = { article: article?.title ?? title, url: article?.url ?? wikiUrl(lang, title) };
+  const chapter = (i: number): ShareInput => ({ ...source, title: blocks[i].title, text: sections[i].paras.join('\n') });
+  const copyChapter = async (i: number) => {
+    try {
+      await navigator.clipboard.writeText(shareText(chapter(i)));
+      toast('متن فصل کپی شد');
+    } catch {
+      toast('کپی نشد؛ متن را دستی کپی کن');
+    }
+  };
   const progress = (cls: string) => (
     <div role="progressbar" aria-label="پیشرفت خواندن" aria-valuemin={0} aria-valuemax={100} aria-valuenow={percent} className={cls}>
       <div className="h-full origin-right bg-accent transition-transform" style={{ transform: `scaleX(${percent / 100})` }} />
@@ -299,6 +314,8 @@ export function Reader({ lang, title, course: courseId, store, ai, needAI }: Pro
 
   return (
     <div ref={root} className={`mx-auto max-w-3xl px-4 lg:max-w-6xl lg:pb-16 ${focus ? 'pb-16' : 'pb-44'}`}>
+      {share && <ShareDialog input={share} onClose={() => setShare(null)} />}
+      {article && <SelectionBar within={articleEl} source={source} focus={focus} onImage={(text) => setShare({ ...source, text })} />}
       {langs && <LangPicker lang={lang} title={article?.title ?? title} course={courseId} onClose={() => setLangs(false)} />}
       {focus ? (
         <>
@@ -355,6 +372,7 @@ export function Reader({ lang, title, course: courseId, store, ai, needAI }: Pro
           </aside>
         )}
         <article
+          ref={articleEl}
           data-reader-bg={prefs.bg === 'app' ? undefined : prefs.bg}
           style={{ fontSize: `${READER_SIZES[size]}rem`, fontFamily: READER_FONTS[prefs.font][1] }}
           className={`mx-auto mt-6 w-full max-w-[38em] ${prefs.bg === 'app' ? '' : 'rounded-2xl border border-line p-5'}`}
@@ -439,10 +457,22 @@ export function Reader({ lang, title, course: courseId, store, ai, needAI }: Pro
               >
                 {card && !sub && <span className="absolute inset-x-0 top-0 h-1.5 bg-linear-to-l from-accent to-sub-physics" aria-hidden="true" />}
                 {i > 0 && (
-                  <H id={`sec-${i}`} dir="auto" className={`mb-3 scroll-mt-32 font-bold lg:scroll-mt-20 leading-snug ${card ? `flex items-start gap-3 ${sub ? 'text-[1.1em]' : 'text-[1.3em]'}` : HEADING[Math.min(s.level, 4)]}`}>
-                    {card && <span className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-full bg-accent text-[0.6em] font-bold tabular-nums text-on-accent" aria-hidden="true">{fa(i)}</span>}
-                    <span className="min-w-0">{s.title}</span>
-                  </H>
+                  <div className={card ? 'mb-3 flex items-start gap-2' : undefined}>
+                    <H id={`sec-${i}`} dir="auto" className={`${card ? 'min-w-0 flex-1' : 'mb-3'} scroll-mt-32 font-bold lg:scroll-mt-20 leading-snug ${card ? `flex items-start gap-3 ${sub ? 'text-[1.1em]' : 'text-[1.3em]'}` : HEADING[Math.min(s.level, 4)]}`}>
+                      {card && <span className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-full bg-accent text-[0.6em] font-bold tabular-nums text-on-accent" aria-hidden="true">{fa(i)}</span>}
+                      <span className="min-w-0">{s.title}</span>
+                    </H>
+                    {card && s.paras.length > 0 && (
+                      <div className="-my-1 flex shrink-0">
+                        <button onClick={() => copyChapter(i)} aria-label={`کپی متن فصل ${s.title}`} title="کپی متن فصل" className="flex size-11 items-center justify-center rounded-lg text-muted hover:bg-fg/10 hover:text-fg">
+                          <ClipboardCopy className="size-5" />
+                        </button>
+                        <button onClick={() => setShare(chapter(i))} aria-label={`اشتراک‌گذاری فصل ${s.title}`} title="اشتراک‌گذاری فصل" className="flex size-11 items-center justify-center rounded-lg text-muted hover:bg-fg/10 hover:text-fg">
+                          <Share2 className="size-5" />
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 )}
                 {s.paras.map((segs, j) => (
                   <Para key={j} segs={segs} />

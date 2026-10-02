@@ -7,6 +7,7 @@ import { courseStats, daysAt, levelOf, nextAction, weakTopics, weekStats } from 
 import { sanitizeCourse, sanitizePack, sanitizePage, sanitizeState, pack as packLink, unpack } from './share';
 import { seed, subjectOf } from './subject';
 import { FORMULA, boldSegments, cleanTerms, outline, parseArticle, termRegex } from './reader';
+import { COLORS, cleanQuote, shareText, withEllipsis, wrapLines } from './shareImage';
 
 assert.deepEqual(parseWikiUrl('https://en.wikipedia.org/wiki/Linear_algebra#History'), { lang: 'en', title: 'Linear algebra' });
 assert.deepEqual(parseWikiUrl('fa.m.wikipedia.org/wiki/%D8%AC%D8%A8%D8%B1_%D8%AE%D8%B7%DB%8C'), { lang: 'fa', title: 'جبر خطی' });
@@ -215,7 +216,28 @@ assert.ok(!('goal' in imported) && !('lastBackup' in imported), 'scalars are nev
   assert.match(await packLink('x'), /^[A-Za-z0-9_-]+$/, 'url-safe, nothing to escape in a fragment');
   await assert.rejects(unpack(await packLink('x'.repeat(100_000)), 1000), /too-big/, 'a small link cannot expand past the cap');
   await assert.rejects(unpack('not-gzip'));
-  console.log('course.check ok');
+  
+// ---------- share text and picture ----------
+const m = (s: string) => s.length * 10; // every character is 10 px wide
+assert.deepEqual(wrapLines('aa bb cc dd', m, 50), ['aa bb', 'cc dd'], 'lines break at word boundaries');
+assert.deepEqual(wrapLines('abcdefghij', m, 40), ['abcd', 'efgh', 'ij'], 'a word wider than the line is cut by characters');
+assert.deepEqual(wrapLines('a\n\nb', m, 100), ['a', '', 'b'], 'blank lines are kept as spacing');
+assert.equal(withEllipsis('abcdefghij', m, 60), 'abcde…', 'the last line is cut so the ellipsis fits');
+assert.equal(cleanQuote(`a ${FORMULA}   b\n\n  c  `), 'a b\n\nc', 'formula placeholders and extra spaces are removed');
+const st = shareText({ text: 'متن', title: 'فصل', article: 'ریاضیات', url: 'https://fa.wikipedia.org/wiki/x' });
+assert.ok(st.includes('«ریاضیات»') && st.includes('https://fa.wikipedia.org/wiki/x') && st.includes('Wiki Course'), 'shared text names its source and the app');
+assert.ok(!st.endsWith('.'), 'no trailing full stop');
+const lum = (h: string) => {
+  const [r, g, b] = [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16) / 255).map((v) => (v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4));
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+};
+const ratio = (a: string, b: string) => (Math.max(lum(a), lum(b)) + 0.05) / (Math.min(lum(a), lum(b)) + 0.05);
+for (const c of COLORS) {
+  for (const bg of [...c.bg, c.card]) for (const fg of [c.fg, c.muted]) assert.ok(ratio(fg, bg) >= 4.5, `${c.id}: ${fg} on ${bg} is ${ratio(fg, bg).toFixed(2)}`);
+  for (const bg of [...c.bg, c.card]) assert.ok(ratio(c.accent, bg) >= 3, `${c.id}: accent on ${bg}`);
+}
+
+console.log('course.check ok');
 })();
 
 // ---------- AI usage log ----------
