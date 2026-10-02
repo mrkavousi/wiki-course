@@ -19,6 +19,8 @@ Versions 0.1.0 to 0.3.0 were assigned afterwards from the commit history and tag
 - `ExportMenu` (`src/components/CourseView/`): export, share, AI prompts and course upkeep (archive, rebuild) in grouped sections.
 
 ### Changed
+- Builder input: the paste button becomes a red clear (X) button while there is text, and the placeholder is the short "عنوان مقاله یا لینک مقاله".
+- Builder search results open as an overlay directly under the input (previously a list further down the page that the phone keyboard covered); the list is sized to the space left above the keyboard and tab bar, and Esc closes it.
 - Reader toolbar: removed the "open in Wikipedia" icon beside the language button (the source link under the article title remains).
 - The topic button is now "ایجاد دوره‌ی این مطلب" and the build progress dialog opens right there. The dialog is its own component (`BuildDialog`) used on every page; "continue in background" hands over to the shell banner, and only failed course builds (not reader-link errors) open it as an error.
 - Course builder shows only two examples under the input (no history chips).

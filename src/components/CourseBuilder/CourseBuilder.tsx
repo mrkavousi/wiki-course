@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { BookOpen, Check, ClipboardPaste, Search, ExternalLink, KeyRound, Loader, Sparkles } from 'lucide-react';
+import { BookOpen, Check, ClipboardPaste, Search, ExternalLink, KeyRound, Loader, Sparkles, X } from 'lucide-react';
 import type { BuildOpts, CourseRef, Depth, Purpose } from '../../types/course';
 import { courseHref, findCourse } from '../../data/store';
 import { DEFAULT_OPTS, DEPTH_CAP, previewArticle, searchArticles, type Hit, type Preview } from '../../lib/build';
@@ -108,6 +108,12 @@ export function CourseBuilder({ job, hasAI, onBuild, onRead, onSettings, compact
     return () => clearTimeout(t);
   }, [url, sLang, building]); // eslint-disable-line react-hooks/exhaustive-deps -- `search` only reads refs and setters
 
+  const clear = () => {
+    setUrl('');
+    setInvalid('');
+    setPre({ state: 'idle' });
+    input.current?.focus();
+  };
   const paste = async () => {
     try {
       const text = (await navigator.clipboard.readText()).trim();
@@ -123,73 +129,29 @@ export function CourseBuilder({ job, hasAI, onBuild, onRead, onSettings, compact
   };
   const choose = (h: Hit) => pick(wikiUrl(sLang ?? guessLang(url), h.title));
 
-  const form = (
-    <form
-      className="space-y-2"
-      onSubmit={(e) => {
-        e.preventDefault();
-        check(url);
-      }}
-      noValidate
-    >
-      <label htmlFor="wiki-url" className="block text-sm font-semibold">
-        لینک مقاله‌ی ویکی‌پدیا یا نام مقاله
-      </label>
-      <div className="flex flex-col gap-2 sm:flex-row">
-        <div className="flex min-w-0 flex-1 gap-2">
-          <input
-            ref={input}
-            id="wiki-url"
-            dir="auto"
-            value={url}
-            disabled={building}
-            onChange={(e) => {
-              setUrl(e.target.value);
-              setInvalid('');
-              if (pre.state !== 'idle') setPre({ state: 'idle' });
-            }}
-            placeholder="جبر خطی، یا https://fa.wikipedia.org/wiki/…"
-            aria-invalid={!!invalid}
-            aria-describedby={invalid ? 'wiki-url-err' : undefined}
-            className={`${field} min-w-0 flex-1 py-3 text-start text-lg ${invalid ? 'border-danger' : ''}`}
-          />
-          <button type="button" onClick={paste} disabled={building} className={`${ghost} shrink-0`} aria-label="چسباندن از کلیپ‌بورد" title="چسباندن از کلیپ‌بورد">
-            <ClipboardPaste className={ic} />
-          </button>
-        </div>
-        <button disabled={building || !url.trim() || pre.state === 'loading'} className={`${primary} sm:px-6`}>
-          {compact ? <Sparkles className={ic} /> : found.state === 'loading' || pre.state === 'loading' ? <Loader className={`${ic} motion-safe:animate-spin`} /> : <Sparkles className={ic} />}
-          {compact ? 'ساخت دوره' : pre.state === 'loading' ? 'در حال بررسی…' : 'بررسی مقاله'}
-        </button>
-      </div>
-      {invalid && (
-        <p id="wiki-url-err" role="alert" className="text-sm text-danger">
-          {invalid}
-        </p>
-      )}
-      <div className="flex flex-wrap items-center gap-2 pt-1 text-sm">
-        <span className="text-muted">نمونه:</span>
-        {EXAMPLES.slice(0, 2).map((t) => (
-          <button key={t} type="button" disabled={building} onClick={() => pick(wikiUrl('fa', t))} className="min-h-11 rounded-lg border border-line px-3 text-sm hover:border-accent hover:text-accent disabled:opacity-50">
-            {t}
-          </button>
-        ))}
-        {url.trim() && !invalid && (
-          <button type="button" onClick={() => onRead(url.trim())} className="ms-auto flex min-h-11 items-center gap-1.5 px-2 text-sm text-muted hover:text-fg">
-            <BookOpen className={ic} />
-            فقط بخوان، بدون ساخت دوره
-          </button>
-        )}
-      </div>
-    </form>
-  );
-
-  if (compact) return form;
+  // The results open right under the input (an overlay, so the keyboard on a phone never hides them) and are sized to what is visible above it.
+  const wrap = useRef<HTMLDivElement>(null);
+  const [avail, setAvail] = useState(320);
+  const open = found.state !== 'idle';
+  useEffect(() => {
+    if (!open) return;
+    const fit = () => {
+      const r = wrap.current!.getBoundingClientRect();
+      setAvail(Math.max(180, (window.visualViewport?.height ?? innerHeight) - r.bottom - 12 - (innerWidth < 1024 ? 64 : 0))); // 64 = the phone tab bar
+    };
+    if (innerWidth < 1024) wrap.current!.scrollIntoView({ block: 'start', behavior: 'smooth' }); // keep the input near the top so there is room below it
+    fit();
+    const vv = window.visualViewport;
+    vv?.addEventListener('resize', fit);
+    vv?.addEventListener('scroll', fit);
+    addEventListener('resize', fit);
+    return () => (vv?.removeEventListener('resize', fit), vv?.removeEventListener('scroll', fit), removeEventListener('resize', fit));
+  }, [open]);
 
   const lang = sLang ?? guessLang(url);
   const results = found.state !== 'idle' && (
-    <section aria-label="نتیجه‌های جست‌وجو" className={`${card} overflow-hidden`}>
-      <div className="flex items-center justify-between gap-2 border-b border-line px-4 py-2">
+    <section aria-label="نتیجه‌های جست‌وجو" style={{ maxHeight: avail }} className={`${card} absolute inset-x-0 top-full z-30 mt-1.5 overflow-y-auto shadow-2xl`}>
+      <div className="sticky top-0 flex items-center justify-between gap-2 border-b border-line bg-panel px-4 py-2">
         <h2 className="flex items-center gap-2 text-sm font-bold">
           <Search className={ic} />
           مقاله‌ها در ویکی‌پدیا
@@ -241,10 +203,80 @@ export function CourseBuilder({ job, hasAI, onBuild, onRead, onSettings, compact
     </section>
   );
 
+  const form = (
+    <form
+      className="space-y-2"
+      onSubmit={(e) => {
+        e.preventDefault();
+        check(url);
+      }}
+      noValidate
+    >
+      <label htmlFor="wiki-url" className="block text-sm font-semibold">
+        لینک مقاله‌ی ویکی‌پدیا یا نام مقاله
+      </label>
+      <div className="flex flex-col gap-2 sm:flex-row">
+        <div ref={wrap} className="relative flex min-w-0 flex-1 gap-2">
+          <input
+            ref={input}
+            id="wiki-url"
+            dir="auto"
+            value={url}
+            disabled={building}
+            onKeyDown={(e) => e.key === 'Escape' && setFound({ state: 'idle' })}
+            onChange={(e) => {
+              setUrl(e.target.value);
+              setInvalid('');
+              if (pre.state !== 'idle') setPre({ state: 'idle' });
+            }}
+            placeholder="عنوان مقاله یا لینک مقاله"
+            aria-invalid={!!invalid}
+            aria-describedby={invalid ? 'wiki-url-err' : undefined}
+            className={`${field} min-w-0 flex-1 py-3 text-start text-lg ${invalid ? 'border-danger' : ''}`}
+          />
+          {url ? (
+            <button type="button" onClick={clear} disabled={building} className={`${ghost} shrink-0 text-danger hover:bg-danger/10`} aria-label="پاک کردن" title="پاک کردن">
+              <X className={ic} />
+            </button>
+          ) : (
+            <button type="button" onClick={paste} disabled={building} className={`${ghost} shrink-0`} aria-label="چسباندن از کلیپ‌بورد" title="چسباندن از کلیپ‌بورد">
+              <ClipboardPaste className={ic} />
+            </button>
+          )}
+          {results}
+        </div>
+        <button disabled={building || !url.trim() || pre.state === 'loading'} className={`${primary} sm:px-6`}>
+          {compact ? <Sparkles className={ic} /> : found.state === 'loading' || pre.state === 'loading' ? <Loader className={`${ic} motion-safe:animate-spin`} /> : <Sparkles className={ic} />}
+          {compact ? 'ساخت دوره' : pre.state === 'loading' ? 'در حال بررسی…' : 'بررسی مقاله'}
+        </button>
+      </div>
+      {invalid && (
+        <p id="wiki-url-err" role="alert" className="text-sm text-danger">
+          {invalid}
+        </p>
+      )}
+      <div className="flex flex-wrap items-center gap-2 pt-1 text-sm">
+        <span className="text-muted">نمونه:</span>
+        {EXAMPLES.slice(0, 2).map((t) => (
+          <button key={t} type="button" disabled={building} onClick={() => pick(wikiUrl('fa', t))} className="min-h-11 rounded-lg border border-line px-3 text-sm hover:border-accent hover:text-accent disabled:opacity-50">
+            {t}
+          </button>
+        ))}
+        {url.trim() && !invalid && (
+          <button type="button" onClick={() => onRead(url.trim())} className="ms-auto flex min-h-11 items-center gap-1.5 px-2 text-sm text-muted hover:text-fg">
+            <BookOpen className={ic} />
+            فقط بخوان، بدون ساخت دوره
+          </button>
+        )}
+      </div>
+    </form>
+  );
+
+  if (compact) return form;
+
   return (
     <div className="space-y-6">
       {form}
-      {results}
 
       <BuildDialog
         job={job}

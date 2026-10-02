@@ -324,6 +324,12 @@ test('builder: typing words searches Wikipedia, and picking a result previews th
   await page.getByRole('button', { name: /Calculus.*Branch of maths/ }).click();
   await expect(page.getByRole('heading', { name: 'Calculus' })).toBeVisible();
   await expect(page.getByText('آنچه ساخته می‌شود')).toBeVisible();
+  // the paste button turns into a clear button while there is text
+  await expect(page.getByRole('button', { name: 'چسباندن از کلیپ‌بورد' })).toHaveCount(0);
+  await page.getByRole('button', { name: 'پاک کردن' }).click();
+  await expect(page.getByLabel('لینک مقاله‌ی ویکی‌پدیا')).toHaveValue('');
+  await expect(page.getByRole('button', { name: 'چسباندن از کلیپ‌بورد' })).toBeVisible();
+  await expect(page.getByText('آنچه ساخته می‌شود')).toHaveCount(0);
 });
 
 test('reader: other-language versions come from Wikipedia language links and open in the reader', async ({ page }) => {
